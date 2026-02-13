@@ -18,7 +18,26 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
   <div class="container page-grid">
     <section class="hero">
       <h1>Walks</h1>
-      <p>Use filters to find routes by region, distance, difficulty, tags, and dog-friendly options.</p>
+      <p>Route finder for UK hills and mountains. Filter by region, distance, difficulty, tags, and dog access.</p>
+    </section>
+
+    <section class="card route-planning-grid">
+      <article>
+        <h2>Before You Set Off</h2>
+        <ul>
+          <li>Check weather and wind exposure for high ground.</li>
+          <li>Download GPX and carry offline mapping backup.</li>
+          <li>Plan parking and daylight margins, especially in winter.</li>
+        </ul>
+      </article>
+      <article>
+        <h2>Dog Trail Intelligence</h2>
+        <ul>
+          <li>Filter by dog-friendly routes only.</li>
+          <li>Use route notes for livestock and lead-sensitive sections.</li>
+          <li>Carry water, paw towel, and spare lead.</li>
+        </ul>
+      </article>
     </section>
 
     <section class="card page-grid">

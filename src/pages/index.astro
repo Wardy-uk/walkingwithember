@@ -5,11 +5,13 @@ import { getPublishedBlogs, getPublishedWalks, getRegions, getSiteSettings } fro
 
 const settings = await getSiteSettings();
 const regions = await getRegions();
-const walks = (await getPublishedWalks()).slice(0, 3);
+const allWalks = await getPublishedWalks();
+const walks = allWalks.slice(0, 3);
 const posts = (await getPublishedBlogs()).slice(0, 3);
 const page = (await getCollection("pages")).find((entry) => entry.slug === "home");
 const { Content } = page ? await page.render() : { Content: null };
 const description = page?.data.seoDescription ?? "UK hiking routes, trail guides, and outdoor stories from Walking with Ember.";
+const dogFriendlyCount = allWalks.filter((walk) => walk.data.dogFriendly).length;
 ---
 
 <BaseLayout title={`${settings.siteName} | Home`} description={description} regions={regions} siteName={settings.siteName} tagline={settings.tagline}>
@@ -25,7 +27,19 @@ const description = page?.data.seoDescription ?? "UK hiking routes, trail guides
       <div class="hero-metrics">
         <div><strong>{walks.length}+</strong><span>featured routes</span></div>
         <div><strong>{regions.length}</strong><span>regions covered</span></div>
-        <div><strong>All year</strong><span>UK hiking focus</span></div>
+        <div><strong>{dogFriendlyCount}</strong><span>dog-friendly routes</span></div>
+      </div>
+    </section>
+
+    <section class="card planning-strip">
+      <div>
+        <h2>Plan Like A UK Hillwalker</h2>
+        <p>Every route is logged with map links, GPX downloads, parking notes, and practical ground-level detail.</p>
+      </div>
+      <div class="planning-links">
+        <a class="button" href="https://www.mwis.org.uk/" target="_blank" rel="noreferrer">Check MWIS</a>
+        <a class="button ghost-dark" href="https://www.metoffice.gov.uk/" target="_blank" rel="noreferrer">Check Met Office</a>
+        <a class="button ghost-dark" href="/walks/">Open Route Finder</a>
       </div>
     </section>
 
@@ -53,6 +67,8 @@ const description = page?.data.seoDescription ?? "UK hiking routes, trail guides
             <li><a href={`/blog/${post.slug}/`}>{post.data.title}</a></li>
           ))}
         </ul>
+        <h3>Dog Trail Promise</h3>
+        <p class="muted">We include honest dog notes on access, livestock risk, water stops, and lead recommendations.</p>
       </aside>
     </section>
   </div>

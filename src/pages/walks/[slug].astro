@@ -18,6 +18,11 @@ const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
 const encodedUrl = encodeURIComponent(pageUrl);
 const encodedTitle = encodeURIComponent(walk.data.title);
 const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
+const estimatedHours = walk.data.difficulty === "Hard"
+  ? Math.max(3, Math.round(walk.data.distance / 2))
+  : walk.data.difficulty === "Moderate"
+    ? Math.max(2, Math.round(walk.data.distance / 2.4))
+    : Math.max(1, Math.round(walk.data.distance / 2.8));
 ---
 
 <BaseLayout
@@ -41,8 +46,34 @@ const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
         {walk.data.tags.map((tag) => <li class="chip">{tag}</li>)}
       </ul>
 
+      <section class="route-facts">
+        <div><span>Distance</span><strong>{walk.data.distance} mi</strong></div>
+        <div><span>Difficulty</span><strong>{walk.data.difficulty}</strong></div>
+        <div><span>Estimated Time</span><strong>{estimatedHours} hrs</strong></div>
+        <div><span>Dog Access</span><strong>{walk.data.dogFriendly ? "Dog-friendly" : "Lead only / restricted areas"}</strong></div>
+      </section>
+
       <div class="map-panel" id="map"></div>
-      {walk.data.osMapsLink && <p><a href={walk.data.osMapsLink} target="_blank" rel="noreferrer">Open OS Maps route</a></p>}
+      <section class="card planning-strip">
+        <div>
+          <h2>Map And Navigation</h2>
+          <p>Use OS mapping where possible, and keep an offline backup before setting off.</p>
+        </div>
+        <div class="planning-links">
+          {walk.data.osMapsLink && <a class="button" href={walk.data.osMapsLink} target="_blank" rel="noreferrer">Open OS Maps Route</a>}
+          <a class="button ghost-dark" href={walk.data.gpxDownload} target="_blank" rel="noreferrer">Download GPX</a>
+        </div>
+      </section>
+
+      <section class="card dog-panel">
+        <h2>Dog Trail Checklist</h2>
+        <ul>
+          <li>{walk.data.dogFriendly ? "Route is suitable for dogs with normal trail control." : "Route has sensitive sections. Use close lead control."}</li>
+          <li>Check livestock and ground-nesting bird signage on the day.</li>
+          <li>Carry water for your dog and avoid heat stress on exposed climbs.</li>
+          <li>Pack a towel and paw check kit for wet rock and boggy exits.</li>
+        </ul>
+      </section>
 
       <section class="card">
         <h2>Route Notes</h2>
@@ -52,6 +83,8 @@ const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
       <section class="card">
         <h2>Downloads and Links</h2>
         <p><strong>Parking:</strong> {walk.data.parking}</p>
+        <p><strong>Mountain weather:</strong> <a href="https://www.mwis.org.uk/" target="_blank" rel="noreferrer">MWIS forecast</a></p>
+        <p><strong>General weather:</strong> <a href="https://www.metoffice.gov.uk/" target="_blank" rel="noreferrer">Met Office</a></p>
         <p><a href={walk.data.gpxDownload} target="_blank" rel="noreferrer">Download GPX</a></p>
         <p><a href={walk.data.stravaRecord} target="_blank" rel="noreferrer">Strava Record</a></p>
         <p><a href={walk.data.stravaFlyby} target="_blank" rel="noreferrer">Strava Flyby</a></p>
