@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import { getRegions, getSiteSettings } from "../lib/content";
+
+const settings = await getSiteSettings();
+const regions = await getRegions();
+const page = (await getCollection("pages")).find((entry) => entry.slug === "contact");
+const { Content } = page ? await page.render() : { Content: null };
+---
+
+<BaseLayout
+  title={`${settings.siteName} | Contact`}
+  description={page?.data.seoDescription ?? "Contact Walking with Ember."}
+  regions={regions}
+  siteName={settings.siteName}
+  tagline={settings.tagline}
+>
+  <div class="container page-grid">
+    <section class="hero">
+      <h1>{page?.data.title ?? "Contact"}</h1>
+      {Content && <Content />}
+    </section>
+
+    <section class="card">
+      <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="contact-form">
+        <input type="hidden" name="form-name" value="contact" />
+        <p hidden>
+          <label>
+            Don’t fill this out: <input name="bot-field" />
+          </label>
+        </p>
+        <label>
+          Name
+          <input type="text" name="name" required />
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" required />
+        </label>
+        <label>
+          Message
+          <textarea name="message" rows="6" required></textarea>
+        </label>
+        <button type="submit">Send Message</button>
+      </form>
+    </section>
+  </div>
+</BaseLayout>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#2f5d3a"/>
+  <circle cx="1040" cy="120" r="180" fill="#ffffff22"/>
+  <path d="M0 500L180 340L350 460L510 280L700 470L870 330L1040 450L1200 300V630H0Z" fill="#ffffff2b"/>
+  <text x="80" y="230" fill="#ffffff" font-size="82" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Walking with Ember</text>
+  <text x="80" y="300" fill="#e2edd8" font-size="38" font-family="Segoe UI, Arial, sans-serif">UK hiking routes and trail stories</text>
+</svg>

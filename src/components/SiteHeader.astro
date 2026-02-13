@@ -1,0 +1,34 @@
+---
+interface Props {
+  siteName: string;
+  tagline: string;
+  regions: string[];
+}
+
+const { siteName, tagline, regions } = Astro.props;
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <div class="brand-name">{siteName}</div>
+      <p class="brand-tagline">{tagline}</p>
+    </a>
+
+    <nav class="nav" aria-label="Main navigation">
+      <a href="/">Home</a>
+      <a href="/walks/">Walks</a>
+      <a href="/blog/">Blog</a>
+      <a href="/about/">About</a>
+      <a href="/contact/">Contact</a>
+      <div class="dropdown">
+        <button type="button" aria-haspopup="true">Regions</button>
+        <div class="dropdown-content">
+          {regions.map((region) => (
+            <a href={`/walks/?region=${encodeURIComponent(region)}`}>{region}</a>
+          ))}
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>

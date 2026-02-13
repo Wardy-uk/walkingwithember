@@ -1,0 +1,75 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getPublishedBlogs, getPublishedWalks, getRegions, getSiteSettings } from "../../lib/content";
+
+export async function getStaticPaths() {
+  const posts = await getPublishedBlogs();
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const settings = await getSiteSettings();
+const regions = await getRegions();
+const { Content } = await post.render();
+const walks = await getPublishedWalks();
+const related = walks.filter((walk) => post.data.relatedWalks.includes(walk.slug));
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const encodedUrl = encodeURIComponent(pageUrl);
+const encodedTitle = encodeURIComponent(post.data.title);
+---
+
+<BaseLayout
+  title={`${post.data.title} | ${settings.siteName}`}
+  description={post.data.excerpt}
+  regions={regions}
+  siteName={settings.siteName}
+  tagline={settings.tagline}
+>
+  <div class="container page-grid">
+    <article class="card article">
+      <img src={post.data.coverImage} alt={post.data.title} />
+      <h1>{post.data.title}</h1>
+      <p class="article-meta">{post.data.author} · {post.data.publishDate.toLocaleDateString("en-GB")}</p>
+      <Content />
+
+      {related.length > 0 && (
+        <section class="card">
+          <h2>Related Walks</h2>
+          <ul>
+            {related.map((walk) => (
+              <li><a href={`/walks/${walk.slug}/`}>{walk.data.title}</a></li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section class="card">
+        <h2>Share This Post</h2>
+        <div class="share-row">
+          <a class="button" href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`} target="_blank" rel="noreferrer">Facebook</a>
+          <a class="button" href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`} target="_blank" rel="noreferrer">X</a>
+          <a class="button" href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`} target="_blank" rel="noreferrer">LinkedIn</a>
+          <a class="button" href={`mailto:?subject=${encodedTitle}&body=${encodedUrl}`}>Email</a>
+        </div>
+      </section>
+    </article>
+  </div>
+
+  <script type="application/ld+json" is:inline define:vars={{ post: post.data, pageUrl }}>
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: post.excerpt,
+      author: {
+        "@type": "Person",
+        name: post.author
+      },
+      datePublished: post.publishDate,
+      url: pageUrl
+    })}
+  </script>
+</BaseLayout>

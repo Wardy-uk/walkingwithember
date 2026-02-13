@@ -1,0 +1,71 @@
+---
+export const prerender = true;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CMS Admin</title>
+  </head>
+  <body>
+    <div style="padding:12px;font-family:Segoe UI,Arial,sans-serif;border-bottom:1px solid #ddd;">
+      <strong>Account access:</strong>
+      <button id="identity-login" type="button">Log in</button>
+      <button id="identity-signup" type="button">Sign up</button>
+      <button id="identity-recovery" type="button">Recover password</button>
+      <span id="identity-status" style="margin-left:10px;color:#666;">Loading login widget...</span>
+    </div>
+    <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <script is:inline>
+      const statusEl = document.getElementById("identity-status");
+
+      function setStatus(message, color) {
+        if (!statusEl) return;
+        statusEl.textContent = message;
+        statusEl.style.color = color || "#666";
+      }
+
+      function bindIdentity(identity) {
+        identity.init();
+        setStatus("Identity ready", "#1b5e20");
+
+        document.getElementById("identity-login")?.addEventListener("click", () => identity.open("login"));
+        document.getElementById("identity-signup")?.addEventListener("click", () => identity.open("signup"));
+        document.getElementById("identity-recovery")?.addEventListener("click", () => identity.open("recovery"));
+
+        const hash = window.location.hash || "";
+        if (hash.includes("invite_token")) {
+          identity.open("signup");
+        } else if (hash.includes("recovery_token")) {
+          identity.open("recovery");
+        }
+
+        identity.on("init", (user) => {
+          if (!user) {
+            identity.on("login", () => {
+              document.location.href = "/admin/";
+            });
+          }
+        });
+      }
+
+      function waitForIdentity(triesLeft) {
+        const identity = window.netlifyIdentity;
+        if (identity) {
+          bindIdentity(identity);
+          return;
+        }
+        if (triesLeft <= 0) {
+          setStatus("Identity widget unavailable. Disable blockers and refresh.", "#b00020");
+          return;
+        }
+        setTimeout(() => waitForIdentity(triesLeft - 1), 250);
+      }
+
+      waitForIdentity(40);
+    </script>
+  </body>
+</html>

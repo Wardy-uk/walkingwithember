@@ -1,0 +1,57 @@
+---
+const gaId = import.meta.env.PUBLIC_GA4_MEASUREMENT_ID ?? "";
+---
+
+<section id="cookie-banner" class="cookie-banner" aria-live="polite">
+  <strong>Cookie settings</strong>
+  <span class="muted">This site uses analytics cookies (GA4) to understand usage. You can accept or decline.</span>
+  <div class="cookie-buttons">
+    <button id="cookie-accept" type="button">Accept analytics</button>
+    <button id="cookie-decline" class="button" style="background:#5d6b64;" type="button">Decline</button>
+  </div>
+</section>
+
+<script is:inline define:vars={{ gaId }}>
+  const storageKey = "walking-with-ember-cookie-choice-v1";
+  const banner = document.getElementById("cookie-banner");
+  const accept = document.getElementById("cookie-accept");
+  const decline = document.getElementById("cookie-decline");
+
+  function loadGA4() {
+    if (!gaId) return;
+    if (window.__ga4Loaded) return;
+
+    window.__ga4Loaded = true;
+    const scriptA = document.createElement("script");
+    scriptA.async = true;
+    scriptA.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    document.head.appendChild(scriptA);
+
+    const scriptB = document.createElement("script");
+    scriptB.textContent = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${gaId}', { anonymize_ip: true });
+    `;
+    document.head.appendChild(scriptB);
+  }
+
+  const choice = localStorage.getItem(storageKey);
+  if (choice === "accepted") {
+    loadGA4();
+  } else if (!choice) {
+    banner?.classList.add("show");
+  }
+
+  accept?.addEventListener("click", () => {
+    localStorage.setItem(storageKey, "accepted");
+    banner?.classList.remove("show");
+    loadGA4();
+  });
+
+  decline?.addEventListener("click", () => {
+    localStorage.setItem(storageKey, "declined");
+    banner?.classList.remove("show");
+  });
+</script>

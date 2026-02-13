@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#efe8dd"/>
+  <rect x="130" y="130" width="940" height="440" rx="28" fill="#fff9ef" stroke="#d1c8b8" stroke-width="8"/>
+  <rect x="210" y="220" width="240" height="240" rx="24" fill="#d4a774"/>
+  <rect x="520" y="220" width="470" height="34" rx="6" fill="#294c40"/>
+  <rect x="520" y="286" width="430" height="24" rx="6" fill="#65857a"/>
+  <rect x="520" y="338" width="470" height="24" rx="6" fill="#65857a"/>
+  <rect x="520" y="390" width="360" height="24" rx="6" fill="#65857a"/>
+  <text x="70" y="92" fill="#5c513e" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Sample Blog Cover</text>
+</svg>

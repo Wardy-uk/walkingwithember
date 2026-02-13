@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#dbe8dc"/>
+  <path d="M0 450C170 390 230 390 390 450C560 510 640 510 800 450C980 380 1030 390 1200 460V700H0Z" fill="#98c4ae"/>
+  <path d="M60 700C120 620 210 560 320 520C460 470 620 460 740 500C910 560 1020 610 1140 700Z" fill="#6ca087"/>
+  <path d="M0 540C170 470 290 470 430 540C590 620 730 620 880 540C1010 470 1110 470 1200 520" stroke="#f7ffff" stroke-width="36" fill="none"/>
+  <text x="70" y="95" fill="#184536" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Sample Walk Image</text>
+</svg>

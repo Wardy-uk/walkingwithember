@@ -1,0 +1,59 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import { getPublishedBlogs, getPublishedWalks, getRegions, getSiteSettings } from "../lib/content";
+
+const settings = await getSiteSettings();
+const regions = await getRegions();
+const walks = (await getPublishedWalks()).slice(0, 3);
+const posts = (await getPublishedBlogs()).slice(0, 3);
+const page = (await getCollection("pages")).find((entry) => entry.slug === "home");
+const { Content } = page ? await page.render() : { Content: null };
+const description = page?.data.seoDescription ?? "UK hiking routes, trail guides, and outdoor stories from Walking with Ember.";
+---
+
+<BaseLayout title={`${settings.siteName} | Home`} description={description} regions={regions} siteName={settings.siteName} tagline={settings.tagline}>
+  <div class="container page-grid">
+    <section class="hero hero-wow">
+      <p class="hero-kicker">UK Mountain Trails</p>
+      <h1>{page?.data.title ?? settings.siteName}</h1>
+      {Content ? <Content /> : <p>Welcome to a collection of practical walk guides and trail stories.</p>}
+      <div class="hero-actions">
+        <a class="button" href="/walks/">Explore Walks</a>
+        <a class="button ghost" href="/blog/">Read Stories</a>
+      </div>
+      <div class="hero-metrics">
+        <div><strong>{walks.length}+</strong><span>featured routes</span></div>
+        <div><strong>{regions.length}</strong><span>regions covered</span></div>
+        <div><strong>All year</strong><span>UK hiking focus</span></div>
+      </div>
+    </section>
+
+    <section class="split">
+      <article class="card">
+        <h2>Featured Walks</h2>
+        <div class="card-grid">
+          {walks.map((walk) => (
+            <a class="entry-card" href={`/walks/${walk.slug}/`}>
+              <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
+              <div class="entry-card-body">
+                <h3>{walk.data.title}</h3>
+                <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}</p>
+                <p>{walk.data.summary}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </article>
+
+      <aside class="card">
+        <h2>Latest From The Blog</h2>
+        <ul>
+          {posts.map((post) => (
+            <li><a href={`/blog/${post.slug}/`}>{post.data.title}</a></li>
+          ))}
+        </ul>
+      </aside>
+    </section>
+  </div>
+</BaseLayout>

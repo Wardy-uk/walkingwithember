@@ -1,0 +1,112 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getPublishedWalks, getRegions, getSiteSettings } from "../../lib/content";
+
+export async function getStaticPaths() {
+  const walks = await getPublishedWalks();
+  return walks.map((walk) => ({
+    params: { slug: walk.slug },
+    props: { walk },
+  }));
+}
+
+const { walk } = Astro.props;
+const settings = await getSiteSettings();
+const regions = await getRegions();
+const { Content } = await walk.render();
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const encodedUrl = encodeURIComponent(pageUrl);
+const encodedTitle = encodeURIComponent(walk.data.title);
+const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
+---
+
+<BaseLayout
+  title={`${walk.data.title} | ${settings.siteName}`}
+  description={walk.data.summary}
+  regions={regions}
+  siteName={settings.siteName}
+  tagline={settings.tagline}
+>
+  <div class="container page-grid">
+    <article class="card article">
+      <img src={walk.data.heroImage} alt={walk.data.title} />
+      <h1>{walk.data.title}</h1>
+      <p class="article-meta">
+        {walk.data.location} · {walk.data.region} · {walk.data.distance} mi · {walk.data.difficulty} ·
+        {walk.data.dogFriendly ? " Dog-friendly" : " Not dog-friendly"}
+      </p>
+      <p>{walk.data.summary}</p>
+
+      <ul class="chip-list">
+        {walk.data.tags.map((tag) => <li class="chip">{tag}</li>)}
+      </ul>
+
+      <div class="map-panel" id="map"></div>
+      {walk.data.osMapsLink && <p><a href={walk.data.osMapsLink} target="_blank" rel="noreferrer">Open OS Maps route</a></p>}
+
+      <section class="card">
+        <h2>Route Notes</h2>
+        <Content />
+      </section>
+
+      <section class="card">
+        <h2>Downloads and Links</h2>
+        <p><strong>Parking:</strong> {walk.data.parking}</p>
+        <p><a href={walk.data.gpxDownload} target="_blank" rel="noreferrer">Download GPX</a></p>
+        <p><a href={walk.data.stravaRecord} target="_blank" rel="noreferrer">Strava Record</a></p>
+        <p><a href={walk.data.stravaFlyby} target="_blank" rel="noreferrer">Strava Flyby</a></p>
+      </section>
+
+      <section class="card">
+        <h2>Share This Walk</h2>
+        <div class="share-row">
+          <a class="button" href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`} target="_blank" rel="noreferrer">Facebook</a>
+          <a class="button" href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`} target="_blank" rel="noreferrer">X</a>
+          <a class="button" href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`} target="_blank" rel="noreferrer">LinkedIn</a>
+          <a class="button" href={`mailto:?subject=${encodedTitle}&body=${encodedUrl}`}>Email</a>
+        </div>
+      </section>
+    </article>
+  </div>
+
+  <script type="application/ld+json" is:inline define:vars={{ walk: walk.data, pageUrl }}>
+    {JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "TouristTrip",
+      name: walk.title,
+      description: walk.summary,
+      url: pageUrl,
+      touristType: "Walkers"
+    })}
+  </script>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script
+    is:inline
+    define:vars={{
+      lat: walk.data.routeMapLat,
+      lng: walk.data.routeMapLng,
+      zoom: walk.data.routeMapZoom,
+      mapApiKey
+    }}
+  >
+    const mapContainer = document.getElementById("map");
+    if (mapContainer && window.L) {
+      const map = window.L.map(mapContainer).setView([lat, lng], zoom);
+      if (mapApiKey) {
+        window.L.tileLayer("https://api.os.uk/maps/raster/v1/zxy/Outdoor_3857/{z}/{x}/{y}.png?key={accessToken}", {
+          accessToken: mapApiKey,
+          maxZoom: 18,
+          attribution: "&copy; Ordnance Survey"
+        }).addTo(map);
+      } else {
+        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+          attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+      }
+      window.L.marker([lat, lng]).addTo(map);
+    }
+  </script>
+</BaseLayout>

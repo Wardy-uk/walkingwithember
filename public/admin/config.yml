@@ -1,0 +1,86 @@
+backend:
+  name: git-gateway
+  branch: main
+
+local_backend: true
+publish_mode: editorial_workflow
+
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  - name: "walks"
+    label: "Walks"
+    folder: "src/content/walks"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Summary", name: "summary", widget: "text", hint: "Short listing summary." }
+      - { label: "Hero Image", name: "heroImage", widget: "image" }
+      - { label: "Publish Date", name: "publishDate", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "Distance (miles)", name: "distance", widget: "number", value_type: "float", min: 0.1, step: 0.1 }
+      - { label: "Difficulty", name: "difficulty", widget: "select", options: ["Easy", "Moderate", "Hard"] }
+      - { label: "Location", name: "location", widget: "string" }
+      - { label: "Region", name: "region", widget: "string" }
+      - { label: "Dog-Friendly", name: "dogFriendly", widget: "boolean", default: true }
+      - { label: "Parking Info", name: "parking", widget: "string" }
+      - { label: "GPX Download URL", name: "gpxDownload", widget: "string" }
+      - { label: "Strava Record URL", name: "stravaRecord", widget: "string" }
+      - { label: "Strava Flyby URL", name: "stravaFlyby", widget: "string" }
+      - { label: "OS Maps Link", name: "osMapsLink", required: false, widget: "string" }
+      - { label: "Map Latitude", name: "routeMapLat", widget: "number", value_type: "float" }
+      - { label: "Map Longitude", name: "routeMapLng", widget: "number", value_type: "float" }
+      - { label: "Map Zoom", name: "routeMapZoom", widget: "number", value_type: "int", min: 5, max: 18, default: 12 }
+      - { label: "Tags", name: "tags", widget: "list", default: [] }
+      - { label: "Draft", name: "draft", widget: "boolean", default: false }
+      - { label: "Full Content", name: "body", widget: "markdown" }
+
+  - name: "blog"
+    label: "Blog"
+    folder: "src/content/blog"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Excerpt", name: "excerpt", widget: "text" }
+      - { label: "Cover Image", name: "coverImage", widget: "image" }
+      - { label: "Author", name: "author", widget: "string" }
+      - { label: "Publish Date", name: "publishDate", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "Tags", name: "tags", widget: "list", default: [] }
+      - { label: "Related Walk Slugs", name: "relatedWalks", widget: "list", default: [] }
+      - { label: "Draft", name: "draft", widget: "boolean", default: false }
+      - { label: "Full Content", name: "body", widget: "markdown" }
+
+  - name: "pages"
+    label: "Pages"
+    folder: "src/content/pages"
+    create: false
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "SEO Description", name: "seoDescription", widget: "text" }
+      - { label: "Body", name: "body", widget: "markdown" }
+
+  - name: "settings"
+    label: "Site Settings"
+    files:
+      - label: "Global Settings"
+        name: "global"
+        file: "src/content/settings/site.json"
+        fields:
+          - { label: "Site Name", name: "siteName", widget: "string" }
+          - { label: "Tagline", name: "tagline", widget: "string" }
+          - { label: "Base URL", name: "baseUrl", widget: "string" }
+          - label: "Social"
+            name: "social"
+            widget: "object"
+            fields:
+              - { label: "Instagram", name: "instagram", widget: "string", required: false }
+              - { label: "Facebook", name: "facebook", widget: "string", required: false }

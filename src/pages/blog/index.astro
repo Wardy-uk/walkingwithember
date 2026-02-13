@@ -1,0 +1,37 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getPublishedBlogs, getRegions, getSiteSettings } from "../../lib/content";
+
+const settings = await getSiteSettings();
+const regions = await getRegions();
+const posts = await getPublishedBlogs();
+---
+
+<BaseLayout
+  title={`${settings.siteName} | Blog`}
+  description="Seasonal tips, walk reports, and practical outdoor planning notes."
+  regions={regions}
+  siteName={settings.siteName}
+  tagline={settings.tagline}
+>
+  <div class="container page-grid">
+    <section class="hero">
+      <h1>Blog</h1>
+      <p>Stories and planning tips from recent days on the trail.</p>
+    </section>
+    <section class="card-grid">
+      {posts.map((post) => (
+        <article class="entry-card">
+          <a href={`/blog/${post.slug}/`}>
+            <img src={post.data.coverImage} alt={post.data.title} loading="lazy" />
+          </a>
+          <div class="entry-card-body">
+            <h2><a href={`/blog/${post.slug}/`}>{post.data.title}</a></h2>
+            <p class="muted">{post.data.author} · {post.data.publishDate.toLocaleDateString("en-GB")}</p>
+            <p>{post.data.excerpt}</p>
+          </div>
+        </article>
+      ))}
+    </section>
+  </div>
+</BaseLayout>

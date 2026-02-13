@@ -1,0 +1,27 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import { getRegions, getSiteSettings } from "../lib/content";
+
+const settings = await getSiteSettings();
+const regions = await getRegions();
+const page = (await getCollection("pages")).find((entry) => entry.slug === "privacy");
+const { Content } = page ? await page.render() : { Content: null };
+---
+
+<BaseLayout
+  title={`${settings.siteName} | Privacy`}
+  description={page?.data.seoDescription ?? "Privacy and cookie information."}
+  regions={regions}
+  siteName={settings.siteName}
+  tagline={settings.tagline}
+>
+  <div class="container page-grid">
+    <section class="hero">
+      <h1>{page?.data.title ?? "Privacy"}</h1>
+    </section>
+    <section class="card">
+      {Content ? <Content /> : <p>This page is managed through the CMS.</p>}
+    </section>
+  </div>
+</BaseLayout>

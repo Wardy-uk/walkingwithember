@@ -1,0 +1,51 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Matt Ward Coaching | Contact" description="Apply for coaching with Matt Ward using Instagram DM or the website form.">
+  <div class="container page-grid">
+    <section class="card">
+      <p class="kicker">Contact</p>
+      <h1>Apply For Coaching</h1>
+      <p class="page-intro">
+        Fastest route is Instagram DM. You can also send details through the form below.
+      </p>
+      <div class="hero-actions">
+        <a class="button" href="https://www.instagram.com/mattwardcoaching11/" target="_blank" rel="noopener noreferrer">Message On Instagram</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <form name="coaching-enquiry" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="contact-form">
+        <input type="hidden" name="form-name" value="coaching-enquiry" />
+        <p hidden>
+          <label>
+            Ignore this field: <input name="bot-field" />
+          </label>
+        </p>
+        <label>
+          Name
+          <input type="text" name="name" required />
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" required />
+        </label>
+        <label>
+          Primary Goal
+          <select name="goal" required>
+            <option value="">Select one</option>
+            <option value="fat-loss">Fat Loss</option>
+            <option value="strength-muscle">Strength & Muscle</option>
+            <option value="accountability">Accountability</option>
+          </select>
+        </label>
+        <label>
+          Message
+          <textarea name="message" rows="6" required></textarea>
+        </label>
+        <button type="submit">Send Application</button>
+      </form>
+    </section>
+  </div>
+</BaseLayout>

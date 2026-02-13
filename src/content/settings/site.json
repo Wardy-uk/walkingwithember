@@ -1,0 +1,9 @@
+{
+  "siteName": "Walking with Ember",
+  "tagline": "UK hiking routes, trail notes, and honest hill days out",
+  "baseUrl": "https://example.com",
+  "social": {
+    "instagram": "",
+    "facebook": ""
+  }
+}

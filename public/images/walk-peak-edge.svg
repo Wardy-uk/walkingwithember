@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#b7dbe8"/>
+      <stop offset="1" stop-color="#f3f7f9"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#sky)"/>
+  <path d="M0 520L200 420L390 470L560 360L760 460L940 380L1200 500V700H0Z" fill="#3f775f"/>
+  <path d="M0 580L180 520L360 570L550 500L720 580L910 520L1200 600V700H0Z" fill="#275844"/>
+  <text x="70" y="100" fill="#1f2a26" font-size="52" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Sample Walk Image</text>
+</svg>
