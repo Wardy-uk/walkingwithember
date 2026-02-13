@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffd7a6"/>
+      <stop offset="0.45" stop-color="#f3a96f"/>
+      <stop offset="1" stop-color="#6b4b3a"/>
+    </linearGradient>
+    <linearGradient id="hillA" x1="0" x2="1">
+      <stop offset="0" stop-color="#3f5a48"/>
+      <stop offset="1" stop-color="#2d4437"/>
+    </linearGradient>
+    <linearGradient id="hillB" x1="0" x2="1">
+      <stop offset="0" stop-color="#2f3b33"/>
+      <stop offset="1" stop-color="#1f2b24"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="900" fill="url(#sky)"/>
+  <circle cx="1080" cy="180" r="95" fill="#ffe9c5" opacity="0.75"/>
+  <path d="M0 560L170 440L320 500L520 390L710 520L920 410L1120 520L1400 430V900H0Z" fill="url(#hillA)"/>
+  <path d="M0 640L190 560L380 650L600 530L790 640L980 560L1200 690L1400 620V900H0Z" fill="url(#hillB)"/>
+  <path d="M0 760C210 680 420 690 610 760C830 840 1010 845 1220 770C1300 740 1360 720 1400 705V900H0Z" fill="#253028"/>
+  <path d="M640 760L680 700L716 760Z" fill="#1e1a16"/>
+  <ellipse cx="710" cy="775" rx="38" ry="18" fill="#1e1a16"/>
+  <circle cx="725" cy="720" r="7" fill="#1e1a16"/>
+  <path d="M675 773L648 784L668 764Z" fill="#1e1a16"/>
+  <text x="70" y="95" font-family="Fraunces, Georgia, serif" font-size="56" fill="#fff4df" opacity="0.95">Walking with Ember</text>
+</svg>

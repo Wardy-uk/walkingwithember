@@ -1,7 +1,7 @@
 ---
 title: "Stanage Edge Loop"
 summary: "A classic Peak District ridge walk with broad views, gritstone edges, and straightforward navigation."
-heroImage: "/images/walk-peak-edge.svg"
+heroImage: "/images/uk-ridge-dawn.svg"
 publishDate: 2026-02-01
 difficulty: "Moderate"
 distance: 8.2

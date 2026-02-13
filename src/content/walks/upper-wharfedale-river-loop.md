@@ -1,7 +1,7 @@
 ---
 title: "Upper Wharfedale River Loop"
 summary: "A lower-level circular route with riverside paths, village sections, and steady gradients."
-heroImage: "/images/walk-river-loop.svg"
+heroImage: "/images/lakeside-fell-trail.svg"
 publishDate: 2026-01-22
 difficulty: "Easy"
 distance: 5.4
