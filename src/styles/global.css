@@ -1,16 +1,16 @@
 :root {
-  --bg: #18110d;
-  --bg-soft: #2b1c14;
-  --surface: #f7efe1;
-  --surface-strong: #fffaf2;
-  --text: #25160f;
-  --muted: #735b49;
-  --line: #d4bda5;
-  --brand: #b75f2d;
-  --brand-deep: #7c3c1d;
-  --brand-soft: #f3d8bf;
+  --bg: #efe3cf;
+  --bg-soft: #f6ead8;
+  --surface: #fff8ee;
+  --surface-strong: #fffdf8;
+  --text: #2b1d14;
+  --muted: #7c6654;
+  --line: #dcc6ac;
+  --brand: #be6d37;
+  --brand-deep: #8a4f27;
+  --brand-soft: #f7dfc7;
   --max: 1140px;
-  --shadow: 0 20px 46px rgba(10, 6, 3, 0.3);
+  --shadow: 0 18px 34px rgba(70, 40, 20, 0.16);
 }
 
 * {
@@ -26,7 +26,7 @@ body {
   font-family: "Manrope", "Segoe UI", Arial, sans-serif;
   color: var(--text);
   background:
-    linear-gradient(130deg, #120c09 0%, #26170f 45%, #3a2418 100%);
+    linear-gradient(130deg, #f3e7d4 0%, #ecd9be 45%, #e3c9a9 100%);
 }
 
 body::before {
@@ -35,16 +35,16 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: -1;
-  opacity: 0.35;
+  opacity: 0.45;
   background:
-    radial-gradient(circle at 78% 8%, rgba(255, 170, 91, 0.42) 0%, transparent 33%),
-    radial-gradient(circle at 9% 104%, rgba(144, 96, 58, 0.45) 0%, transparent 50%),
+    radial-gradient(circle at 78% 8%, rgba(255, 191, 121, 0.5) 0%, transparent 35%),
+    radial-gradient(circle at 9% 104%, rgba(196, 144, 99, 0.35) 0%, transparent 50%),
     repeating-linear-gradient(
       170deg,
       transparent 0,
       transparent 13px,
-      rgba(255, 215, 170, 0.08) 13px,
-      rgba(255, 215, 170, 0.08) 14px
+      rgba(255, 232, 205, 0.16) 13px,
+      rgba(255, 232, 205, 0.16) 14px
     );
 }
 
@@ -66,8 +66,8 @@ img {
   position: sticky;
   top: 0;
   z-index: 30;
-  border-bottom: 1px solid rgba(249, 227, 201, 0.25);
-  background: rgba(24, 16, 12, 0.86);
+  border-bottom: 1px solid rgba(154, 108, 67, 0.22);
+  background: rgba(255, 247, 236, 0.88);
   backdrop-filter: blur(8px);
 }
 
@@ -81,7 +81,7 @@ img {
 
 .brand {
   text-decoration: none;
-  color: #f8eede;
+  color: #3d2718;
 }
 
 .brand-name {
@@ -93,7 +93,7 @@ img {
 
 .brand-tagline {
   margin: 0.2rem 0 0;
-  color: #d2b899;
+  color: #866a52;
   font-size: 0.78rem;
 }
 
@@ -104,14 +104,14 @@ img {
 }
 
 .nav a {
-  color: #f8eede;
+  color: #422a1a;
   text-decoration: none;
   font-weight: 600;
 }
 
 .nav a:hover,
 .nav a:focus {
-  color: #ffd7ac;
+  color: #b15d2d;
 }
 
 .dropdown {
@@ -120,9 +120,9 @@ img {
 
 .dropdown button {
   font: inherit;
-  border: 1px solid rgba(240, 207, 172, 0.5);
-  color: #fff2df;
-  background: rgba(255, 224, 188, 0.09);
+  border: 1px solid rgba(172, 122, 80, 0.42);
+  color: #4a2f1c;
+  background: rgba(255, 241, 223, 0.8);
   border-radius: 999px;
   padding: 0.45rem 0.8rem;
   cursor: pointer;
@@ -183,13 +183,13 @@ h1 {
 }
 
 .hero {
-  border: 1px solid rgba(255, 221, 184, 0.38);
+  border: 1px solid rgba(200, 146, 95, 0.45);
   border-radius: 24px;
   background:
-    linear-gradient(135deg, rgba(54, 28, 17, 0.9), rgba(117, 58, 29, 0.75)),
+    linear-gradient(135deg, rgba(196, 128, 74, 0.78), rgba(167, 95, 52, 0.62)),
     url("/images/hero-pattern.svg");
   background-size: cover;
-  color: #fef2e2;
+  color: #fff9f2;
   padding: clamp(1.2rem, 4vw, 2.6rem);
   box-shadow: var(--shadow);
   position: relative;
@@ -203,7 +203,7 @@ h1 {
   width: 240px;
   height: 240px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 182, 110, 0.38), transparent 70%);
+  background: radial-gradient(circle, rgba(255, 221, 174, 0.45), transparent 70%);
 }
 
 .hero h1 {
@@ -224,7 +224,7 @@ h1 {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: #ffdcb8;
+  color: #fff2df;
 }
 
 .hero-actions {
@@ -242,21 +242,21 @@ h1 {
 }
 
 .hero-metrics div {
-  border: 1px solid rgba(255, 227, 196, 0.34);
+  border: 1px solid rgba(255, 237, 213, 0.5);
   border-radius: 12px;
   padding: 0.6rem;
-  background: rgba(255, 226, 194, 0.1);
+  background: rgba(255, 243, 224, 0.2);
   display: grid;
   gap: 0.15rem;
 }
 
 .hero-metrics strong {
   font-size: 1rem;
-  color: #fff4e5;
+  color: #fffaf4;
 }
 
 .hero-metrics span {
-  color: #f3d4b1;
+  color: #ffe8cc;
   font-size: 0.82rem;
 }
 
@@ -392,13 +392,13 @@ button:hover,
 }
 
 .site-footer {
-  border-top: 1px solid rgba(252, 222, 187, 0.24);
+  border-top: 1px solid rgba(168, 117, 76, 0.28);
   padding: 1rem 0 1.6rem;
-  color: #f0d2b0;
+  color: #5f4633;
 }
 
 .site-footer a {
-  color: #ffe3c2;
+  color: #8a4f27;
 }
 
 .footer-links {
