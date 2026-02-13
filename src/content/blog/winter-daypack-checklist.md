@@ -1,7 +1,7 @@
 ---
 title: "Winter Daypack Checklist for UK Hill Walks"
 excerpt: "A practical checklist for shorter winter daylight, wet ground, and variable temperatures."
-coverImage: "/images/uk-ridge-dawn.svg"
+coverImage: "https://images.pexels.com/photos/16637564/pexels-photo-16637564.jpeg?auto=compress&cs=tinysrgb&w=1600"
 author: "Walking with Ember"
 publishDate: 2026-02-03
 tags:

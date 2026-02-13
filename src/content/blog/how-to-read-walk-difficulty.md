@@ -1,7 +1,7 @@
 ---
 title: "How To Read Walk Difficulty Before You Set Off"
 excerpt: "Distance alone is not a reliable predictor; here is the framework we use for route grading."
-coverImage: "/images/lakeside-fell-trail.svg"
+coverImage: "https://images.pexels.com/photos/19908941/pexels-photo-19908941.jpeg?auto=compress&cs=tinysrgb&w=1600"
 author: "Walking with Ember"
 publishDate: 2026-01-25
 tags:

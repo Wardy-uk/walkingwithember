@@ -1,7 +1,7 @@
 ---
 title: "Coastal Headland Circuit"
 summary: "A sea-view route on open coastal paths with short climbs and exposed cliff-top sections."
-heroImage: "/images/ember-peak-lookout.svg"
+heroImage: "https://images.pexels.com/photos/33889535/pexels-photo-33889535.jpeg?auto=compress&cs=tinysrgb&w=1600"
 publishDate: 2026-01-12
 difficulty: "Moderate"
 distance: 6.8
