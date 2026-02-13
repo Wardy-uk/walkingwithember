@@ -16,6 +16,14 @@ const dogFriendlyCount = allWalks.filter((walk) => walk.data.dogFriendly).length
 
 <BaseLayout title={`${settings.siteName} | Home`} description={description} regions={regions} siteName={settings.siteName} tagline={settings.tagline}>
   <div class="container page-grid">
+    <section class="masthead-photo">
+      <img src="/images/uploads/ember-walking.jpg" alt="Ember on a mountain trail in the UK" />
+      <div class="masthead-overlay">
+        <p class="hero-kicker">UK Hillwalking With Ember</p>
+        <h2>Mountain miles, route notes, and dog-first trail intelligence.</h2>
+      </div>
+    </section>
+
     <section class="hero hero-wow">
       <p class="hero-kicker">UK Mountain Trails</p>
       <h1>{page?.data.title ?? settings.siteName}</h1>
