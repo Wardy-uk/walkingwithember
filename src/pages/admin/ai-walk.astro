@@ -3,152 +3,156 @@ export const prerender = true;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
     <title>AI Walk Creator</title>
     <style>
       :root {
-        color-scheme: light;
-        --bg: #f4f7f1;
-        --card: #ffffff;
-        --text: #1a261c;
-        --muted: #5a6a5f;
-        --line: #d5dfd1;
-        --accent: #2f6f42;
-        --accent-2: #173f2d;
+        --bg: #efe3cf;
+        --card: #fff8ee;
+        --text: #2b1d14;
+        --muted: #7c6654;
+        --line: #dcc6ac;
+        --accent: #be6d37;
+        --accent-2: #8a4f27;
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: "Segoe UI", Tahoma, sans-serif;
+        font-family: "Manrope", "Segoe UI", Arial, sans-serif;
         color: var(--text);
-        background:
-          radial-gradient(1200px 400px at 10% -20%, #dce9d9 0%, transparent 70%),
-          radial-gradient(1000px 340px at 95% -10%, #e6efe3 0%, transparent 65%),
-          var(--bg);
+        background: linear-gradient(130deg, #f3e7d4 0%, #ecd9be 45%, #e3c9a9 100%);
       }
       .wrap {
-        max-width: 980px;
-        margin: 0 auto;
-        padding: 18px;
+        width: min(980px, calc(100% - 2rem));
+        margin: 1.2rem auto 2rem;
       }
       .topbar {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
+        gap: 0.8rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
       }
-      .topbar a,
+      a.button,
       button {
-        border: 1px solid var(--line);
-        background: var(--card);
-        color: var(--text);
+        border: 0;
+        border-radius: 999px;
+        padding: 0.62rem 1rem;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #fff6ed;
         text-decoration: none;
-        border-radius: 10px;
-        padding: 8px 12px;
-        font-weight: 600;
         cursor: pointer;
+        font-weight: 700;
+        letter-spacing: 0.01em;
       }
-      button.primary {
-        border-color: var(--accent);
-        background: var(--accent);
-        color: #fff;
+      .ghost {
+        background: #fff5e8;
+        border: 1px solid #d9b995;
+        color: #6f3f20;
       }
-      button.primary:hover { background: var(--accent-2); }
       .card {
-        background: var(--card);
+        background: linear-gradient(180deg, var(--card) 0%, #f6ebdc 100%);
         border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 16px;
-        margin-bottom: 14px;
+        border-radius: 18px;
+        padding: 1rem;
+        margin-bottom: 0.9rem;
       }
-      h1, h2, h3 { margin: 0 0 10px; }
-      p { margin: 0 0 10px; color: var(--muted); }
+      h1, h2, h3 {
+        margin: 0 0 0.55rem;
+        font-family: "Fraunces", Georgia, serif;
+      }
+      p { margin: 0 0 0.7rem; color: var(--muted); }
       .grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
+        gap: 0.75rem;
       }
-      .field { display: grid; gap: 6px; }
-      label { font-weight: 600; font-size: 14px; }
+      .field { display: grid; gap: 0.35rem; }
+      label { font-weight: 700; font-size: 0.9rem; color: #5d4431; }
       input, select, textarea {
         width: 100%;
-        border: 1px solid var(--line);
+        border: 1px solid #d7bda0;
         border-radius: 10px;
-        padding: 9px 10px;
+        padding: 0.58rem 0.68rem;
         font: inherit;
         color: var(--text);
-        background: #fff;
+        background: #fffaf2;
       }
       textarea { min-height: 100px; resize: vertical; }
-      .q-list {
-        display: grid;
-        gap: 10px;
-      }
+      .q-list { display: grid; gap: 0.65rem; }
       .status {
-        padding: 10px;
+        padding: 0.7rem 0.75rem;
         border-radius: 10px;
         border: 1px solid var(--line);
-        background: #f7fbf6;
-        color: #204729;
-        font-weight: 600;
+        background: #f8ecdc;
+        color: #5a3a22;
+        font-weight: 700;
       }
       .status.error {
-        background: #fff4f2;
-        color: #8e1f11;
-        border-color: #f1c6c1;
+        background: #fff0ea;
+        color: #8a3f1d;
+        border-color: #e6bfa1;
       }
       .actions {
         display: flex;
-        gap: 10px;
+        gap: 0.55rem;
         flex-wrap: wrap;
       }
       .step-badge {
         display: inline-block;
-        padding: 4px 9px;
+        padding: 0.25rem 0.58rem;
         border-radius: 999px;
-        background: #e8f2e8;
-        color: #1f4a30;
-        font-size: 12px;
-        font-weight: 700;
-        margin-bottom: 8px;
+        background: #f7dfc7;
+        color: #8a4f27;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
       }
       .hidden { display: none; }
       .metrics-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
+        gap: 0.6rem;
       }
       .metric {
         border: 1px solid var(--line);
         border-radius: 10px;
-        padding: 10px;
-        background: #fafdf9;
+        padding: 0.62rem;
+        background: #fff6e9;
       }
       .metric .label {
         display: block;
         color: var(--muted);
-        font-size: 12px;
-        margin-bottom: 4px;
+        font-size: 0.78rem;
+        margin-bottom: 0.22rem;
       }
       .metric .value {
-        font-weight: 700;
-        color: #1f3b29;
+        font-weight: 800;
+        color: #5d371d;
       }
       @media (max-width: 840px) {
         .grid { grid-template-columns: 1fr; }
         .metrics-grid { grid-template-columns: 1fr 1fr; }
+      }
+      @media (max-width: 560px) {
+        .metrics-grid { grid-template-columns: 1fr; }
       }
     </style>
   </head>
   <body>
     <main class="wrap">
       <div class="topbar">
-        <a href="/admin/">Back to CMS</a>
-        <span id="who" class="status" style="padding:7px 10px;">Checking admin session...</span>
+        <a class="button ghost" href="/admin/">Back to CMS</a>
+        <span id="who" class="status">Checking admin session...</span>
       </div>
 
       <section class="card">
@@ -161,8 +165,8 @@ export const prerender = true;
             <input id="gpxFile" type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" required />
           </div>
         </div>
-        <div class="actions" style="margin-top:10px;">
-          <button id="analyzeBtn" class="primary" type="button">Analyze GPX</button>
+        <div class="actions" style="margin-top:0.6rem;">
+          <button id="analyzeBtn" type="button">Analyze GPX</button>
         </div>
       </section>
 
@@ -223,9 +227,9 @@ export const prerender = true;
             <label for="extraNotes">Extra notes for AI (optional)</label>
             <textarea id="extraNotes" placeholder="Anything else you want reflected in the post"></textarea>
           </div>
-          <div class="actions">
-            <button id="generateBtn" class="primary" type="button">Generate Draft Post(s)</button>
-            <button id="clearBtn" type="button">Clear Answers</button>
+          <div class="actions" style="margin-top:0.6rem;">
+            <button id="generateBtn" type="button">Generate Draft Post(s)</button>
+            <button id="clearBtn" type="button" class="ghost">Clear Answers</button>
           </div>
         </section>
       </section>
@@ -285,15 +289,12 @@ export const prerender = true;
         for (const [id, prompt] of QUESTION_ITEMS) {
           const wrap = document.createElement("div");
           wrap.className = "field";
-
           const label = document.createElement("label");
           label.htmlFor = `q-${id}`;
           label.textContent = prompt;
-
           const textarea = document.createElement("textarea");
           textarea.id = `q-${id}`;
           textarea.dataset.questionId = id;
-
           wrap.append(label, textarea);
           questionsEl.appendChild(wrap);
         }
@@ -323,7 +324,7 @@ export const prerender = true;
         }
         const token = await user.jwt();
         whoEl.textContent = user.email || "Admin logged in";
-        return { user, token };
+        return { token };
       }
 
       function formatMetric(value, suffix = "") {

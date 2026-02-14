@@ -1,18 +1,117 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CMS Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
+    <title>Walking with Ember | Admin</title>
+    <style>
+      :root {
+        --bg: #efe3cf;
+        --surface: #fff8ee;
+        --text: #2b1d14;
+        --muted: #7c6654;
+        --line: #dcc6ac;
+        --brand: #be6d37;
+        --brand-deep: #8a4f27;
+        --max: 1140px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background: linear-gradient(130deg, #f3e7d4 0%, #ecd9be 45%, #e3c9a9 100%);
+      }
+      .wrap {
+        width: min(var(--max), calc(100% - 2rem));
+        margin: 1.5rem auto;
+        display: grid;
+        gap: 1rem;
+      }
+      .card {
+        background: linear-gradient(180deg, var(--surface) 0%, #f6ebdc 100%);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 1rem;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+      }
+      .brand {
+        text-decoration: none;
+        color: #3d2718;
+      }
+      .brand strong {
+        font-family: "Unbounded", "Segoe UI", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+      .brand span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.82rem;
+        margin-top: 0.15rem;
+      }
+      .actions,
+      .identity {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      button,
+      .button {
+        border: 0;
+        border-radius: 999px;
+        padding: 0.62rem 1rem;
+        background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+        color: #fff6ed;
+        text-decoration: none;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .button.ghost {
+        background: #fff5e8;
+        border: 1px solid #d9b995;
+        color: #6f3f20;
+      }
+      #identity-status { color: var(--muted); font-weight: 600; }
+      h1 { margin: 0 0 0.4rem; font-family: "Fraunces", Georgia, serif; }
+      p { margin: 0 0 0.8rem; color: var(--muted); }
+    </style>
   </head>
   <body>
-    <div style="padding:12px;font-family:Segoe UI,Arial,sans-serif;border-bottom:1px solid #ddd;">
-      <strong>Account access:</strong>
-      <button id="identity-login" type="button">Log in</button>
-      <button id="identity-signup" type="button">Sign up</button>
-      <button id="identity-recovery" type="button">Recover password</button>
-      <span id="identity-status" style="margin-left:10px;color:#666;">Loading login widget...</span> <a href="/admin/ai-walk/" style="margin-left:10px;">AI Walk Creator</a>
-    </div>
+    <main class="wrap">
+      <section class="card top">
+        <a class="brand" href="/">
+          <strong>Walking with Ember</strong>
+          <span>Admin tools and publishing</span>
+        </a>
+        <div class="actions">
+          <a class="button ghost" href="/">View site</a>
+          <a class="button" href="/admin/ai-walk/">AI Walk Creator</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <h1>CMS Admin</h1>
+        <p>Sign in with Netlify Identity to manage content or use the AI walk workflow.</p>
+        <div class="identity">
+          <button id="identity-login" type="button">Log in</button>
+          <button id="identity-signup" type="button">Sign up</button>
+          <button id="identity-recovery" type="button">Recover password</button>
+          <span id="identity-status">Loading login widget...</span>
+        </div>
+      </section>
+    </main>
+
     <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
     <script>
@@ -21,12 +120,12 @@
       function setStatus(message, color) {
         if (!statusEl) return;
         statusEl.textContent = message;
-        statusEl.style.color = color || "#666";
+        statusEl.style.color = color || "#7c6654";
       }
 
       function bindIdentity(identity) {
         identity.init();
-        setStatus("Identity ready", "#1b5e20");
+        setStatus("Identity ready", "#5b7f3f");
 
         document.getElementById("identity-login")?.addEventListener("click", () => identity.open("login"));
         document.getElementById("identity-signup")?.addEventListener("click", () => identity.open("signup"));
