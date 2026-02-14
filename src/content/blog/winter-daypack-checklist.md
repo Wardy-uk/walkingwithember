@@ -1,7 +1,7 @@
 ---
 title: "Winter Daypack Checklist for UK Hill Walks"
 excerpt: "A practical checklist for shorter winter daylight, wet ground, and variable temperatures."
-coverImage: "https://images.pexels.com/photos/16637564/pexels-photo-16637564.jpeg?auto=compress&cs=tinysrgb&w=1600"
+coverImage: "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20district%2012.jpg"
 author: "Walking with Ember"
 publishDate: 2026-02-03
 tags:
@@ -26,3 +26,4 @@ If you only change one habit for winter walking, make it this: pack for delayed 
 - Paper backup map if possible
 - Power bank and head torch
 - Emergency contact plan
+

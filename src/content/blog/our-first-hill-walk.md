@@ -1,7 +1,7 @@
 ---
 title: "Our First Hill Walk"
 excerpt: "A simple day out with clear skies, big views, and Ember loving every minute on the trail."
-coverImage: "/images/uploads/ember-walking.jpg"
+coverImage: "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG"
 author: "Walking with Ember"
 publishDate: 2024-06-01
 tags:
@@ -15,4 +15,5 @@ This was one of our first proper hill days together and it still sets the tone f
 
 The weather was perfect, the views were stunning, and Ember had an absolute blast exploring every bend in the trail.
 
-![Ember on the trail](/images/uploads/ember-walking.jpg)
+![Peak District trail scene](https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG)
+
