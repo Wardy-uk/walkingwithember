@@ -648,3 +648,144 @@ button:hover,
     grid-template-columns: 1fr;
   }
 }
+
+.v2-hero {
+  position: relative;
+  min-height: min(92vh, 980px);
+  overflow: hidden;
+}
+
+.v2-hero img {
+  width: 100%;
+  height: min(92vh, 980px);
+  object-fit: cover;
+}
+
+.v2-hero-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: end;
+  gap: 0.8rem;
+  padding: clamp(1rem, 5vw, 4rem);
+  color: #fff6ec;
+  background: linear-gradient(180deg, rgba(26, 15, 10, 0.06) 20%, rgba(26, 15, 10, 0.85) 100%);
+}
+
+.v2-hero-overlay p {
+  margin: 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.v2-hero-overlay h1 {
+  margin: 0;
+  max-width: 14ch;
+  font-size: clamp(2rem, 7vw, 5.3rem);
+  line-height: 0.95;
+}
+
+.v2-section {
+  margin-top: 2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.v2-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+}
+
+.v2-section-head h2 {
+  margin: 0;
+  font-size: clamp(1.4rem, 3vw, 2.1rem);
+}
+
+.v2-route-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.v2-route-card {
+  border: 1px solid #d9c0a3;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fffaf2;
+}
+
+.v2-route-card img {
+  width: 100%;
+  height: 290px;
+  object-fit: cover;
+}
+
+.v2-route-card div {
+  padding: 0.9rem;
+}
+
+.v2-route-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+}
+
+.v2-route-card p {
+  margin: 0;
+  color: #7c6654;
+}
+
+.v2-ethos {
+  margin-top: 1.2rem;
+  margin-bottom: 2rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1.05fr 1fr;
+}
+
+.v2-ethos article {
+  border: 1px solid #d9c0a3;
+  border-radius: 16px;
+  padding: 1rem;
+  background: #fff8ee;
+}
+
+.v2-ethos h2 {
+  margin-top: 0;
+}
+
+.v2-image-stack {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.v2-image-stack img {
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid #d9c0a3;
+}
+
+@media (max-width: 980px) {
+  .v2-route-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .v2-ethos {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .v2-route-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .v2-image-stack {
+    grid-template-columns: 1fr;
+  }
+}

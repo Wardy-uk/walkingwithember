@@ -1,98 +1,64 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getCollection } from "astro:content";
-import { getPublishedBlogs, getPublishedWalks, getRegions, getSiteSettings } from "../lib/content";
+import { getPublishedWalks, getRegions, getSiteSettings } from "../lib/content";
 
 const settings = await getSiteSettings();
 const regions = await getRegions();
 const allWalks = await getPublishedWalks();
 const walks = allWalks.slice(0, 3);
-const posts = (await getPublishedBlogs()).slice(0, 3);
-const page = (await getCollection("pages")).find((entry) => entry.slug === "home");
-const { Content } = page ? await page.render() : { Content: null };
-const description = page?.data.seoDescription ?? "UK hiking routes, trail guides, and outdoor stories from Walking with Ember.";
-const dogFriendlyCount = allWalks.filter((walk) => walk.data.dogFriendly).length;
 const mastheadImage = settings.homepage?.mastheadImage || "/images/uploads/ember-walking.jpg";
-const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 6);
+const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 3);
 ---
 
-<BaseLayout title={`${settings.siteName} | Home`} description={description} regions={regions} siteName={settings.siteName} tagline={settings.tagline}>
-  <div class="container page-grid">
-    <section class="masthead-photo">
-      <img src={mastheadImage} alt="Mountain trail with Ember" />
-      <div class="masthead-overlay">
-        <p class="hero-kicker">UK Hillwalking With Ember</p>
-        <h2>Mountain miles, route notes, and dog-first trail intelligence.</h2>
-      </div>
-    </section>
+<BaseLayout
+  title={`${settings.siteName} | Home`}
+  description="UK hillwalking and mountain routes with dog-focused trail notes."
+  regions={regions}
+  siteName={settings.siteName}
+  tagline={settings.tagline}
+>
+  <section class="v2-hero">
+    <img src={mastheadImage} alt="Walking with Ember mountain hero" />
+    <div class="v2-hero-overlay">
+      <p>Walking with Ember</p>
+      <h1>UK hillwalking and mountain days with your trusty dog.</h1>
+      <a class="button" href="/walks/">Explore Routes</a>
+    </div>
+  </section>
 
-    <section class="hero hero-wow">
-      <p class="hero-kicker">UK Mountain Trails</p>
-      <h1>{page?.data.title ?? settings.siteName}</h1>
-      {Content ? <Content /> : <p>Welcome to a collection of practical walk guides and trail stories.</p>}
-      <div class="hero-actions">
-        <a class="button" href="/walks/">Explore Walks</a>
-        <a class="button ghost" href="/blog/">Read Stories</a>
-      </div>
-      <div class="hero-metrics">
-        <div><strong>{walks.length}+</strong><span>featured routes</span></div>
-        <div><strong>{regions.length}</strong><span>regions covered</span></div>
-        <div><strong>{dogFriendlyCount}</strong><span>dog-friendly routes</span></div>
-      </div>
-    </section>
+  <section class="container v2-section">
+    <div class="v2-section-head">
+      <h2>Flagship Routes</h2>
+      <a href="/walks/">View all walks</a>
+    </div>
+    <div class="v2-route-grid">
+      {walks.map((walk) => (
+        <article class="v2-route-card">
+          <a href={`/walks/${walk.slug}/`}>
+            <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
+          </a>
+          <div>
+            <h3><a href={`/walks/${walk.slug}/`}>{walk.data.title}</a></h3>
+            <p>{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
 
-    <section class="card planning-strip">
-      <div>
-        <h2>Plan Like A UK Hillwalker</h2>
-        <p>Every route is logged with map links, GPX downloads, parking notes, and practical ground-level detail.</p>
-      </div>
-      <div class="planning-links">
-        <a class="button" href="https://www.mwis.org.uk/" target="_blank" rel="noreferrer">Check MWIS</a>
-        <a class="button ghost-dark" href="https://www.metoffice.gov.uk/" target="_blank" rel="noreferrer">Check Met Office</a>
-        <a class="button ghost-dark" href="/walks/">Open Route Finder</a>
-      </div>
-    </section>
-
-    <section class="split">
-      <article class="card">
-        <h2>Featured Walks</h2>
-        <div class="card-grid">
-          {walks.map((walk) => (
-            <a class="entry-card" href={`/walks/${walk.slug}/`}>
-              <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
-              <div class="entry-card-body">
-                <h3>{walk.data.title}</h3>
-                <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}</p>
-                <p>{walk.data.summary}</p>
-              </div>
-            </a>
-          ))}
-        </div>
-      </article>
-
-      <aside class="card">
-        <h2>Latest From The Blog</h2>
-        <ul>
-          {posts.map((post) => (
-            <li><a href={`/blog/${post.slug}/`}>{post.data.title}</a></li>
-          ))}
-        </ul>
-        <h3>Dog Trail Promise</h3>
-        <p class="muted">We include honest dog notes on access, livestock risk, water stops, and lead recommendations.</p>
-      </aside>
-    </section>
-
-    <section class="card photo-band">
-      <h2>Field Gallery</h2>
-      <div class="photo-band-grid">
-        {galleryImages.length > 0 ? (
-          galleryImages.map((image, i) => (
-            <img src={image} alt={`Walking with Ember gallery image ${i + 1}`} loading="lazy" />
-          ))
-        ) : (
-          <img src="/images/uploads/ember-walking.jpg" alt="Ember on the trail" loading="lazy" />
-        )}
-      </div>
-    </section>
-  </div>
+  <section class="container v2-ethos">
+    <article>
+      <h2>Dog-First Trail Ethos</h2>
+      <p>
+        Every route is logged with practical mountain detail and real dog handling context:
+        livestock risk, lead-sensitive ground, weather exposure, parking access, and route backups.
+      </p>
+      <a class="button ghost-dark" href="/blog/">Read trail stories</a>
+    </article>
+    <div class="v2-image-stack">
+      {(galleryImages.length > 0 ? galleryImages : ["/images/uploads/ember-walking.jpg"]).map((image, idx) => (
+        <img src={image} alt={`Walking with Ember gallery ${idx + 1}`} loading="lazy" />
+      ))}
+    </div>
+  </section>
 </BaseLayout>
