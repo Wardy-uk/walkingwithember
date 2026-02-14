@@ -84,3 +84,12 @@ collections:
             fields:
               - { label: "Instagram", name: "instagram", widget: "string", required: false }
               - { label: "Facebook", name: "facebook", widget: "string", required: false }
+          - label: "Homepage Images"
+            name: "homepage"
+            widget: "object"
+            fields:
+              - { label: "Masthead Image", name: "mastheadImage", widget: "image" }
+              - label: "Gallery Images"
+                name: "galleryImages"
+                widget: "list"
+                field: { label: "Image", name: "image", widget: "image" }

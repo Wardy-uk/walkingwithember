@@ -59,6 +59,10 @@ const settings = defineCollection({
         instagram: z.union([z.string().url(), z.literal("")]).optional(),
         facebook: z.union([z.string().url(), z.literal("")]).optional(),
       }),
+      homepage: z.object({
+        mastheadImage: z.string(),
+        galleryImages: z.array(z.string()).default([]),
+      }),
     }),
 });
 

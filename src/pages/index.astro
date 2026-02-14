@@ -12,12 +12,14 @@ const page = (await getCollection("pages")).find((entry) => entry.slug === "home
 const { Content } = page ? await page.render() : { Content: null };
 const description = page?.data.seoDescription ?? "UK hiking routes, trail guides, and outdoor stories from Walking with Ember.";
 const dogFriendlyCount = allWalks.filter((walk) => walk.data.dogFriendly).length;
+const mastheadImage = settings.homepage?.mastheadImage || "/images/uploads/ember-walking.jpg";
+const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 6);
 ---
 
 <BaseLayout title={`${settings.siteName} | Home`} description={description} regions={regions} siteName={settings.siteName} tagline={settings.tagline}>
   <div class="container page-grid">
     <section class="masthead-photo">
-      <img src="https://images.pexels.com/photos/16637564/pexels-photo-16637564.jpeg?auto=compress&cs=tinysrgb&w=2000" alt="Dog on a UK mountain trail" />
+      <img src={mastheadImage} alt="Mountain trail with Ember" />
       <div class="masthead-overlay">
         <p class="hero-kicker">UK Hillwalking With Ember</p>
         <h2>Mountain miles, route notes, and dog-first trail intelligence.</h2>
@@ -83,33 +85,13 @@ const dogFriendlyCount = allWalks.filter((walk) => walk.data.dogFriendly).length
     <section class="card photo-band">
       <h2>Field Gallery</h2>
       <div class="photo-band-grid">
-        <img src="https://images.pexels.com/photos/19952925/pexels-photo-19952925.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="UK mountain ridge at golden hour" loading="lazy" />
-        <img src="/images/uploads/ember-walking.jpg" alt="Ember on the trail" loading="lazy" />
-        <img src="https://images.pexels.com/photos/33889535/pexels-photo-33889535.jpeg?auto=compress&cs=tinysrgb&w=1400" alt="Hiker and dog on mountain path" loading="lazy" />
-      </div>
-    </section>
-
-    <section class="card insta-section">
-      <div class="insta-head">
-        <div>
-          <h2>From Instagram: @trigpointnick</h2>
-          <p class="muted">Trail moments, summit days, and dog miles from your live account.</p>
-        </div>
-        <a class="button" href="https://www.instagram.com/trigpointnick/" target="_blank" rel="noreferrer">Open Instagram</a>
-      </div>
-      <div class="insta-grid">
-        <a class="insta-card" href="https://www.instagram.com/trigpointnick/" target="_blank" rel="noreferrer">
-          <img src="https://images.pexels.com/photos/19908941/pexels-photo-19908941.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Mountain landscape post style" loading="lazy" />
-          <span>Mountain weather days</span>
-        </a>
-        <a class="insta-card" href="https://www.instagram.com/trigpointnick/" target="_blank" rel="noreferrer">
-          <img src="/images/uploads/ember-walking.jpg" alt="Dog hiking post style" loading="lazy" />
-          <span>Ember trail moments</span>
-        </a>
-        <a class="insta-card" href="https://www.instagram.com/trigpointnick/" target="_blank" rel="noreferrer">
-          <img src="https://images.pexels.com/photos/16637564/pexels-photo-16637564.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Hillwalking kit and trail post style" loading="lazy" />
-          <span>Route and kit highlights</span>
-        </a>
+        {galleryImages.length > 0 ? (
+          galleryImages.map((image, i) => (
+            <img src={image} alt={`Walking with Ember gallery image ${i + 1}`} loading="lazy" />
+          ))
+        ) : (
+          <img src="/images/uploads/ember-walking.jpg" alt="Ember on the trail" loading="lazy" />
+        )}
       </div>
     </section>
   </div>

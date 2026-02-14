@@ -6,7 +6,11 @@ export async function getSiteSettings() {
     siteName: "Walking with Ember",
     tagline: "UK hiking routes, trail notes, and honest hill days out",
     baseUrl: "https://example.com",
-    social: {}
+    social: {},
+    homepage: {
+      mastheadImage: "/images/uploads/ember-walking.jpg",
+      galleryImages: ["/images/uploads/ember-walking.jpg"],
+    }
   };
 }
 

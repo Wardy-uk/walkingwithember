@@ -5,5 +5,13 @@
   "social": {
     "instagram": "",
     "facebook": ""
+  },
+  "homepage": {
+    "mastheadImage": "/images/uploads/ember-walking.jpg",
+    "galleryImages": [
+      "/images/uploads/ember-walking.jpg",
+      "/images/uploads/ember-walking.jpg",
+      "/images/uploads/ember-walking.jpg"
+    ]
   }
 }
