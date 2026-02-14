@@ -1,0 +1,376 @@
+---
+export const prerender = true;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Walk Creator</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f7f1;
+        --card: #ffffff;
+        --text: #1a261c;
+        --muted: #5a6a5f;
+        --line: #d5dfd1;
+        --accent: #2f6f42;
+        --accent-2: #173f2d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1200px 400px at 10% -20%, #dce9d9 0%, transparent 70%),
+          radial-gradient(1000px 340px at 95% -10%, #e6efe3 0%, transparent 65%),
+          var(--bg);
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 18px;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .topbar a,
+      button {
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--text);
+        text-decoration: none;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+      button.primary:hover { background: var(--accent-2); }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 14px;
+      }
+      h1, h2 { margin: 0 0 10px; }
+      p { margin: 0 0 10px; color: var(--muted); }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .field { display: grid; gap: 6px; }
+      label { font-weight: 600; font-size: 14px; }
+      input, select, textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 10px;
+        font: inherit;
+        color: var(--text);
+        background: #fff;
+      }
+      textarea { min-height: 100px; resize: vertical; }
+      .q-list {
+        display: grid;
+        gap: 10px;
+      }
+      .status {
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #f7fbf6;
+        color: #204729;
+        font-weight: 600;
+      }
+      .status.error {
+        background: #fff4f2;
+        color: #8e1f11;
+        border-color: #f1c6c1;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      @media (max-width: 840px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="topbar">
+        <a href="/admin/">Back to CMS</a>
+        <span id="who" class="status" style="padding:7px 10px;">Checking admin session...</span>
+      </div>
+
+      <section class="card">
+        <h1>AI Walk and Blog Creator</h1>
+        <p>Uploads GPX and photos, asks route questions, generates draft content, and commits files to GitHub.</p>
+        <div class="grid">
+          <div class="field">
+            <label for="postMode">What to create</label>
+            <select id="postMode">
+              <option value="both">Walk page + Blog post</option>
+              <option value="walk">Walk page only</option>
+              <option value="blog">Blog post only</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="author">Blog author</label>
+            <input id="author" type="text" value="Nick" />
+          </div>
+          <div class="field">
+            <label for="walkTitle">Optional walk title override</label>
+            <input id="walkTitle" type="text" placeholder="Leave blank to let AI decide" />
+          </div>
+          <div class="field">
+            <label for="blogTitle">Optional blog title override</label>
+            <input id="blogTitle" type="text" placeholder="Leave blank to let AI decide" />
+          </div>
+          <div class="field">
+            <label for="stravaRecord">Strava record URL</label>
+            <input id="stravaRecord" type="url" required />
+          </div>
+          <div class="field">
+            <label for="stravaFlyby">Strava flyby URL</label>
+            <input id="stravaFlyby" type="url" required />
+          </div>
+          <div class="field">
+            <label for="gpxFile">GPX file</label>
+            <input id="gpxFile" type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" required />
+          </div>
+          <div class="field">
+            <label for="images">Photos (1-6)</label>
+            <input id="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required />
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Walk Reflection Questions</h2>
+        <p>Answer as much as you can. AI uses this as source material for the draft.</p>
+        <div id="questions" class="q-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="field">
+          <label for="extraNotes">Extra notes for AI (optional)</label>
+          <textarea id="extraNotes" placeholder="Anything else you want reflected in the post"></textarea>
+        </div>
+        <div class="actions">
+          <button id="generateBtn" class="primary" type="button">Generate Draft Post(s)</button>
+          <button id="clearBtn" type="button">Clear Answers</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div id="status" class="status">Ready.</div>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
+    <script>
+      const QUESTION_ITEMS = [
+        ["where_walked", "Where did you walk?"],
+        ["why_route_today", "Why did you choose this route today?"],
+        ["familiar_or_new", "Was it familiar ground or somewhere new?"],
+        ["distance_and_gain", "What were the distance and elevation gain?"],
+        ["compare_recent", "How did it compare to your recent hikes?"],
+        ["weather_trail_conditions", "What were the weather and trail conditions?"],
+        ["conditions_impact", "Did the conditions enhance or detract from the experience?"],
+        ["energy_levels", "How did your energy levels feel during the walk?"],
+        ["pace_comfort", "Did the pace feel comfortable or challenging?"],
+        ["standout_sections", "Were there any standout climbs or sections?"],
+        ["kit_layers", "What kit and layers did you wear?"],
+        ["layering_fit", "Did your layering system suit the conditions?"],
+        ["footwear_match", "Did your footwear match the terrain?"],
+        ["gear_lessons", "Were there any gear lessons learned?"],
+        ["ember_experience", "How did Ember get on during the walk?"],
+        ["ember_rhythm", "Did she settle into the rhythm of the hike?"],
+        ["before_setting_off", "How did you feel before setting off?"],
+        ["during_after_feeling", "How did you feel during and after the walk?"],
+        ["emotional_moments", "Did the walk have any emotional or reflective moments?"],
+        ["walk_purpose", "Did it feel more like fitness, therapy, adventure or routine?"],
+        ["what_it_taught", "What did this walk teach you?"],
+        ["what_it_meant", "What did it mean to you?"],
+        ["overall_rating", "How would you rate the overall experience?"],
+        ["walk_again", "Would you walk this route again?"],
+        ["safety_notes", "Any route hazards, navigation issues, or safety notes others should know?"],
+        ["parking_toilets", "What were parking and facilities like (toilets, cafes, water)?"],
+      ];
+
+      const questionsEl = document.getElementById("questions");
+      const statusEl = document.getElementById("status");
+      const whoEl = document.getElementById("who");
+
+      function setStatus(message, error) {
+        statusEl.textContent = message;
+        statusEl.classList.toggle("error", Boolean(error));
+      }
+
+      function renderQuestions() {
+        for (const [id, prompt] of QUESTION_ITEMS) {
+          const wrap = document.createElement("div");
+          wrap.className = "field";
+
+          const label = document.createElement("label");
+          label.htmlFor = `q-${id}`;
+          label.textContent = prompt;
+
+          const textarea = document.createElement("textarea");
+          textarea.id = `q-${id}`;
+          textarea.dataset.questionId = id;
+
+          wrap.append(label, textarea);
+          questionsEl.appendChild(wrap);
+        }
+      }
+
+      function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = () => reject(new Error(`Failed reading file ${file.name}`));
+          reader.onload = () => {
+            const result = String(reader.result || "");
+            const comma = result.indexOf(",");
+            resolve(comma >= 0 ? result.slice(comma + 1) : result);
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function requireAdminUser() {
+        const identity = window.netlifyIdentity;
+        if (!identity) throw new Error("Netlify Identity is unavailable.");
+        identity.init();
+        const user = identity.currentUser();
+        if (!user) {
+          identity.open("login");
+          throw new Error("Please log in as admin first.");
+        }
+        const token = await user.jwt();
+        whoEl.textContent = user.email || "Admin logged in";
+        return { user, token };
+      }
+
+      async function buildPayload() {
+        const postMode = document.getElementById("postMode").value;
+        const author = document.getElementById("author").value.trim();
+        const walkTitle = document.getElementById("walkTitle").value.trim();
+        const blogTitle = document.getElementById("blogTitle").value.trim();
+        const stravaRecord = document.getElementById("stravaRecord").value.trim();
+        const stravaFlyby = document.getElementById("stravaFlyby").value.trim();
+        const extraNotes = document.getElementById("extraNotes").value.trim();
+
+        const gpxInput = document.getElementById("gpxFile");
+        const imageInput = document.getElementById("images");
+
+        if (!stravaRecord || !stravaFlyby) throw new Error("Strava record and flyby URLs are required.");
+        if (!gpxInput.files || gpxInput.files.length < 1) throw new Error("Please upload a GPX file.");
+        if (!imageInput.files || imageInput.files.length < 1) throw new Error("Please upload at least one image.");
+        if (imageInput.files.length > 6) throw new Error("Please upload a maximum of 6 images.");
+
+        const answers = {};
+        document.querySelectorAll("textarea[data-question-id]").forEach((el) => {
+          answers[el.dataset.questionId] = el.value.trim();
+        });
+
+        const gpxFile = gpxInput.files[0];
+        const gpxBase64 = await readFileAsBase64(gpxFile);
+
+        const images = [];
+        for (const file of imageInput.files) {
+          if (file.size > 6 * 1024 * 1024) {
+            throw new Error(`Image ${file.name} is too large. Keep each image under 6MB.`);
+          }
+          images.push({
+            name: file.name,
+            mimeType: file.type || "image/jpeg",
+            contentBase64: await readFileAsBase64(file),
+          });
+        }
+
+        return {
+          postMode,
+          author,
+          walkTitle,
+          blogTitle,
+          stravaRecord,
+          stravaFlyby,
+          extraNotes,
+          answers,
+          gpxFile: {
+            name: gpxFile.name,
+            contentBase64: gpxBase64,
+          },
+          images,
+        };
+      }
+
+      async function generate() {
+        try {
+          setStatus("Checking admin session...");
+          const { token } = await requireAdminUser();
+
+          setStatus("Preparing files and answers...");
+          const payload = await buildPayload();
+
+          setStatus("Generating content and committing files. This can take 30-90 seconds...");
+          const response = await fetch("/.netlify/functions/ai-create-post", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(data.error || `Request failed (${response.status})`);
+          }
+
+          const created = data.created || {};
+          const lines = ["Draft generation completed."];
+          if (created.walkPath) lines.push(`Walk: ${created.walkPath}`);
+          if (created.blogPath) lines.push(`Blog: ${created.blogPath}`);
+          if (created.gpxPath) lines.push(`GPX: ${created.gpxPath}`);
+          setStatus(lines.join(" "));
+        } catch (error) {
+          setStatus(String(error.message || error), true);
+        }
+      }
+
+      function clearAnswers() {
+        document.querySelectorAll("textarea[data-question-id], #extraNotes").forEach((el) => {
+          el.value = "";
+        });
+        setStatus("Answers cleared.");
+      }
+
+      document.getElementById("generateBtn").addEventListener("click", generate);
+      document.getElementById("clearBtn").addEventListener("click", clearAnswers);
+
+      renderQuestions();
+      requireAdminUser().catch((error) => {
+        whoEl.textContent = "Not logged in";
+        setStatus(error.message, true);
+      });
+    </script>
+  </body>
+</html>

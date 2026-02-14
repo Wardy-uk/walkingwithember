@@ -14,7 +14,7 @@ const walks = defineCollection({
       region: z.string(),
       dogFriendly: z.boolean(),
       parking: z.string(),
-      gpxDownload: z.string().url(),
+      gpxDownload: z.string().min(1),
       stravaRecord: z.string().url(),
       stravaFlyby: z.string().url(),
       tags: z.array(z.string()).default([]),

@@ -19,6 +19,7 @@ Multi-page walking website with browser-based CMS, ready for GitHub + Netlify.
 - GA4 with cookie consent banner
 - OS Maps API tile support on walk pages
 - SEO basics: sitemap, robots, Open Graph, schema markup
+- AI walk/blog generator at `/admin/ai-walk/` (admin login required)
 
 ## Local development
 
@@ -35,6 +36,15 @@ Set these in Netlify Site Settings > Environment Variables:
 
 - `PUBLIC_GA4_MEASUREMENT_ID`
 - `PUBLIC_OS_MAPS_API_KEY`
+
+### Additional variables for AI post generation
+
+- `OPENAI_API_KEY` (required)
+- `OPENAI_MODEL` (optional, defaults to `gpt-4o-mini`)
+- `GITHUB_TOKEN` (required, repo write access)
+- `GITHUB_REPO` (required, format: `owner/repo`)
+- `GITHUB_BRANCH` (optional, defaults to `main`)
+- `SITE_BASE_URL` (optional, used for absolute GPX links)
 
 You can also set them locally in `.env`.
 
@@ -77,6 +87,15 @@ In Netlify for this site:
 - Pages (`src/content/pages`)
 - Site Settings (`src/content/settings/site.json`)
 
+## AI creator workflow
+
+1. Log into `/admin`.
+2. Open **AI Walk Creator**.
+3. Upload one GPX + one or more photos.
+4. Fill route/reflection questions.
+5. Choose output mode: walk, blog, or both.
+6. Tool commits assets and draft markdown posts to GitHub.
+
 ## Important files
 
 - `public/admin/config.yml` Decap CMS config
@@ -84,3 +103,5 @@ In Netlify for this site:
 - `src/pages/` site routes
 - `src/layouts/BaseLayout.astro` base SEO/layout shell
 - `netlify.toml` Netlify build and headers
+- `src/pages/admin/ai-walk.astro` AI creation UI
+- `netlify/functions/ai-create-post.mjs` AI generation + GitHub commit endpoint
