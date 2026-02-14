@@ -6,7 +6,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const REQUIRED_ENV_GENERATE = ["OPENAI_API_KEY", "GITHUB_TOKEN", "GITHUB_REPO"];
+const REQUIRED_ENV_GENERATE = ["GITHUB_TOKEN", "GITHUB_REPO"];
 
 export const handler = async (event) => {
   try {
@@ -402,96 +402,141 @@ async function buildImageArtifacts(images) {
 }
 
 async function generateContent({ payload, gpxSummary, imageSummaries, walkSlug, blogSlug, publishDate }) {
-  const response = await callOpenAi({
-    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    input: [
-      {
-        role: "system",
-        content: [
-          {
-            type: "input_text",
-            text: [
-              "You are writing content for a UK hiking website.",
-              "Use answers as source truth. Avoid fabricated specifics.",
-              "Tone: personal, practical, reflective, concise.",
-              "Return strict JSON only.",
-            ].join("\n"),
-          },
-        ],
+  const answers = payload.answers || {};
+
+  const walkLocation = nonEmpty(
+    payload.walkTitle,
+    answers.where_walked,
+    answers.familiar_or_new,
+    "Peak District"
+  );
+
+  const walkTitle = nonEmpty(
+    payload.walkTitle,
+    titleCaseFromSlug(walkSlug),
+    `Walk ${publishDate}`
+  );
+
+  const distance = Number(gpxSummary.distanceMiles || 0);
+  const ascentFt = Number(gpxSummary.elevationGainFeet || 0);
+  const difficulty = distance >= 10 || ascentFt >= 2200
+    ? "Hard"
+    : distance >= 6 || ascentFt >= 1200
+      ? "Moderate"
+      : "Easy";
+
+  const summary = truncate(
+    nonEmpty(
+      answers.why_route_today,
+      answers.conditions_impact,
+      "A reflective route day with practical trail notes and conditions captured from the walk."
+    ),
+    230
+  );
+
+  const walkTags = dedupeStrings([
+    "Peak District",
+    difficulty,
+    answers.walk_purpose,
+    answers.weather_trail_conditions,
+    answers.standout_sections,
+    answers.kit_layers,
+  ]).slice(0, 8);
+
+  const routeNotesMarkdown = [
+    `## Why this route`,
+    nonEmpty(answers.why_route_today, "Chosen for a steady route with varied terrain and good access."),
+    "",
+    `## Conditions and pacing`,
+    nonEmpty(answers.weather_trail_conditions, "Conditions were mixed with typical hill exposure."),
+    "",
+    nonEmpty(answers.pace_comfort, "Pacing felt controlled for the day."),
+    "",
+    `## Standout sections`,
+    nonEmpty(answers.standout_sections, "Several sections offered strong views and useful route markers."),
+    "",
+    `## Kit and lessons`,
+    nonEmpty(answers.kit_layers, "Layering and kit were selected for variable UK hill conditions."),
+    "",
+    nonEmpty(answers.gear_lessons, "No major gear issues; small refinements noted for the next outing."),
+    "",
+    `## Ember on route`,
+    nonEmpty(answers.ember_experience, "Ember settled well and handled the route rhythm throughout."),
+    "",
+    `## Reflection`,
+    nonEmpty(answers.what_it_meant, answers.what_it_taught, "A strong day out with both practical and reflective value."),
+  ].join("\n");
+
+  const blogTitle = nonEmpty(
+    payload.blogTitle,
+    `Walk Notes: ${walkTitle}`,
+    titleCaseFromSlug(blogSlug)
+  );
+
+  const blogExcerpt = truncate(
+    nonEmpty(
+      answers.during_after_feeling,
+      answers.what_it_meant,
+      "A practical and personal trail note from a recent Peak District walk."
+    ),
+    250
+  );
+
+  const blogBody = [
+    `This post was generated from your walk inputs and GPX metrics, then saved as a draft for review.`,
+    "",
+    `## Route context`,
+    `- Distance: ${gpxSummary.distanceMiles} mi`,
+    `- Elevation gain: ${gpxSummary.elevationGainFeet} ft`,
+    ...(gpxSummary.elapsedHms ? [`- Elapsed time: ${gpxSummary.elapsedHms}`] : []),
+    ...(gpxSummary.avgPaceMinPerMile ? [`- Average pace: ${gpxSummary.avgPaceMinPerMile} min/mi`] : []),
+    "",
+    `## How the day felt`,
+    nonEmpty(answers.during_after_feeling, "Effort and pace were manageable for the route profile."),
+    "",
+    `## What stood out`,
+    nonEmpty(answers.standout_sections, "Terrain variation and views were key highlights."),
+    "",
+    `## Kit and trail learning`,
+    nonEmpty(answers.gear_lessons, "Gear choices were mostly sound with a few notes for improvement."),
+    "",
+    `## Ember update`,
+    nonEmpty(answers.ember_experience, "Ember was steady and engaged throughout the route."),
+    "",
+    `## Closing note`,
+    nonEmpty(answers.what_it_meant, answers.what_it_taught, "Another useful route day to build on."),
+  ].join("\n");
+
+  const blogTags = dedupeStrings([
+    "Peak District",
+    "Walk Journal",
+    answers.walk_purpose,
+    answers.weather_trail_conditions,
+    answers.kit_layers,
+  ]).slice(0, 8);
+
+  return {
+    ok: true,
+    data: {
+      walk: {
+        title: walkTitle,
+        summary,
+        location: walkLocation,
+        region: "Peak District",
+        difficulty,
+        parking: nonEmpty(answers.parking_toilets, "Parking available near route start; check facilities before travel."),
+        dogFriendly: true,
+        tags: walkTags,
+        routeNotesMarkdown,
       },
-      {
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: JSON.stringify(
-              {
-                postMode: payload.postMode,
-                publishDate,
-                walkSlug,
-                blogSlug,
-                gpxSummary,
-                answers: payload.answers,
-                stravaRecord: payload.stravaRecord,
-                stravaFlyby: payload.stravaFlyby,
-                imageSummaries,
-                extraNotes: payload.extraNotes || "",
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      },
-    ],
-    text: {
-      format: {
-        type: "json_schema",
-        name: "post_content",
-        schema: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            walk: {
-              type: "object",
-              additionalProperties: false,
-              properties: {
-                title: { type: "string" },
-                summary: { type: "string" },
-                location: { type: "string" },
-                region: { type: "string" },
-                difficulty: { type: "string", enum: ["Easy", "Moderate", "Hard"] },
-                parking: { type: "string" },
-                dogFriendly: { type: "boolean" },
-                tags: { type: "array", items: { type: "string" } },
-                routeNotesMarkdown: { type: "string" },
-              },
-              required: ["title", "summary", "location", "region", "difficulty", "parking", "dogFriendly", "tags", "routeNotesMarkdown"],
-            },
-            blog: {
-              type: "object",
-              additionalProperties: false,
-              properties: {
-                title: { type: "string" },
-                excerpt: { type: "string" },
-                bodyMarkdown: { type: "string" },
-                tags: { type: "array", items: { type: "string" } },
-              },
-              required: ["title", "excerpt", "bodyMarkdown", "tags"],
-            },
-          },
-          required: ["walk", "blog"],
-        },
+      blog: {
+        title: blogTitle,
+        excerpt: blogExcerpt,
+        bodyMarkdown: blogBody,
+        tags: blogTags,
       },
     },
-  });
-
-  if (!response.ok) return response;
-  try {
-    return { ok: true, data: JSON.parse(response.data.outputText) };
-  } catch {
-    return { ok: false, error: "Failed to parse generated content" };
-  }
+  };
 }
 
 async function callOpenAi(body) {
@@ -676,6 +721,24 @@ function sanitizeFilename(name) {
   );
 }
 
+function nonEmpty(...values) {
+  for (const value of values) {
+    const text = String(value || "").trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+function titleCaseFromSlug(value) {
+  return String(value || "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 function toReadableLabel(value) {
   return String(value || "")
     .replace(/[-_]+/g, " ")
@@ -721,6 +784,8 @@ function quoteYaml(value) {
 function escapeInline(value) {
   return String(value || "").replace(/[\[\]]/g, "");
 }
+
+
 
 
 
