@@ -389,67 +389,16 @@ async function buildImageArtifacts(images) {
     const path = `public/uploads/images/${filename}`;
     const publicPath = `/uploads/images/${filename}`;
 
-    const describe = await describeImageWithAi(image.contentBase64, image.mimeType);
-    if (!describe.ok) return describe;
-
+    const readableName = toReadableLabel(safeName.replace(/\.[^.]+$/, ""));
     out.push({
       path,
       publicPath,
       contentBase64: image.contentBase64,
-      caption: describe.data.caption,
-      alt: describe.data.alt,
+      alt: truncate(`Peak District trail photo: ${readableName}`, 140),
+      caption: truncate(`Peak District route image: ${readableName}.`, 180),
     });
   }
   return { ok: true, data: out };
-}
-
-async function describeImageWithAi(contentBase64, mimeType) {
-  const response = await callOpenAi({
-    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    input: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: [
-              "Describe this hiking photo for a website post.",
-              "Return strict JSON: {\"alt\":\"max 140 chars\",\"caption\":\"max 180 chars\"}",
-              "Use concise factual language.",
-            ].join("\n"),
-          },
-          { type: "input_image", image_url: `data:${mimeType};base64,${contentBase64}` },
-        ],
-      },
-    ],
-    text: {
-      format: {
-        type: "json_schema",
-        name: "image_meta",
-        schema: {
-          type: "object",
-          additionalProperties: false,
-          properties: { alt: { type: "string" }, caption: { type: "string" } },
-          required: ["alt", "caption"],
-        },
-      },
-    },
-  });
-
-  if (!response.ok) return response;
-
-  try {
-    const parsed = JSON.parse(response.data.outputText);
-    return {
-      ok: true,
-      data: {
-        alt: truncate(parsed.alt || "Trail photo", 140),
-        caption: truncate(parsed.caption || "Walk highlight.", 180),
-      },
-    };
-  } catch {
-    return { ok: false, error: "Failed to parse image metadata from AI" };
-  }
 }
 
 async function generateContent({ payload, gpxSummary, imageSummaries, walkSlug, blogSlug, publishDate }) {
@@ -727,6 +676,12 @@ function sanitizeFilename(name) {
   );
 }
 
+function toReadableLabel(value) {
+  return String(value || "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim() || "trail";
+}
 function getImageExtension(mimeType, fallbackName) {
   const byMime = {
     "image/jpeg": "jpg",
@@ -766,5 +721,7 @@ function quoteYaml(value) {
 function escapeInline(value) {
   return String(value || "").replace(/[\[\]]/g, "");
 }
+
+
 
 
