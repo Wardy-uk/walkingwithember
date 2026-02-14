@@ -10,175 +10,185 @@ const REQUIRED_ENV_GENERATE = ["GITHUB_TOKEN", "GITHUB_REPO"];
 
 export const handler = async (event) => {
   try {
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers: CORS_HEADERS, body: "" };
-  }
-
-  if (event.httpMethod !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
-  }
-
-  const authHeader = event.headers?.authorization || event.headers?.Authorization || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  if (!token) {
-    return json({ error: "Missing admin auth token" }, 401);
-  }
-
-  const user = await validateIdentityToken(token, event);
-  if (!user) {
-    return json({ error: "Unauthorized" }, 401);
-  }
-
-  let payload;
-  try {
-    const raw = event.isBase64Encoded ? Buffer.from(event.body || "", "base64").toString("utf8") : event.body || "{}";
-    payload = JSON.parse(raw);
-  } catch {
-    return json({ error: "Invalid JSON payload" }, 400);
-  }
-
-  const action = payload?.action || "generate_post";
-  if (action === "analyze_gpx") {
-    const gpxValidationError = validateGpxAnalyzePayload(payload);
-    if (gpxValidationError) {
-      return json({ error: gpxValidationError }, 400);
+    if (event.httpMethod === "OPTIONS") {
+      return { statusCode: 204, headers: CORS_HEADERS, body: "" };
     }
+
+    if (event.httpMethod !== "POST") {
+      return json({ error: "Method not allowed" }, 405);
+    }
+
+    const authHeader = event.headers?.authorization || event.headers?.Authorization || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    if (!token) {
+      return json({ error: "Missing admin auth token" }, 401);
+    }
+
+    const user = await validateIdentityToken(token, event);
+    if (!user) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+
+    let payload;
+    try {
+      const raw = event.isBase64Encoded ? Buffer.from(event.body || "", "base64").toString("utf8") : event.body || "{}";
+      payload = JSON.parse(raw);
+    } catch {
+      return json({ error: "Invalid JSON payload" }, 400);
+    }
+
+    const action = payload?.action || "generate_post";
+    if (action === "analyze_gpx") {
+      const gpxValidationError = validateGpxAnalyzePayload(payload);
+      if (gpxValidationError) return json({ error: gpxValidationError }, 400);
+
+      const gpxSummary = parseGpx(payload.gpxFile.contentBase64, payload.gpxFile.name);
+      if (!gpxSummary.ok) return json({ error: gpxSummary.error }, 400);
+
+      return json({ ok: true, gpxSummary: gpxSummary.data }, 200);
+    }
+
+    if (action !== "generate_post") {
+      return json({ error: "Invalid action" }, 400);
+    }
+
+    for (const key of REQUIRED_ENV_GENERATE) {
+      if (!process.env[key]) {
+        return json({ error: `Missing required environment variable: ${key}` }, 500);
+      }
+    }
+
+    const validationError = validateGeneratePayload(payload);
+    if (validationError) {
+      return json({ error: validationError }, 400);
+    }
+
+    const now = new Date();
+    const branch = process.env.GITHUB_BRANCH || "main";
+    const siteBaseUrl = sanitizeBaseUrl(process.env.SITE_BASE_URL || process.env.URL || deriveBaseUrl(event) || "https://example.com");
+
     const gpxSummary = parseGpx(payload.gpxFile.contentBase64, payload.gpxFile.name);
     if (!gpxSummary.ok) {
       return json({ error: gpxSummary.error }, 400);
     }
-    return json({ ok: true, gpxSummary: gpxSummary.data }, 200);
-  }
 
-  if (action !== "generate_post") {
-    return json({ error: "Invalid action" }, 400);
-  }
+    const walkSlugBase = slugify(payload.walkTitle || payload.answers?.where_walked || `walk-${now.toISOString().slice(0, 10)}`);
+    const walkSlug = `${walkSlugBase}-${now.toISOString().slice(0, 10)}`;
+    const blogSlugBase = slugify(payload.blogTitle || `${walkSlugBase}-journal`);
+    const blogSlug = `${blogSlugBase}-${now.toISOString().slice(0, 10)}`;
 
-  for (const key of REQUIRED_ENV_GENERATE) {
-    if (!process.env[key]) {
-      return json({ error: `Missing required environment variable: ${key}` }, 500);
+    const imageArtifacts = await buildImageArtifacts(payload.images);
+    if (!imageArtifacts.ok) {
+      return json({ error: imageArtifacts.error }, 400);
     }
-  }
 
-  const validationError = validateGeneratePayload(payload);
-  if (validationError) {
-    return json({ error: validationError }, 400);
-  }
-
-  const now = new Date();
-  const branch = process.env.GITHUB_BRANCH || "main";
-  const siteBaseUrl = sanitizeBaseUrl(process.env.SITE_BASE_URL || process.env.URL || deriveBaseUrl(event) || "https://example.com");
-
-  const gpxSummary = parseGpx(payload.gpxFile.contentBase64, payload.gpxFile.name);
-  if (!gpxSummary.ok) {
-    return json({ error: gpxSummary.error }, 400);
-  }
-
-  const walkSlugBase = slugify(payload.walkTitle || payload.answers?.where_walked || `walk-${now.toISOString().slice(0, 10)}`);
-  const walkSlug = `${walkSlugBase}-${now.toISOString().slice(0, 10)}`;
-  const blogSlugBase = slugify(payload.blogTitle || `${walkSlugBase}-journal`);
-  const blogSlug = `${blogSlugBase}-${now.toISOString().slice(0, 10)}`;
-
-  const imageArtifacts = await buildImageArtifacts(payload.images);
-  if (!imageArtifacts.ok) {
-    return json({ error: imageArtifacts.error }, 400);
-  }
-
-  const content = await generateContent({
-    payload,
-    gpxSummary: gpxSummary.data,
-    imageSummaries: imageArtifacts.data.map((img) => ({ path: img.path, caption: img.caption, alt: img.alt })),
-    walkSlug,
-    blogSlug,
-    publishDate: now.toISOString().slice(0, 10),
-  });
-
-  if (!content.ok) {
-    return json({ error: content.error }, 502);
-  }
-
-  const commitResults = [];
-  for (const img of imageArtifacts.data) {
-    const result = await upsertRepoFile({
-      path: img.path,
-      contentBase64: img.contentBase64,
-      message: `chore(ai): add image asset ${img.path}`,
-      branch,
-    });
-    if (!result.ok) return json({ error: result.error }, 502);
-    commitResults.push(result.data);
-  }
-
-  const gpxPath = `public/uploads/gpx/${walkSlug}.gpx`;
-  const gpxResult = await upsertRepoFile({
-    path: gpxPath,
-    contentBase64: payload.gpxFile.contentBase64,
-    message: `chore(ai): add gpx file ${gpxPath}`,
-    branch,
-  });
-  if (!gpxResult.ok) return json({ error: gpxResult.error }, 502);
-  commitResults.push(gpxResult.data);
-
-  let walkPath = null;
-  let blogPath = null;
-
-  if (payload.postMode === "walk" || payload.postMode === "both") {
-    walkPath = `src/content/walks/${walkSlug}.md`;
-    const walkMarkdown = createWalkMarkdown({
-      content: content.data,
+    const content = await generateContent({
       payload,
       gpxSummary: gpxSummary.data,
-      publishDate: now.toISOString().slice(0, 10),
-      gpxPublicUrl: `${siteBaseUrl}/uploads/gpx/${walkSlug}.gpx`,
-      heroImage: imageArtifacts.data[0]?.publicPath || "/images/uploads/ember-walking.jpg",
-      imageSummaries: imageArtifacts.data,
-    });
-    const walkResult = await upsertRepoFile({
-      path: walkPath,
-      contentBase64: toBase64Utf8(walkMarkdown),
-      message: `feat(ai): create walk post ${walkSlug}`,
-      branch,
-    });
-    if (!walkResult.ok) return json({ error: walkResult.error }, 502);
-    commitResults.push(walkResult.data);
-  }
-
-  if (payload.postMode === "blog" || payload.postMode === "both") {
-    blogPath = `src/content/blog/${blogSlug}.md`;
-    const blogMarkdown = createBlogMarkdown({
-      content: content.data,
-      payload,
-      publishDate: now.toISOString().slice(0, 10),
-      coverImage: imageArtifacts.data[0]?.publicPath || "/images/uploads/ember-walking.jpg",
-      includeWalkRelation: payload.postMode === "both",
+      imageSummaries: imageArtifacts.data.map((img) => ({ path: img.path, caption: img.caption, alt: img.alt })),
       walkSlug,
-      imageSummaries: imageArtifacts.data,
+      blogSlug,
+      publishDate: now.toISOString().slice(0, 10),
     });
-    const blogResult = await upsertRepoFile({
-      path: blogPath,
-      contentBase64: toBase64Utf8(blogMarkdown),
-      message: `feat(ai): create blog post ${blogSlug}`,
-      branch,
-    });
-    if (!blogResult.ok) return json({ error: blogResult.error }, 502);
-    commitResults.push(blogResult.data);
-  }
 
-  return json(
-    {
-      ok: true,
-      createdBy: user.email || user.id || "admin",
-      branch,
-      created: {
-        walkPath,
-        blogPath,
-        gpxPath,
-        imagePaths: imageArtifacts.data.map((x) => x.path),
+    if (!content.ok) {
+      return json({ error: content.error }, 502);
+    }
+
+    const commitResults = [];
+    const gpxPath = `public/uploads/gpx/${walkSlug}.gpx`;
+
+    const assetWrites = [
+      ...imageArtifacts.data.map((img) =>
+        upsertRepoFile({
+          path: img.path,
+          contentBase64: img.contentBase64,
+          message: `chore(ai): add image asset ${img.path}`,
+          branch,
+        })
+      ),
+      upsertRepoFile({
+        path: gpxPath,
+        contentBase64: payload.gpxFile.contentBase64,
+        message: `chore(ai): add gpx file ${gpxPath}`,
+        branch,
+      }),
+    ];
+
+    const assetResults = await Promise.all(assetWrites);
+    for (const result of assetResults) {
+      if (!result.ok) return json({ error: result.error }, 502);
+      commitResults.push(result.data);
+    }
+
+    let walkPath = null;
+    let blogPath = null;
+
+    const postWrites = [];
+
+    if (payload.postMode === "walk" || payload.postMode === "both") {
+      walkPath = `src/content/walks/${walkSlug}.md`;
+      const walkMarkdown = createWalkMarkdown({
+        content: content.data,
+        payload,
+        gpxSummary: gpxSummary.data,
+        publishDate: now.toISOString().slice(0, 10),
+        gpxPublicUrl: `${siteBaseUrl}/uploads/gpx/${walkSlug}.gpx`,
+        heroImage: imageArtifacts.data[0]?.publicPath || "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG",
+        imageSummaries: imageArtifacts.data,
+      });
+      postWrites.push(
+        upsertRepoFile({
+          path: walkPath,
+          contentBase64: toBase64Utf8(walkMarkdown),
+          message: `feat(ai): create walk post ${walkSlug}`,
+          branch,
+        })
+      );
+    }
+
+    if (payload.postMode === "blog" || payload.postMode === "both") {
+      blogPath = `src/content/blog/${blogSlug}.md`;
+      const blogMarkdown = createBlogMarkdown({
+        content: content.data,
+        payload,
+        publishDate: now.toISOString().slice(0, 10),
+        coverImage: imageArtifacts.data[0]?.publicPath || "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG",
+        includeWalkRelation: payload.postMode === "both",
+        walkSlug,
+        imageSummaries: imageArtifacts.data,
+      });
+      postWrites.push(
+        upsertRepoFile({
+          path: blogPath,
+          contentBase64: toBase64Utf8(blogMarkdown),
+          message: `feat(ai): create blog post ${blogSlug}`,
+          branch,
+        })
+      );
+    }
+
+    const postResults = await Promise.all(postWrites);
+    for (const result of postResults) {
+      if (!result.ok) return json({ error: result.error }, 502);
+      commitResults.push(result.data);
+    }
+
+    return json(
+      {
+        ok: true,
+        createdBy: user.email || user.id || "admin",
+        branch,
+        created: {
+          walkPath,
+          blogPath,
+          gpxPath,
+          imagePaths: imageArtifacts.data.map((x) => x.path),
+        },
+        commits: commitResults.map((r) => r.commitUrl).filter(Boolean),
       },
-      commits: commitResults.map((r) => r.commitUrl).filter(Boolean),
-    },
-    200
-  );
+      200
+    );
   } catch (error) {
     return json({ error: `Unexpected server error: ${String(error?.message || error)}` }, 500);
   }
@@ -250,11 +260,7 @@ function parseGpx(contentBase64, name) {
     return { ok: false, error: "Unable to decode GPX file" };
   }
 
-  const points = [
-    ...extractPoints(xml, "trkpt"),
-    ...extractPoints(xml, "rtept"),
-  ];
-
+  const points = [...extractPoints(xml, "trkpt"), ...extractPoints(xml, "rtept")];
   if (points.length < 2) return { ok: false, error: "GPX did not contain enough track points" };
 
   let meters = 0;
@@ -267,10 +273,9 @@ function parseGpx(contentBase64, name) {
   }
 
   const elevations = points.map((p) => p.ele).filter((v) => Number.isFinite(v));
-  const hasElevation = elevations.length > 1;
-    const minMaxElevation = getMinMax(elevations);
-  const minElevationMeters = hasElevation ? Math.round(minMaxElevation.min) : null;
-  const maxElevationMeters = hasElevation ? Math.round(minMaxElevation.max) : null;
+  const minMaxElevation = getMinMax(elevations);
+  const hasElevation = Number.isFinite(minMaxElevation.min) && Number.isFinite(minMaxElevation.max);
+
   const timeValues = points.map((p) => p.timeMs).filter((v) => Number.isFinite(v));
   const hasTime = timeValues.length > 1;
   const elapsedSeconds = hasTime ? Math.max(0, Math.round((timeValues[timeValues.length - 1] - timeValues[0]) / 1000)) : null;
@@ -279,7 +284,6 @@ function parseGpx(contentBase64, name) {
   const durationHours = elapsedSeconds && elapsedSeconds > 0 ? elapsedSeconds / 3600 : null;
   const avgMph = durationHours && distanceMiles > 0 ? Number((distanceMiles / durationHours).toFixed(2)) : null;
   const avgPaceMinPerMile = durationHours && distanceMiles > 0 ? Number(((durationHours * 60) / distanceMiles).toFixed(2)) : null;
-  const elapsedHms = elapsedSeconds ? formatDuration(elapsedSeconds) : null;
 
   return {
     ok: true,
@@ -291,10 +295,10 @@ function parseGpx(contentBase64, name) {
       centerLng: Number(average(points.map((p) => p.lon)).toFixed(6)),
       distanceMiles,
       elevationGainFeet: Math.round(ascentMeters * 3.28084),
-      minElevationMeters,
-      maxElevationMeters,
+      minElevationMeters: hasElevation ? Math.round(minMaxElevation.min) : null,
+      maxElevationMeters: hasElevation ? Math.round(minMaxElevation.max) : null,
       elapsedSeconds,
-      elapsedHms,
+      elapsedHms: elapsedSeconds ? formatDuration(elapsedSeconds) : null,
       avgMph,
       avgPaceMinPerMile,
     },
@@ -314,16 +318,11 @@ function extractPoints(xml, tagName) {
     const ele = eleMatch ? Number(eleMatch[1]) : null;
     const ts = timeMatch ? Date.parse(timeMatch[1]) : null;
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      points.push({
-        lat,
-        lon,
-        ele: Number.isFinite(ele) ? ele : null,
-        timeMs: Number.isFinite(ts) ? ts : null,
-      });
+      points.push({ lat, lon, ele: Number.isFinite(ele) ? ele : null, timeMs: Number.isFinite(ts) ? ts : null });
     }
   }
 
-  const selfClosingRegex = new RegExp(`<${tagName}[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*\/>`, "g");
+  const selfClosingRegex = new RegExp(`<${tagName}[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*/>`, "g");
   while ((match = selfClosingRegex.exec(xml)) !== null) {
     const lat = Number(match[1]);
     const lon = Number(match[2]);
@@ -334,6 +333,7 @@ function extractPoints(xml, tagName) {
 
   return points;
 }
+
 function getMinMax(values) {
   let min = Infinity;
   let max = -Infinity;
@@ -342,11 +342,10 @@ function getMinMax(values) {
     if (value < min) min = value;
     if (value > max) max = value;
   }
-  if (!Number.isFinite(min) || !Number.isFinite(max)) {
-    return { min: null, max: null };
-  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return { min: null, max: null };
   return { min, max };
 }
+
 function formatDuration(totalSeconds) {
   const seconds = Number(totalSeconds || 0);
   if (!Number.isFinite(seconds) || seconds <= 0) return null;
@@ -404,116 +403,73 @@ async function buildImageArtifacts(images) {
 async function generateContent({ payload, gpxSummary, imageSummaries, walkSlug, blogSlug, publishDate }) {
   const answers = payload.answers || {};
 
-  const walkLocation = nonEmpty(
-    payload.walkTitle,
-    answers.where_walked,
-    answers.familiar_or_new,
-    "Peak District"
-  );
-
-  const walkTitle = nonEmpty(
-    payload.walkTitle,
-    titleCaseFromSlug(walkSlug),
-    `Walk ${publishDate}`
-  );
+  const walkLocation = nonEmpty(payload.walkTitle, answers.where_walked, answers.familiar_or_new, "Peak District");
+  const walkTitle = nonEmpty(payload.walkTitle, titleCaseFromSlug(walkSlug), `Walk ${publishDate}`);
 
   const distance = Number(gpxSummary.distanceMiles || 0);
   const ascentFt = Number(gpxSummary.elevationGainFeet || 0);
-  const difficulty = distance >= 10 || ascentFt >= 2200
-    ? "Hard"
-    : distance >= 6 || ascentFt >= 1200
-      ? "Moderate"
-      : "Easy";
+  const difficulty = distance >= 10 || ascentFt >= 2200 ? "Hard" : distance >= 6 || ascentFt >= 1200 ? "Moderate" : "Easy";
 
   const summary = truncate(
-    nonEmpty(
-      answers.why_route_today,
-      answers.conditions_impact,
-      "A reflective route day with practical trail notes and conditions captured from the walk."
-    ),
+    nonEmpty(answers.why_route_today, answers.conditions_impact, "A reflective route day with practical trail notes and conditions captured from the walk."),
     230
   );
 
-  const walkTags = dedupeStrings([
-    "Peak District",
-    difficulty,
-    answers.walk_purpose,
-    answers.weather_trail_conditions,
-    answers.standout_sections,
-    answers.kit_layers,
-  ]).slice(0, 8);
+  const walkTags = dedupeStrings(["Peak District", difficulty, answers.walk_purpose, answers.weather_trail_conditions, answers.standout_sections, answers.kit_layers]).slice(0, 8);
 
   const routeNotesMarkdown = [
-    `## Why this route`,
+    "## Why this route",
     nonEmpty(answers.why_route_today, "Chosen for a steady route with varied terrain and good access."),
     "",
-    `## Conditions and pacing`,
+    "## Conditions and pacing",
     nonEmpty(answers.weather_trail_conditions, "Conditions were mixed with typical hill exposure."),
     "",
     nonEmpty(answers.pace_comfort, "Pacing felt controlled for the day."),
     "",
-    `## Standout sections`,
+    "## Standout sections",
     nonEmpty(answers.standout_sections, "Several sections offered strong views and useful route markers."),
     "",
-    `## Kit and lessons`,
+    "## Kit and lessons",
     nonEmpty(answers.kit_layers, "Layering and kit were selected for variable UK hill conditions."),
     "",
     nonEmpty(answers.gear_lessons, "No major gear issues; small refinements noted for the next outing."),
     "",
-    `## Ember on route`,
+    "## Ember on route",
     nonEmpty(answers.ember_experience, "Ember settled well and handled the route rhythm throughout."),
     "",
-    `## Reflection`,
+    "## Reflection",
     nonEmpty(answers.what_it_meant, answers.what_it_taught, "A strong day out with both practical and reflective value."),
   ].join("\n");
 
-  const blogTitle = nonEmpty(
-    payload.blogTitle,
-    `Walk Notes: ${walkTitle}`,
-    titleCaseFromSlug(blogSlug)
-  );
-
-  const blogExcerpt = truncate(
-    nonEmpty(
-      answers.during_after_feeling,
-      answers.what_it_meant,
-      "A practical and personal trail note from a recent Peak District walk."
-    ),
-    250
-  );
+  const finalBlogTitle = nonEmpty(payload.blogTitle, `Walk Notes: ${walkTitle}`, titleCaseFromSlug(blogSlug));
+  const blogExcerpt = truncate(nonEmpty(answers.during_after_feeling, answers.what_it_meant, "A practical and personal trail note from a recent Peak District walk."), 250);
 
   const blogBody = [
-    `This post was generated from your walk inputs and GPX metrics, then saved as a draft for review.`,
+    "This post was generated from your walk inputs and GPX metrics, then saved as a draft for review.",
     "",
-    `## Route context`,
+    "## Route context",
     `- Distance: ${gpxSummary.distanceMiles} mi`,
     `- Elevation gain: ${gpxSummary.elevationGainFeet} ft`,
     ...(gpxSummary.elapsedHms ? [`- Elapsed time: ${gpxSummary.elapsedHms}`] : []),
     ...(gpxSummary.avgPaceMinPerMile ? [`- Average pace: ${gpxSummary.avgPaceMinPerMile} min/mi`] : []),
     "",
-    `## How the day felt`,
+    "## How the day felt",
     nonEmpty(answers.during_after_feeling, "Effort and pace were manageable for the route profile."),
     "",
-    `## What stood out`,
+    "## What stood out",
     nonEmpty(answers.standout_sections, "Terrain variation and views were key highlights."),
     "",
-    `## Kit and trail learning`,
+    "## Kit and trail learning",
     nonEmpty(answers.gear_lessons, "Gear choices were mostly sound with a few notes for improvement."),
     "",
-    `## Ember update`,
+    "## Ember update",
     nonEmpty(answers.ember_experience, "Ember was steady and engaged throughout the route."),
     "",
-    `## Closing note`,
+    "## Closing note",
     nonEmpty(answers.what_it_meant, answers.what_it_taught, "Another useful route day to build on."),
   ].join("\n");
 
-  const blogTags = dedupeStrings([
-    "Peak District",
-    "Walk Journal",
-    answers.walk_purpose,
-    answers.weather_trail_conditions,
-    answers.kit_layers,
-  ]).slice(0, 8);
+  const blogTags = dedupeStrings(["Peak District", "Walk Journal", answers.walk_purpose, answers.weather_trail_conditions, answers.kit_layers]).slice(0, 8);
 
   return {
     ok: true,
@@ -530,49 +486,13 @@ async function generateContent({ payload, gpxSummary, imageSummaries, walkSlug, 
         routeNotesMarkdown,
       },
       blog: {
-        title: blogTitle,
+        title: finalBlogTitle,
         excerpt: blogExcerpt,
         bodyMarkdown: blogBody,
         tags: blogTags,
       },
     },
   };
-}
-
-async function callOpenAi(body) {
-  try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      return { ok: false, error: `OpenAI request failed (${response.status}): ${text}` };
-    }
-
-    const data = await response.json();
-    const outputText = extractOutputText(data);
-    if (!outputText) return { ok: false, error: "OpenAI response missing output text" };
-    return { ok: true, data: { outputText } };
-  } catch (error) {
-    return { ok: false, error: `OpenAI call failed: ${String(error?.message || error)}` };
-  }
-}
-
-function extractOutputText(data) {
-  if (typeof data?.output_text === "string" && data.output_text.trim()) return data.output_text;
-  const parts = [];
-  for (const item of data?.output || []) {
-    for (const content of item?.content || []) {
-      if (content?.type === "output_text" && typeof content.text === "string") parts.push(content.text);
-    }
-  }
-  return parts.join("\n").trim();
 }
 
 function createWalkMarkdown({ content, payload, gpxSummary, publishDate, gpxPublicUrl, heroImage, imageSummaries }) {
@@ -611,9 +531,7 @@ function createWalkMarkdown({ content, payload, gpxSummary, publishDate, gpxPubl
     ...(gpxSummary.avgPaceMinPerMile ? [`- Average pace (from GPX time): ${gpxSummary.avgPaceMinPerMile} min/mi`] : []),
     "",
     "## Photo highlights",
-    ...(imageSummaries.length
-      ? imageSummaries.map((img) => `- ![${escapeInline(img.alt)}](${img.publicPath}) ${img.caption}`)
-      : ["- Photos uploaded with this walk."]),
+    ...(imageSummaries.length ? imageSummaries.map((img) => `- ![${escapeInline(img.alt)}](${img.publicPath}) ${img.caption}`) : ["- Photos uploaded with this walk."]),
     "",
   ].join("\n");
 }
@@ -636,13 +554,8 @@ function createBlogMarkdown({ content, payload, publishDate, coverImage, include
 
   if (includeWalkRelation) lines.push(`  - ${quoteYaml(walkSlug)}`);
   lines.push("draft: true", "---", blog.bodyMarkdown.trim(), "", "## Photo captions");
-
-  if (imageSummaries.length) {
-    lines.push(...imageSummaries.map((img) => `- ${img.caption}`));
-  } else {
-    lines.push("- Captions generated from uploaded photos.");
-  }
-
+  if (imageSummaries.length) lines.push(...imageSummaries.map((img) => `- ${img.caption}`));
+  else lines.push("- Captions generated from uploaded photos.");
   lines.push("");
   return lines.join("\n");
 }
@@ -651,20 +564,11 @@ async function upsertRepoFile({ path, contentBase64, message, branch }) {
   const repo = process.env.GITHUB_REPO;
   const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}`;
 
-  let sha;
-  try {
-    const existing = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers: githubHeaders() });
-    if (existing.ok) {
-      const data = await existing.json();
-      sha = data.sha;
-    }
-  } catch {}
-
   try {
     const response = await fetch(url, {
       method: "PUT",
       headers: githubHeaders(),
-      body: JSON.stringify({ message, content: contentBase64, branch, sha }),
+      body: JSON.stringify({ message, content: contentBase64, branch }),
     });
 
     if (!response.ok) {
@@ -700,25 +604,28 @@ function toBase64Utf8(value) {
 }
 
 function slugify(value) {
-  return (
-    String(value || "post")
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .slice(0, 72) || "post"
-  );
+  return String(value || "post")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 72) || "post";
 }
 
 function sanitizeFilename(name) {
-  return (
-    String(name || "upload")
-      .replace(/[^a-zA-Z0-9._-]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 80) || "upload"
-  );
+  return String(name || "upload")
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "upload";
+}
+
+function toReadableLabel(value) {
+  return String(value || "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim() || "trail";
 }
 
 function nonEmpty(...values) {
@@ -739,12 +646,7 @@ function titleCaseFromSlug(value) {
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
-function toReadableLabel(value) {
-  return String(value || "")
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim() || "trail";
-}
+
 function getImageExtension(mimeType, fallbackName) {
   const byMime = {
     "image/jpeg": "jpg",
@@ -784,9 +686,3 @@ function quoteYaml(value) {
 function escapeInline(value) {
   return String(value || "").replace(/[\[\]]/g, "");
 }
-
-
-
-
-
-
