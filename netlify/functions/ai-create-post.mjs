@@ -6,7 +6,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const REQUIRED_ENV = ["OPENAI_API_KEY", "GITHUB_TOKEN", "GITHUB_REPO"];
+const REQUIRED_ENV_GENERATE = ["OPENAI_API_KEY", "GITHUB_TOKEN", "GITHUB_REPO"];
 
 export const handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
@@ -15,12 +15,6 @@ export const handler = async (event) => {
 
   if (event.httpMethod !== "POST") {
     return json({ error: "Method not allowed" }, 405);
-  }
-
-  for (const key of REQUIRED_ENV) {
-    if (!process.env[key]) {
-      return json({ error: `Missing required environment variable: ${key}` }, 500);
-    }
   }
 
   const authHeader = event.headers?.authorization || event.headers?.Authorization || "";
@@ -42,7 +36,30 @@ export const handler = async (event) => {
     return json({ error: "Invalid JSON payload" }, 400);
   }
 
-  const validationError = validatePayload(payload);
+  const action = payload?.action || "generate_post";
+  if (action === "analyze_gpx") {
+    const gpxValidationError = validateGpxAnalyzePayload(payload);
+    if (gpxValidationError) {
+      return json({ error: gpxValidationError }, 400);
+    }
+    const gpxSummary = parseGpx(payload.gpxFile.contentBase64, payload.gpxFile.name);
+    if (!gpxSummary.ok) {
+      return json({ error: gpxSummary.error }, 400);
+    }
+    return json({ ok: true, gpxSummary: gpxSummary.data }, 200);
+  }
+
+  if (action !== "generate_post") {
+    return json({ error: "Invalid action" }, 400);
+  }
+
+  for (const key of REQUIRED_ENV_GENERATE) {
+    if (!process.env[key]) {
+      return json({ error: `Missing required environment variable: ${key}` }, 500);
+    }
+  }
+
+  const validationError = validateGeneratePayload(payload);
   if (validationError) {
     return json({ error: validationError }, 400);
   }
@@ -196,13 +213,19 @@ async function validateIdentityToken(token, event) {
   }
 }
 
-function validatePayload(payload) {
+function validateGeneratePayload(payload) {
   if (!payload || typeof payload !== "object") return "Payload missing";
   if (!["walk", "blog", "both"].includes(payload.postMode)) return "Invalid postMode";
   if (!payload.answers || typeof payload.answers !== "object") return "answers are required";
   if (!payload.gpxFile || !payload.gpxFile.contentBase64 || !payload.gpxFile.name) return "GPX file is required";
   if (!payload.stravaRecord || !payload.stravaFlyby) return "Strava URLs are required";
   if (!Array.isArray(payload.images) || payload.images.length === 0) return "At least one image is required";
+  return null;
+}
+
+function validateGpxAnalyzePayload(payload) {
+  if (!payload || typeof payload !== "object") return "Payload missing";
+  if (!payload.gpxFile || !payload.gpxFile.contentBase64 || !payload.gpxFile.name) return "GPX file is required";
   return null;
 }
 
@@ -230,8 +253,12 @@ function parseGpx(contentBase64, name) {
     const lat = Number(match[1]);
     const lon = Number(match[2]);
     const eleMatch = (match[3] || "").match(/<ele>([^<]+)<\/ele>/);
+    const timeMatch = (match[3] || "").match(/<time>([^<]+)<\/time>/);
     const ele = eleMatch ? Number(eleMatch[1]) : null;
-    if (Number.isFinite(lat) && Number.isFinite(lon)) points.push({ lat, lon, ele: Number.isFinite(ele) ? ele : null });
+    const ts = timeMatch ? Date.parse(timeMatch[1]) : null;
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      points.push({ lat, lon, ele: Number.isFinite(ele) ? ele : null, timeMs: Number.isFinite(ts) ? ts : null });
+    }
   }
 
   if (points.length < 2) return { ok: false, error: "GPX did not contain enough track points" };
@@ -245,6 +272,20 @@ function parseGpx(contentBase64, name) {
     }
   }
 
+  const elevations = points.map((p) => p.ele).filter((v) => Number.isFinite(v));
+  const hasElevation = elevations.length > 1;
+  const minElevationMeters = hasElevation ? Math.round(Math.min(...elevations)) : null;
+  const maxElevationMeters = hasElevation ? Math.round(Math.max(...elevations)) : null;
+  const timeValues = points.map((p) => p.timeMs).filter((v) => Number.isFinite(v));
+  const hasTime = timeValues.length > 1;
+  const elapsedSeconds = hasTime ? Math.max(0, Math.round((timeValues[timeValues.length - 1] - timeValues[0]) / 1000)) : null;
+
+  const distanceMiles = Number((meters / 1609.344).toFixed(2));
+  const durationHours = elapsedSeconds && elapsedSeconds > 0 ? elapsedSeconds / 3600 : null;
+  const avgMph = durationHours && distanceMiles > 0 ? Number((distanceMiles / durationHours).toFixed(2)) : null;
+  const avgPaceMinPerMile = durationHours && distanceMiles > 0 ? Number(((durationHours * 60) / distanceMiles).toFixed(2)) : null;
+  const elapsedHms = elapsedSeconds ? formatDuration(elapsedSeconds) : null;
+
   return {
     ok: true,
     data: {
@@ -253,10 +294,25 @@ function parseGpx(contentBase64, name) {
       startLng: Number(points[0].lon.toFixed(6)),
       centerLat: Number(average(points.map((p) => p.lat)).toFixed(6)),
       centerLng: Number(average(points.map((p) => p.lon)).toFixed(6)),
-      distanceMiles: Number((meters / 1609.344).toFixed(2)),
+      distanceMiles,
       elevationGainFeet: Math.round(ascentMeters * 3.28084),
+      minElevationMeters,
+      maxElevationMeters,
+      elapsedSeconds,
+      elapsedHms,
+      avgMph,
+      avgPaceMinPerMile,
     },
   };
+}
+
+function formatDuration(totalSeconds) {
+  const seconds = Number(totalSeconds || 0);
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return `${hours}h ${minutes}m ${secs}s`;
 }
 
 function haversineMeters(a, b) {
@@ -515,6 +571,9 @@ function createWalkMarkdown({ content, payload, gpxSummary, publishDate, gpxPubl
     "## Route data",
     `- Distance from GPX: ${gpxSummary.distanceMiles} mi`,
     `- Elevation gain from GPX: ${gpxSummary.elevationGainFeet} ft`,
+    ...(gpxSummary.elapsedHms ? [`- GPX elapsed time: ${gpxSummary.elapsedHms}`] : []),
+    ...(gpxSummary.avgMph ? [`- Average speed (from GPX time): ${gpxSummary.avgMph} mph`] : []),
+    ...(gpxSummary.avgPaceMinPerMile ? [`- Average pace (from GPX time): ${gpxSummary.avgPaceMinPerMile} min/mi`] : []),
     "",
     "## Photo highlights",
     ...(imageSummaries.length

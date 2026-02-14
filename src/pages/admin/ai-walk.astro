@@ -65,7 +65,7 @@ export const prerender = true;
         padding: 16px;
         margin-bottom: 14px;
       }
-      h1, h2 { margin: 0 0 10px; }
+      h1, h2, h3 { margin: 0 0 10px; }
       p { margin: 0 0 10px; color: var(--muted); }
       .grid {
         display: grid;
@@ -106,8 +106,41 @@ export const prerender = true;
         gap: 10px;
         flex-wrap: wrap;
       }
+      .step-badge {
+        display: inline-block;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: #e8f2e8;
+        color: #1f4a30;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .hidden { display: none; }
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px;
+        background: #fafdf9;
+      }
+      .metric .label {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+      .metric .value {
+        font-weight: 700;
+        color: #1f3b29;
+      }
       @media (max-width: 840px) {
         .grid { grid-template-columns: 1fr; }
+        .metrics-grid { grid-template-columns: 1fr 1fr; }
       }
     </style>
   </head>
@@ -119,67 +152,86 @@ export const prerender = true;
       </div>
 
       <section class="card">
-        <h1>AI Walk and Blog Creator</h1>
-        <p>Uploads GPX and photos, asks route questions, generates draft content, and commits files to GitHub.</p>
+        <span class="step-badge">Step 1</span>
+        <h1>Upload GPX And Analyze Route</h1>
+        <p>Start by uploading your GPX. We will calculate route metrics before asking for post details.</p>
         <div class="grid">
-          <div class="field">
-            <label for="postMode">What to create</label>
-            <select id="postMode">
-              <option value="both">Walk page + Blog post</option>
-              <option value="walk">Walk page only</option>
-              <option value="blog">Blog post only</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="author">Blog author</label>
-            <input id="author" type="text" value="Nick" />
-          </div>
-          <div class="field">
-            <label for="walkTitle">Optional walk title override</label>
-            <input id="walkTitle" type="text" placeholder="Leave blank to let AI decide" />
-          </div>
-          <div class="field">
-            <label for="blogTitle">Optional blog title override</label>
-            <input id="blogTitle" type="text" placeholder="Leave blank to let AI decide" />
-          </div>
-          <div class="field">
-            <label for="stravaRecord">Strava record URL</label>
-            <input id="stravaRecord" type="url" required />
-          </div>
-          <div class="field">
-            <label for="stravaFlyby">Strava flyby URL</label>
-            <input id="stravaFlyby" type="url" required />
-          </div>
           <div class="field">
             <label for="gpxFile">GPX file</label>
             <input id="gpxFile" type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" required />
           </div>
-          <div class="field">
-            <label for="images">Photos (1-6)</label>
-            <input id="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required />
+        </div>
+        <div class="actions" style="margin-top:10px;">
+          <button id="analyzeBtn" class="primary" type="button">Analyze GPX</button>
+        </div>
+      </section>
+
+      <section id="metricsSection" class="card hidden">
+        <h2>Analyzed Route Data</h2>
+        <div id="metricsGrid" class="metrics-grid"></div>
+      </section>
+
+      <section id="stepTwoSection" class="hidden">
+        <section class="card">
+          <span class="step-badge">Step 2</span>
+          <h2>Add Post Inputs</h2>
+          <p>Now add photos, links, and route reflections to generate drafts.</p>
+          <div class="grid">
+            <div class="field">
+              <label for="postMode">What to create</label>
+              <select id="postMode">
+                <option value="both">Walk page + Blog post</option>
+                <option value="walk">Walk page only</option>
+                <option value="blog">Blog post only</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="author">Blog author</label>
+              <input id="author" type="text" value="Nick" />
+            </div>
+            <div class="field">
+              <label for="walkTitle">Optional walk title override</label>
+              <input id="walkTitle" type="text" placeholder="Leave blank to let AI decide" />
+            </div>
+            <div class="field">
+              <label for="blogTitle">Optional blog title override</label>
+              <input id="blogTitle" type="text" placeholder="Leave blank to let AI decide" />
+            </div>
+            <div class="field">
+              <label for="stravaRecord">Strava record URL</label>
+              <input id="stravaRecord" type="url" required />
+            </div>
+            <div class="field">
+              <label for="stravaFlyby">Strava flyby URL</label>
+              <input id="stravaFlyby" type="url" required />
+            </div>
+            <div class="field">
+              <label for="images">Photos (1-6)</label>
+              <input id="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required />
+            </div>
           </div>
-        </div>
+        </section>
+
+        <section class="card">
+          <h2>Walk Reflection Questions</h2>
+          <p>Answer as much as you can. AI uses this as source material for the draft.</p>
+          <div id="questions" class="q-list"></div>
+        </section>
+
+        <section class="card">
+          <div class="field">
+            <label for="extraNotes">Extra notes for AI (optional)</label>
+            <textarea id="extraNotes" placeholder="Anything else you want reflected in the post"></textarea>
+          </div>
+          <div class="actions">
+            <button id="generateBtn" class="primary" type="button">Generate Draft Post(s)</button>
+            <button id="clearBtn" type="button">Clear Answers</button>
+          </div>
+        </section>
       </section>
 
       <section class="card">
-        <h2>Walk Reflection Questions</h2>
-        <p>Answer as much as you can. AI uses this as source material for the draft.</p>
-        <div id="questions" class="q-list"></div>
-      </section>
-
-      <section class="card">
-        <div class="field">
-          <label for="extraNotes">Extra notes for AI (optional)</label>
-          <textarea id="extraNotes" placeholder="Anything else you want reflected in the post"></textarea>
-        </div>
-        <div class="actions">
-          <button id="generateBtn" class="primary" type="button">Generate Draft Post(s)</button>
-          <button id="clearBtn" type="button">Clear Answers</button>
-        </div>
-      </section>
-
-      <section class="card">
-        <div id="status" class="status">Ready.</div>
+        <div id="status" class="status">Step 1: Upload and analyze GPX.</div>
       </section>
     </main>
 
@@ -217,6 +269,12 @@ export const prerender = true;
       const questionsEl = document.getElementById("questions");
       const statusEl = document.getElementById("status");
       const whoEl = document.getElementById("who");
+      const stepTwoSection = document.getElementById("stepTwoSection");
+      const metricsSection = document.getElementById("metricsSection");
+      const metricsGrid = document.getElementById("metricsGrid");
+      const gpxInput = document.getElementById("gpxFile");
+
+      let analyzedGpx = null;
 
       function setStatus(message, error) {
         statusEl.textContent = message;
@@ -268,7 +326,92 @@ export const prerender = true;
         return { user, token };
       }
 
-      async function buildPayload() {
+      function formatMetric(value, suffix = "") {
+        if (value === null || value === undefined || value === "") return "N/A";
+        return `${value}${suffix}`;
+      }
+
+      function renderMetrics(summary) {
+        const metrics = [
+          ["Track Points", formatMetric(summary.points)],
+          ["Distance", formatMetric(summary.distanceMiles, " mi")],
+          ["Elevation Gain", formatMetric(summary.elevationGainFeet, " ft")],
+          ["Elapsed Time", formatMetric(summary.elapsedHms)],
+          ["Average Speed", formatMetric(summary.avgMph, " mph")],
+          ["Average Pace", formatMetric(summary.avgPaceMinPerMile, " min/mi")],
+          ["Min Elevation", formatMetric(summary.minElevationMeters, " m")],
+          ["Max Elevation", formatMetric(summary.maxElevationMeters, " m")],
+          ["Map Center", summary.centerLat && summary.centerLng ? `${summary.centerLat}, ${summary.centerLng}` : "N/A"],
+        ];
+
+        metricsGrid.innerHTML = "";
+        for (const [label, value] of metrics) {
+          const card = document.createElement("div");
+          card.className = "metric";
+          const labelEl = document.createElement("span");
+          labelEl.className = "label";
+          labelEl.textContent = label;
+          const valueEl = document.createElement("span");
+          valueEl.className = "value";
+          valueEl.textContent = value;
+          card.append(labelEl, valueEl);
+          metricsGrid.appendChild(card);
+        }
+      }
+
+      async function analyzeGpx() {
+        try {
+          setStatus("Checking admin session...");
+          const { token } = await requireAdminUser();
+
+          if (!gpxInput.files || gpxInput.files.length < 1) {
+            throw new Error("Please upload a GPX file first.");
+          }
+
+          setStatus("Reading GPX file...");
+          const gpxFile = gpxInput.files[0];
+          const gpxBase64 = await readFileAsBase64(gpxFile);
+
+          setStatus("Analyzing route metrics...");
+          const response = await fetch("/.netlify/functions/ai-create-post", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              action: "analyze_gpx",
+              gpxFile: {
+                name: gpxFile.name,
+                contentBase64: gpxBase64,
+              },
+            }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+
+          analyzedGpx = {
+            name: gpxFile.name,
+            contentBase64: gpxBase64,
+            summary: data.gpxSummary,
+          };
+
+          renderMetrics(data.gpxSummary);
+          metricsSection.classList.remove("hidden");
+          stepTwoSection.classList.remove("hidden");
+          setStatus("GPX analyzed. Step 2 is now available.");
+        } catch (error) {
+          analyzedGpx = null;
+          metricsSection.classList.add("hidden");
+          stepTwoSection.classList.add("hidden");
+          setStatus(String(error.message || error), true);
+        }
+      }
+
+      async function buildGeneratePayload() {
+        if (!analyzedGpx) throw new Error("Analyze GPX first before generating posts.");
+
         const postMode = document.getElementById("postMode").value;
         const author = document.getElementById("author").value.trim();
         const walkTitle = document.getElementById("walkTitle").value.trim();
@@ -276,12 +419,9 @@ export const prerender = true;
         const stravaRecord = document.getElementById("stravaRecord").value.trim();
         const stravaFlyby = document.getElementById("stravaFlyby").value.trim();
         const extraNotes = document.getElementById("extraNotes").value.trim();
-
-        const gpxInput = document.getElementById("gpxFile");
         const imageInput = document.getElementById("images");
 
         if (!stravaRecord || !stravaFlyby) throw new Error("Strava record and flyby URLs are required.");
-        if (!gpxInput.files || gpxInput.files.length < 1) throw new Error("Please upload a GPX file.");
         if (!imageInput.files || imageInput.files.length < 1) throw new Error("Please upload at least one image.");
         if (imageInput.files.length > 6) throw new Error("Please upload a maximum of 6 images.");
 
@@ -289,9 +429,6 @@ export const prerender = true;
         document.querySelectorAll("textarea[data-question-id]").forEach((el) => {
           answers[el.dataset.questionId] = el.value.trim();
         });
-
-        const gpxFile = gpxInput.files[0];
-        const gpxBase64 = await readFileAsBase64(gpxFile);
 
         const images = [];
         for (const file of imageInput.files) {
@@ -306,6 +443,7 @@ export const prerender = true;
         }
 
         return {
+          action: "generate_post",
           postMode,
           author,
           walkTitle,
@@ -315,8 +453,8 @@ export const prerender = true;
           extraNotes,
           answers,
           gpxFile: {
-            name: gpxFile.name,
-            contentBase64: gpxBase64,
+            name: analyzedGpx.name,
+            contentBase64: analyzedGpx.contentBase64,
           },
           images,
         };
@@ -328,7 +466,7 @@ export const prerender = true;
           const { token } = await requireAdminUser();
 
           setStatus("Preparing files and answers...");
-          const payload = await buildPayload();
+          const payload = await buildGeneratePayload();
 
           setStatus("Generating content and committing files. This can take 30-90 seconds...");
           const response = await fetch("/.netlify/functions/ai-create-post", {
@@ -363,6 +501,13 @@ export const prerender = true;
         setStatus("Answers cleared.");
       }
 
+      gpxInput.addEventListener("change", () => {
+        analyzedGpx = null;
+        metricsSection.classList.add("hidden");
+        stepTwoSection.classList.add("hidden");
+      });
+
+      document.getElementById("analyzeBtn").addEventListener("click", analyzeGpx);
       document.getElementById("generateBtn").addEventListener("click", generate);
       document.getElementById("clearBtn").addEventListener("click", clearAnswers);
 
