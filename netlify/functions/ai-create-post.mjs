@@ -246,20 +246,10 @@ function parseGpx(contentBase64, name) {
     return { ok: false, error: "Unable to decode GPX file" };
   }
 
-  const regex = /<trkpt[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*>([\s\S]*?)<\/trkpt>/g;
-  const points = [];
-  let match;
-  while ((match = regex.exec(xml)) !== null) {
-    const lat = Number(match[1]);
-    const lon = Number(match[2]);
-    const eleMatch = (match[3] || "").match(/<ele>([^<]+)<\/ele>/);
-    const timeMatch = (match[3] || "").match(/<time>([^<]+)<\/time>/);
-    const ele = eleMatch ? Number(eleMatch[1]) : null;
-    const ts = timeMatch ? Date.parse(timeMatch[1]) : null;
-    if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      points.push({ lat, lon, ele: Number.isFinite(ele) ? ele : null, timeMs: Number.isFinite(ts) ? ts : null });
-    }
-  }
+  const points = [
+    ...extractPoints(xml, "trkpt"),
+    ...extractPoints(xml, "rtept"),
+  ];
 
   if (points.length < 2) return { ok: false, error: "GPX did not contain enough track points" };
 
@@ -306,6 +296,39 @@ function parseGpx(contentBase64, name) {
   };
 }
 
+function extractPoints(xml, tagName) {
+  const points = [];
+  const blockRegex = new RegExp(`<${tagName}[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*>([\\s\\S]*?)<\\/${tagName}>`, "g");
+  let match;
+  while ((match = blockRegex.exec(xml)) !== null) {
+    const lat = Number(match[1]);
+    const lon = Number(match[2]);
+    const block = match[3] || "";
+    const eleMatch = block.match(/<ele>([^<]+)<\/ele>/);
+    const timeMatch = block.match(/<time>([^<]+)<\/time>/);
+    const ele = eleMatch ? Number(eleMatch[1]) : null;
+    const ts = timeMatch ? Date.parse(timeMatch[1]) : null;
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      points.push({
+        lat,
+        lon,
+        ele: Number.isFinite(ele) ? ele : null,
+        timeMs: Number.isFinite(ts) ? ts : null,
+      });
+    }
+  }
+
+  const selfClosingRegex = new RegExp(`<${tagName}[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*\/>`, "g");
+  while ((match = selfClosingRegex.exec(xml)) !== null) {
+    const lat = Number(match[1]);
+    const lon = Number(match[2]);
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      points.push({ lat, lon, ele: null, timeMs: null });
+    }
+  }
+
+  return points;
+}
 function formatDuration(totalSeconds) {
   const seconds = Number(totalSeconds || 0);
   if (!Number.isFinite(seconds) || seconds <= 0) return null;
