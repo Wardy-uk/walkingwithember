@@ -6,7 +6,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const REQUIRED_ENV_GENERATE = ["GITHUB_TOKEN", "GITHUB_REPO"];
+const REQUIRED_ENV = ["GITHUB_TOKEN", "GITHUB_REPO"];
 
 export const handler = async (event) => {
   try {
@@ -20,14 +20,10 @@ export const handler = async (event) => {
 
     const authHeader = event.headers?.authorization || event.headers?.Authorization || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-    if (!token) {
-      return json({ error: "Missing admin auth token" }, 401);
-    }
+    if (!token) return json({ error: "Missing admin auth token" }, 401);
 
     const user = await validateIdentityToken(token, event);
-    if (!user) {
-      return json({ error: "Unauthorized" }, 401);
-    }
+    if (!user) return json({ error: "Unauthorized" }, 401);
 
     let payload;
     try {
@@ -37,114 +33,141 @@ export const handler = async (event) => {
       return json({ error: "Invalid JSON payload" }, 400);
     }
 
-    const action = payload?.action || "generate_post";
-    if (action === "analyze_gpx") {
-      const gpxValidationError = validateGpxAnalyzePayload(payload);
-      if (gpxValidationError) return json({ error: gpxValidationError }, 400);
+    for (const key of REQUIRED_ENV) {
+      if (!process.env[key]) return json({ error: `Missing required environment variable: ${key}` }, 500);
+    }
 
+    const action = payload?.action || "generate_post";
+
+    if (action === "analyze_gpx") {
+      const validationError = validateGpxAnalyzePayload(payload);
+      if (validationError) return json({ error: validationError }, 400);
       const gpxSummary = parseGpx(payload.gpxFile.contentBase64, payload.gpxFile.name);
       if (!gpxSummary.ok) return json({ error: gpxSummary.error }, 400);
-
       return json({ ok: true, gpxSummary: gpxSummary.data }, 200);
     }
 
-    if (action !== "generate_post") {
-      return json({ error: "Invalid action" }, 400);
+    if (action === "upload_asset") {
+      const validationError = validateUploadAssetPayload(payload);
+      if (validationError) return json({ error: validationError }, 400);
+      const branch = process.env.GITHUB_BRANCH || "main";
+
+      if (payload.asset.kind === "gpx") {
+        const gpxSummary = parseGpx(payload.asset.contentBase64, payload.asset.name);
+        if (!gpxSummary.ok) return json({ error: gpxSummary.error }, 400);
+
+        const slug = slugify(payload.asset.name.replace(/\.[^.]+$/, ""));
+        const hash = shortHash(`${Date.now()}-${payload.asset.name}`);
+        const gpxPath = `public/uploads/gpx/${slug}-${hash}.gpx`;
+        const write = await upsertRepoFile({
+          path: gpxPath,
+          contentBase64: payload.asset.contentBase64,
+          message: `chore(ai): add gpx asset ${gpxPath}`,
+          branch,
+        });
+
+        if (!write.ok) return json({ error: write.error }, 502);
+        return json({
+          ok: true,
+          asset: {
+            kind: "gpx",
+            path: gpxPath,
+            publicPath: `/${stripPublicPrefix(gpxPath)}`,
+            name: payload.asset.name,
+          },
+          commit: write.data?.commitUrl || null,
+          gpxSummary: gpxSummary.data,
+        });
+      }
+
+      const safeName = sanitizeFilename(payload.asset.name);
+      const ext = getImageExtension(payload.asset.mimeType, safeName);
+      const stem = safeName.replace(/\.[^.]+$/, "");
+      const hash = shortHash(`${Date.now()}-${safeName}`);
+      const fileName = `${stem}-${hash}.${ext}`;
+      const imagePath = `public/uploads/images/${fileName}`;
+
+      const write = await upsertRepoFile({
+        path: imagePath,
+        contentBase64: payload.asset.contentBase64,
+        message: `chore(ai): add image asset ${imagePath}`,
+        branch,
+      });
+
+      if (!write.ok) return json({ error: write.error }, 502);
+      const readable = toReadableLabel(stem);
+      return json({
+        ok: true,
+        asset: {
+          kind: "image",
+          path: imagePath,
+          publicPath: `/${stripPublicPrefix(imagePath)}`,
+          name: payload.asset.name,
+          alt: truncate(`Peak District trail photo: ${readable}`, 140),
+          caption: truncate(`Peak District route image: ${readable}.`, 180),
+        },
+        commit: write.data?.commitUrl || null,
+      });
     }
 
-    for (const key of REQUIRED_ENV_GENERATE) {
-      if (!process.env[key]) {
-        return json({ error: `Missing required environment variable: ${key}` }, 500);
-      }
-    }
+    if (action !== "generate_post") return json({ error: "Invalid action" }, 400);
 
     const validationError = validateGeneratePayload(payload);
-    if (validationError) {
-      return json({ error: validationError }, 400);
-    }
+    if (validationError) return json({ error: validationError }, 400);
 
     const now = new Date();
+    const datePart = now.toISOString().slice(0, 10);
     const branch = process.env.GITHUB_BRANCH || "main";
-    const siteBaseUrl = sanitizeBaseUrl(process.env.SITE_BASE_URL || process.env.URL || deriveBaseUrl(event) || "https://example.com");
+    const siteBaseUrl = sanitizeBaseUrl(process.env.SITE_BASE_URL || process.env.URL || deriveBaseUrl(event));
 
-    const gpxSummary = parseGpx(payload.gpxFile.contentBase64, payload.gpxFile.name);
-    if (!gpxSummary.ok) {
-      return json({ error: gpxSummary.error }, 400);
-    }
+    const gpxSummary = payload.gpxSummary;
+    const gpxPublicUrl = siteBaseUrl ? `${siteBaseUrl}${payload.gpxAsset.publicPath}` : payload.gpxAsset.publicPath;
 
-    const walkSlugBase = slugify(payload.walkTitle || payload.answers?.where_walked || `walk-${now.toISOString().slice(0, 10)}`);
-    const walkSlug = `${walkSlugBase}-${now.toISOString().slice(0, 10)}`;
+    const walkSlugBase = slugify(payload.walkTitle || payload.answers?.where_walked || `walk-${datePart}`);
+    const walkSlug = `${walkSlugBase}-${datePart}`;
     const blogSlugBase = slugify(payload.blogTitle || `${walkSlugBase}-journal`);
-    const blogSlug = `${blogSlugBase}-${now.toISOString().slice(0, 10)}`;
+    const blogSlug = `${blogSlugBase}-${datePart}`;
 
-    const imageArtifacts = await buildImageArtifacts(payload.images);
-    if (!imageArtifacts.ok) {
-      return json({ error: imageArtifacts.error }, 400);
-    }
+    const imageSummaries = payload.imageAssets.map((img) => ({
+      path: img.path,
+      publicPath: img.publicPath,
+      caption: img.caption || `Peak District route image: ${toReadableLabel(img.name || "trail")}.`,
+      alt: img.alt || `Peak District trail photo: ${toReadableLabel(img.name || "trail")}`,
+    }));
 
     const content = await generateContent({
       payload,
-      gpxSummary: gpxSummary.data,
-      imageSummaries: imageArtifacts.data.map((img) => ({ path: img.path, caption: img.caption, alt: img.alt })),
+      gpxSummary,
+      imageSummaries,
       walkSlug,
       blogSlug,
-      publishDate: now.toISOString().slice(0, 10),
+      publishDate: datePart,
     });
-
-    if (!content.ok) {
-      return json({ error: content.error }, 502);
-    }
-
-    const commitResults = [];
-    const gpxPath = `public/uploads/gpx/${walkSlug}.gpx`;
-
-    const assetWrites = [
-      ...imageArtifacts.data.map((img) =>
-        upsertRepoFile({
-          path: img.path,
-          contentBase64: img.contentBase64,
-          message: `chore(ai): add image asset ${img.path}`,
-          branch,
-        })
-      ),
-      upsertRepoFile({
-        path: gpxPath,
-        contentBase64: payload.gpxFile.contentBase64,
-        message: `chore(ai): add gpx file ${gpxPath}`,
-        branch,
-      }),
-    ];
-
-    const assetResults = await Promise.all(assetWrites);
-    for (const result of assetResults) {
-      if (!result.ok) return json({ error: result.error }, 502);
-      commitResults.push(result.data);
-    }
+    if (!content.ok) return json({ error: content.error }, 502);
 
     let walkPath = null;
     let blogPath = null;
-
-    const postWrites = [];
+    const commitResults = [];
 
     if (payload.postMode === "walk" || payload.postMode === "both") {
       walkPath = `src/content/walks/${walkSlug}.md`;
       const walkMarkdown = createWalkMarkdown({
         content: content.data,
         payload,
-        gpxSummary: gpxSummary.data,
-        publishDate: now.toISOString().slice(0, 10),
-        gpxPublicUrl: `${siteBaseUrl}/uploads/gpx/${walkSlug}.gpx`,
-        heroImage: imageArtifacts.data[0]?.publicPath || "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG",
-        imageSummaries: imageArtifacts.data,
+        gpxSummary,
+        publishDate: datePart,
+        gpxPublicUrl,
+        heroImage: imageSummaries[0]?.publicPath || "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG",
+        imageSummaries,
       });
-      postWrites.push(
-        upsertRepoFile({
-          path: walkPath,
-          contentBase64: toBase64Utf8(walkMarkdown),
-          message: `feat(ai): create walk post ${walkSlug}`,
-          branch,
-        })
-      );
+      const write = await upsertRepoFile({
+        path: walkPath,
+        contentBase64: toBase64Utf8(walkMarkdown),
+        message: `feat(ai): create walk post ${walkSlug}`,
+        branch,
+      });
+      if (!write.ok) return json({ error: write.error }, 502);
+      commitResults.push(write.data);
     }
 
     if (payload.postMode === "blog" || payload.postMode === "both") {
@@ -152,43 +175,34 @@ export const handler = async (event) => {
       const blogMarkdown = createBlogMarkdown({
         content: content.data,
         payload,
-        publishDate: now.toISOString().slice(0, 10),
-        coverImage: imageArtifacts.data[0]?.publicPath || "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG",
+        publishDate: datePart,
+        coverImage: imageSummaries[0]?.publicPath || "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG",
         includeWalkRelation: payload.postMode === "both",
         walkSlug,
-        imageSummaries: imageArtifacts.data,
+        imageSummaries,
       });
-      postWrites.push(
-        upsertRepoFile({
-          path: blogPath,
-          contentBase64: toBase64Utf8(blogMarkdown),
-          message: `feat(ai): create blog post ${blogSlug}`,
-          branch,
-        })
-      );
-    }
-
-    const postResults = await Promise.all(postWrites);
-    for (const result of postResults) {
-      if (!result.ok) return json({ error: result.error }, 502);
-      commitResults.push(result.data);
-    }
-
-    return json(
-      {
-        ok: true,
-        createdBy: user.email || user.id || "admin",
+      const write = await upsertRepoFile({
+        path: blogPath,
+        contentBase64: toBase64Utf8(blogMarkdown),
+        message: `feat(ai): create blog post ${blogSlug}`,
         branch,
-        created: {
-          walkPath,
-          blogPath,
-          gpxPath,
-          imagePaths: imageArtifacts.data.map((x) => x.path),
-        },
-        commits: commitResults.map((r) => r.commitUrl).filter(Boolean),
+      });
+      if (!write.ok) return json({ error: write.error }, 502);
+      commitResults.push(write.data);
+    }
+
+    return json({
+      ok: true,
+      createdBy: user.email || user.id || "admin",
+      branch,
+      created: {
+        walkPath,
+        blogPath,
+        gpxPath: payload.gpxAsset.path,
+        imagePaths: imageSummaries.map((x) => x.path),
       },
-      200
-    );
+      commits: commitResults.map((r) => r.commitUrl).filter(Boolean),
+    });
   } catch (error) {
     return json({ error: `Unexpected server error: ${String(error?.message || error)}` }, 500);
   }
@@ -227,19 +241,29 @@ async function validateIdentityToken(token, event) {
   }
 }
 
+function validateGpxAnalyzePayload(payload) {
+  if (!payload || typeof payload !== "object") return "Payload missing";
+  if (!payload.gpxFile || !payload.gpxFile.contentBase64 || !payload.gpxFile.name) return "GPX file is required";
+  return null;
+}
+
+function validateUploadAssetPayload(payload) {
+  if (!payload || typeof payload !== "object") return "Payload missing";
+  if (!payload.asset || typeof payload.asset !== "object") return "asset is required";
+  if (!["gpx", "image"].includes(payload.asset.kind)) return "asset.kind must be gpx or image";
+  if (!payload.asset.name || !payload.asset.contentBase64) return "asset name and content are required";
+  if (payload.asset.kind === "image" && !payload.asset.mimeType) return "asset mimeType is required for images";
+  return null;
+}
+
 function validateGeneratePayload(payload) {
   if (!payload || typeof payload !== "object") return "Payload missing";
   if (!["walk", "blog", "both"].includes(payload.postMode)) return "Invalid postMode";
   if (!payload.answers || typeof payload.answers !== "object") return "answers are required";
-  if (!payload.gpxFile || !payload.gpxFile.contentBase64 || !payload.gpxFile.name) return "GPX file is required";
   if (!payload.stravaRecord || !payload.stravaFlyby) return "Strava URLs are required";
-  if (!Array.isArray(payload.images) || payload.images.length === 0) return "At least one image is required";
-  return null;
-}
-
-function validateGpxAnalyzePayload(payload) {
-  if (!payload || typeof payload !== "object") return "Payload missing";
-  if (!payload.gpxFile || !payload.gpxFile.contentBase64 || !payload.gpxFile.name) return "GPX file is required";
+  if (!payload.gpxAsset || !payload.gpxAsset.path || !payload.gpxAsset.publicPath) return "gpxAsset is required";
+  if (!payload.gpxSummary || typeof payload.gpxSummary !== "object") return "gpxSummary is required";
+  if (!Array.isArray(payload.imageAssets) || payload.imageAssets.length === 0) return "At least one image asset is required";
   return null;
 }
 
@@ -373,34 +397,7 @@ function average(values) {
   return values.reduce((sum, n) => sum + n, 0) / values.length;
 }
 
-async function buildImageArtifacts(images) {
-  const out = [];
-  for (let i = 0; i < images.length; i += 1) {
-    const image = images[i];
-    if (!image?.contentBase64 || !image?.name || !image?.mimeType) {
-      return { ok: false, error: `Invalid image input at index ${i}` };
-    }
-
-    const safeName = sanitizeFilename(image.name);
-    const hash = crypto.createHash("sha1").update(`${Date.now()}-${safeName}-${i}`).digest("hex").slice(0, 10);
-    const ext = getImageExtension(image.mimeType, safeName);
-    const filename = `${safeName.replace(/\.[^.]+$/, "")}-${hash}.${ext}`;
-    const path = `public/uploads/images/${filename}`;
-    const publicPath = `/uploads/images/${filename}`;
-
-    const readableName = toReadableLabel(safeName.replace(/\.[^.]+$/, ""));
-    out.push({
-      path,
-      publicPath,
-      contentBase64: image.contentBase64,
-      alt: truncate(`Peak District trail photo: ${readableName}`, 140),
-      caption: truncate(`Peak District route image: ${readableName}.`, 180),
-    });
-  }
-  return { ok: true, data: out };
-}
-
-async function generateContent({ payload, gpxSummary, imageSummaries, walkSlug, blogSlug, publishDate }) {
+async function generateContent({ payload, gpxSummary, walkSlug, blogSlug, publishDate }) {
   const answers = payload.answers || {};
 
   const walkLocation = nonEmpty(payload.walkTitle, answers.where_walked, answers.familiar_or_new, "Peak District");
@@ -411,11 +408,22 @@ async function generateContent({ payload, gpxSummary, imageSummaries, walkSlug, 
   const difficulty = distance >= 10 || ascentFt >= 2200 ? "Hard" : distance >= 6 || ascentFt >= 1200 ? "Moderate" : "Easy";
 
   const summary = truncate(
-    nonEmpty(answers.why_route_today, answers.conditions_impact, "A reflective route day with practical trail notes and conditions captured from the walk."),
+    nonEmpty(
+      answers.why_route_today,
+      answers.conditions_impact,
+      "A reflective route day with practical trail notes and conditions captured from the walk."
+    ),
     230
   );
 
-  const walkTags = dedupeStrings(["Peak District", difficulty, answers.walk_purpose, answers.weather_trail_conditions, answers.standout_sections, answers.kit_layers]).slice(0, 8);
+  const walkTags = dedupeStrings([
+    "Peak District",
+    difficulty,
+    answers.walk_purpose,
+    answers.weather_trail_conditions,
+    answers.standout_sections,
+    answers.kit_layers,
+  ]).slice(0, 8);
 
   const routeNotesMarkdown = [
     "## Why this route",
@@ -442,7 +450,14 @@ async function generateContent({ payload, gpxSummary, imageSummaries, walkSlug, 
   ].join("\n");
 
   const finalBlogTitle = nonEmpty(payload.blogTitle, `Walk Notes: ${walkTitle}`, titleCaseFromSlug(blogSlug));
-  const blogExcerpt = truncate(nonEmpty(answers.during_after_feeling, answers.what_it_meant, "A practical and personal trail note from a recent Peak District walk."), 250);
+  const blogExcerpt = truncate(
+    nonEmpty(
+      answers.during_after_feeling,
+      answers.what_it_meant,
+      "A practical and personal trail note from a recent Peak District walk."
+    ),
+    250
+  );
 
   const blogBody = [
     "This post was generated from your walk inputs and GPX metrics, then saved as a draft for review.",
@@ -469,7 +484,13 @@ async function generateContent({ payload, gpxSummary, imageSummaries, walkSlug, 
     nonEmpty(answers.what_it_meant, answers.what_it_taught, "Another useful route day to build on."),
   ].join("\n");
 
-  const blogTags = dedupeStrings(["Peak District", "Walk Journal", answers.walk_purpose, answers.weather_trail_conditions, answers.kit_layers]).slice(0, 8);
+  const blogTags = dedupeStrings([
+    "Peak District",
+    "Walk Journal",
+    answers.walk_purpose,
+    answers.weather_trail_conditions,
+    answers.kit_layers,
+  ]).slice(0, 8);
 
   return {
     ok: true,
@@ -531,7 +552,9 @@ function createWalkMarkdown({ content, payload, gpxSummary, publishDate, gpxPubl
     ...(gpxSummary.avgPaceMinPerMile ? [`- Average pace (from GPX time): ${gpxSummary.avgPaceMinPerMile} min/mi`] : []),
     "",
     "## Photo highlights",
-    ...(imageSummaries.length ? imageSummaries.map((img) => `- ![${escapeInline(img.alt)}](${img.publicPath}) ${img.caption}`) : ["- Photos uploaded with this walk."]),
+    ...(imageSummaries.length
+      ? imageSummaries.map((img) => `- ![${escapeInline(img.alt)}](${img.publicPath}) ${img.caption}`)
+      : ["- Photos uploaded with this walk."]),
     "",
   ].join("\n");
 }
@@ -603,29 +626,38 @@ function toBase64Utf8(value) {
   return Buffer.from(String(value), "utf8").toString("base64");
 }
 
+function stripPublicPrefix(path) {
+  return String(path || "").replace(/^public\//, "");
+}
+
+function shortHash(input) {
+  return crypto.createHash("sha1").update(String(input || "")).digest("hex").slice(0, 10);
+}
+
 function slugify(value) {
-  return String(value || "post")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 72) || "post";
+  return (
+    String(value || "post")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 72) || "post"
+  );
 }
 
 function sanitizeFilename(name) {
-  return String(name || "upload")
-    .replace(/[^a-zA-Z0-9._-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || "upload";
+  return (
+    String(name || "upload")
+      .replace(/[^a-zA-Z0-9._-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "upload"
+  );
 }
 
 function toReadableLabel(value) {
-  return String(value || "")
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim() || "trail";
+  return String(value || "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim() || "trail";
 }
 
 function nonEmpty(...values) {

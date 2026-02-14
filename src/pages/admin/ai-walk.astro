@@ -274,8 +274,7 @@ export const prerender = true;
       const MAX_IMAGE_BYTES_EACH = 6 * 1024 * 1024;
       const MAX_IMAGE_DIMENSION = 1800;
       const OUTPUT_IMAGE_QUALITY = 0.82;
-      const MAX_ESTIMATED_PAYLOAD_BYTES = 5_800_000;
-
+      
       const questionsEl = document.getElementById("questions");
       const statusEl = document.getElementById("status");
       const whoEl = document.getElementById("who");
@@ -583,7 +582,7 @@ export const prerender = true;
         }
       }
 
-      async function buildGeneratePayload() {
+            async function buildGeneratePayload() {
         if (!analyzedGpx) throw new Error("Analyze GPX first before generating posts.");
 
         const postMode = document.getElementById("postMode").value;
@@ -605,7 +604,6 @@ export const prerender = true;
         });
 
         const images = [];
-        let estimatedPayloadBytes = analyzedGpx.contentBase64.length;
         for (const file of imageInput.files) {
           if (file.size > MAX_IMAGE_BYTES_EACH) {
             throw new Error(`Image ${file.name} is too large. Keep each image under 6MB.`);
@@ -613,7 +611,6 @@ export const prerender = true;
 
           setStatus(`Optimizing image ${images.length + 1} of ${imageInput.files.length}...`);
           const optimized = await optimizeImageForUpload(file);
-          estimatedPayloadBytes += optimized.contentBase64.length;
           images.push({
             name: optimized.name,
             mimeType: optimized.mimeType,
@@ -621,12 +618,7 @@ export const prerender = true;
           });
         }
 
-        if (estimatedPayloadBytes > MAX_ESTIMATED_PAYLOAD_BYTES) {
-          throw new Error("Upload payload is too large for serverless processing. Use fewer/smaller photos and retry.");
-        }
-
         return {
-          action: "generate_post",
           postMode,
           author,
           walkTitle,
@@ -635,12 +627,30 @@ export const prerender = true;
           stravaFlyby,
           extraNotes,
           answers,
-          gpxFile: {
-            name: analyzedGpx.name,
-            contentBase64: analyzedGpx.contentBase64,
-          },
+          gpxFile: { name: analyzedGpx.name, contentBase64: analyzedGpx.contentBase64 },
+          gpxSummary: analyzedGpx.summary,
           images,
         };
+      }
+
+      async function callAiTool(token, payload) {
+        const response = await fetch("/.netlify/functions/ai-create-post", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const raw = await response.text();
+        let data = {};
+        try { data = raw ? JSON.parse(raw) : {}; } catch {}
+        if (!response.ok) {
+          const detail = data.error || raw || response.statusText;
+          throw new Error(`Request failed (${response.status}): ${detail}`);
+        }
+        return data;
       }
 
       async function generate() {
@@ -651,23 +661,46 @@ export const prerender = true;
           setStatus("Preparing files and answers...");
           const payload = await buildGeneratePayload();
 
-          setStatus("Generating content and committing files. This can take 30-90 seconds...");
-          const response = await fetch("/.netlify/functions/ai-create-post", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+          setStatus("Uploading GPX asset...");
+          const gpxUpload = await callAiTool(token, {
+            action: "upload_asset",
+            asset: {
+              kind: "gpx",
+              name: payload.gpxFile.name,
+              contentBase64: payload.gpxFile.contentBase64,
             },
-            body: JSON.stringify(payload),
           });
 
-          const raw = await response.text();
-          let data = {};
-          try { data = raw ? JSON.parse(raw) : {}; } catch {}
-          if (!response.ok) {
-            const detail = data.error || raw || response.statusText;
-            throw new Error(`Request failed (${response.status}): ${detail}`);
+          const imageAssets = [];
+          for (let i = 0; i < payload.images.length; i += 1) {
+            setStatus(`Uploading image ${i + 1} of ${payload.images.length}...`);
+            const upload = await callAiTool(token, {
+              action: "upload_asset",
+              asset: {
+                kind: "image",
+                name: payload.images[i].name,
+                mimeType: payload.images[i].mimeType,
+                contentBase64: payload.images[i].contentBase64,
+              },
+            });
+            imageAssets.push(upload.asset);
           }
+
+          setStatus("Generating content and committing files. This can take 30-90 seconds...");
+          const data = await callAiTool(token, {
+            action: "generate_post",
+            postMode: payload.postMode,
+            author: payload.author,
+            walkTitle: payload.walkTitle,
+            blogTitle: payload.blogTitle,
+            stravaRecord: payload.stravaRecord,
+            stravaFlyby: payload.stravaFlyby,
+            extraNotes: payload.extraNotes,
+            answers: payload.answers,
+            gpxSummary: payload.gpxSummary,
+            gpxAsset: gpxUpload.asset,
+            imageAssets,
+          });
 
           const created = data.created || {};
           const lines = ["Draft generation completed."];
@@ -705,5 +738,6 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
 
 
