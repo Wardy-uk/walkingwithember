@@ -41,6 +41,19 @@ const blog = defineCollection({
     }),
 });
 
+const gallery = defineCollection({
+  type: "content",
+  schema: () =>
+    z.object({
+      title: z.string(),
+      image: z.string(),
+      caption: z.string().max(260).optional(),
+      location: z.string().optional(),
+      publishDate: z.coerce.date(),
+      draft: z.boolean().default(false),
+    }),
+});
+
 const pages = defineCollection({
   type: "content",
   schema: z.object({
@@ -69,6 +82,7 @@ const settings = defineCollection({
 export const collections = {
   walks,
   blog,
+  gallery,
   pages,
   settings,
 };

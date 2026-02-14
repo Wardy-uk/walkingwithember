@@ -56,6 +56,21 @@ collections:
       - { label: "Draft", name: "draft", widget: "boolean", default: false }
       - { label: "Full Content", name: "body", widget: "markdown" }
 
+  - name: "gallery"
+    label: "Gallery"
+    folder: "src/content/gallery"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Image", name: "image", widget: "image" }
+      - { label: "Caption", name: "caption", required: false, widget: "text" }
+      - { label: "Location", name: "location", required: false, widget: "string" }
+      - { label: "Publish Date", name: "publishDate", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "Draft", name: "draft", widget: "boolean", default: false }
+
   - name: "pages"
     label: "Pages"
     folder: "src/content/pages"

@@ -24,6 +24,11 @@ export async function getPublishedBlogs() {
   return posts.sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());
 }
 
+export async function getPublishedGallery() {
+  const photos = await getCollection("gallery", ({ data }) => !data.draft);
+  return photos.sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());
+}
+
 export async function getRegions() {
   const walks = await getPublishedWalks();
   return Array.from(new Set(walks.map((walk) => walk.data.region))).sort((a, b) => a.localeCompare(b));

@@ -1,0 +1,49 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getPublishedGallery, getRegions, getSiteSettings } from "../../lib/content";
+
+const settings = await getSiteSettings();
+const regions = await getRegions();
+const photos = await getPublishedGallery();
+---
+
+<BaseLayout
+  title={`${settings.siteName} | Gallery`}
+  description="Photo gallery from our walks with Ember across UK trails and mountain routes."
+  regions={regions}
+  siteName={settings.siteName}
+  tagline={settings.tagline}
+>
+  <div class="container page-grid">
+    <section class="hero">
+      <h1>Gallery</h1>
+      <p>Moments from our walks: trail mornings, summit pauses, changing weather, and Ember on route.</p>
+    </section>
+
+    {photos.length === 0 ? (
+      <section class="card">
+        <p>No gallery images published yet. Add entries in the CMS under <strong>Gallery</strong>.</p>
+      </section>
+    ) : (
+      <section class="card card-grid">
+        {photos.map((photo) => (
+          <article class="entry-card">
+            <img src={photo.data.image} alt={photo.data.title} loading="lazy" />
+            <div class="entry-card-body">
+              <h2>{photo.data.title}</h2>
+              <p class="muted">
+                {photo.data.location ? `${photo.data.location} · ` : ""}
+                {photo.data.publishDate.toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </p>
+              {photo.data.caption && <p>{photo.data.caption}</p>}
+            </div>
+          </article>
+        ))}
+      </section>
+    )}
+  </div>
+</BaseLayout>
