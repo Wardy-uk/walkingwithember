@@ -270,6 +270,10 @@ export const prerender = true;
         ["parking_toilets", "What were parking and facilities like (toilets, cafes, water)?"],
       ];
 
+      const MAX_IMAGE_COUNT = 6;
+      const MAX_IMAGE_BYTES_EACH = 6 * 1024 * 1024;
+      const MAX_ESTIMATED_PAYLOAD_BYTES = 5_500_000;
+
       const questionsEl = document.getElementById("questions");
       const statusEl = document.getElementById("status");
       const whoEl = document.getElementById("who");
@@ -327,6 +331,116 @@ export const prerender = true;
         return { token };
       }
 
+      function parsePoints(xml, tagName) {
+        const points = [];
+        const blockRegex = new RegExp(`<${tagName}[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*>([\\s\\S]*?)<\\/${tagName}>`, "g");
+        let match;
+        while ((match = blockRegex.exec(xml)) !== null) {
+          const lat = Number(match[1]);
+          const lon = Number(match[2]);
+          const block = match[3] || "";
+          const eleMatch = block.match(/<ele>([^<]+)<\/ele>/);
+          const timeMatch = block.match(/<time>([^<]+)<\/time>/);
+          const ele = eleMatch ? Number(eleMatch[1]) : null;
+          const timeMs = timeMatch ? Date.parse(timeMatch[1]) : null;
+          if (Number.isFinite(lat) && Number.isFinite(lon)) {
+            points.push({
+              lat,
+              lon,
+              ele: Number.isFinite(ele) ? ele : null,
+              timeMs: Number.isFinite(timeMs) ? timeMs : null,
+            });
+          }
+        }
+
+        const selfClosingRegex = new RegExp(`<${tagName}[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*/>`, "g");
+        while ((match = selfClosingRegex.exec(xml)) !== null) {
+          const lat = Number(match[1]);
+          const lon = Number(match[2]);
+          if (Number.isFinite(lat) && Number.isFinite(lon)) {
+            points.push({ lat, lon, ele: null, timeMs: null });
+          }
+        }
+
+        return points;
+      }
+
+      function toRad(v) {
+        return (v * Math.PI) / 180;
+      }
+
+      function haversineMeters(a, b) {
+        const R = 6371000;
+        const dLat = toRad(b.lat - a.lat);
+        const dLon = toRad(b.lon - a.lon);
+        const aa =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+        return 2 * R * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
+      }
+
+      function formatDuration(totalSeconds) {
+        if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) return null;
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${hours}h ${minutes}m ${seconds}s`;
+      }
+
+      function parseGpxClient(xml, filename) {
+        if (!String(filename || "").toLowerCase().endsWith(".gpx")) {
+          throw new Error("Uploaded route file must be a .gpx");
+        }
+
+        const points = [...parsePoints(xml, "trkpt"), ...parsePoints(xml, "rtept")];
+        if (points.length < 2) {
+          throw new Error("GPX did not contain enough route points");
+        }
+
+        let meters = 0;
+        let ascentMeters = 0;
+        for (let i = 1; i < points.length; i += 1) {
+          meters += haversineMeters(points[i - 1], points[i]);
+          const prevEle = points[i - 1].ele;
+          const currEle = points[i].ele;
+          if (Number.isFinite(prevEle) && Number.isFinite(currEle) && currEle > prevEle) {
+            ascentMeters += currEle - prevEle;
+          }
+        }
+
+        let minEle = Infinity;
+        let maxEle = -Infinity;
+        for (const point of points) {
+          if (!Number.isFinite(point.ele)) continue;
+          if (point.ele < minEle) minEle = point.ele;
+          if (point.ele > maxEle) maxEle = point.ele;
+        }
+
+        const timeValues = points.map((p) => p.timeMs).filter((v) => Number.isFinite(v));
+        const elapsedSeconds = timeValues.length > 1
+          ? Math.max(0, Math.round((timeValues[timeValues.length - 1] - timeValues[0]) / 1000))
+          : null;
+
+        const distanceMiles = Number((meters / 1609.344).toFixed(2));
+        const hours = elapsedSeconds && elapsedSeconds > 0 ? elapsedSeconds / 3600 : null;
+
+        return {
+          points: points.length,
+          startLat: Number(points[0].lat.toFixed(6)),
+          startLng: Number(points[0].lon.toFixed(6)),
+          centerLat: Number((points.reduce((s, p) => s + p.lat, 0) / points.length).toFixed(6)),
+          centerLng: Number((points.reduce((s, p) => s + p.lon, 0) / points.length).toFixed(6)),
+          distanceMiles,
+          elevationGainFeet: Math.round(ascentMeters * 3.28084),
+          minElevationMeters: Number.isFinite(minEle) ? Math.round(minEle) : null,
+          maxElevationMeters: Number.isFinite(maxEle) ? Math.round(maxEle) : null,
+          elapsedSeconds,
+          elapsedHms: elapsedSeconds ? formatDuration(elapsedSeconds) : null,
+          avgMph: hours && distanceMiles > 0 ? Number((distanceMiles / hours).toFixed(2)) : null,
+          avgPaceMinPerMile: hours && distanceMiles > 0 ? Number(((hours * 60) / distanceMiles).toFixed(2)) : null,
+        };
+      }
+
       function formatMetric(value, suffix = "") {
         if (value === null || value === undefined || value === "") return "N/A";
         return `${value}${suffix}`;
@@ -363,47 +477,27 @@ export const prerender = true;
       async function analyzeGpx() {
         try {
           setStatus("Checking admin session...");
-          const { token } = await requireAdminUser();
+          await requireAdminUser();
 
           if (!gpxInput.files || gpxInput.files.length < 1) {
             throw new Error("Please upload a GPX file first.");
           }
 
-          setStatus("Reading GPX file...");
           const gpxFile = gpxInput.files[0];
-          const gpxBase64 = await readFileAsBase64(gpxFile);
+          setStatus("Reading GPX file...");
+          const [gpxBase64, gpxText] = await Promise.all([readFileAsBase64(gpxFile), gpxFile.text()]);
 
-          setStatus("Analyzing route metrics...");
-          const response = await fetch("/.netlify/functions/ai-create-post", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              action: "analyze_gpx",
-              gpxFile: {
-                name: gpxFile.name,
-                contentBase64: gpxBase64,
-              },
-            }),
-          });
-
-          const raw = await response.text();
-          let data = {};
-          try { data = raw ? JSON.parse(raw) : {}; } catch {}
-          if (!response.ok) {
-            const detail = data.error || raw || response.statusText;
-            throw new Error(`Request failed (${response.status}): ${detail}`);
-          }
+          setStatus("Analyzing route metrics locally...");
+          const summary = parseGpxClient(gpxText, gpxFile.name);
 
           analyzedGpx = {
             name: gpxFile.name,
             contentBase64: gpxBase64,
-            summary: data.gpxSummary,
+            sizeBytes: gpxFile.size,
+            summary,
           };
 
-          renderMetrics(data.gpxSummary);
+          renderMetrics(summary);
           metricsSection.classList.remove("hidden");
           stepTwoSection.classList.remove("hidden");
           setStatus("GPX analyzed. Step 2 is now available.");
@@ -429,7 +523,7 @@ export const prerender = true;
 
         if (!stravaRecord || !stravaFlyby) throw new Error("Strava record and flyby URLs are required.");
         if (!imageInput.files || imageInput.files.length < 1) throw new Error("Please upload at least one image.");
-        if (imageInput.files.length > 6) throw new Error("Please upload a maximum of 6 images.");
+        if (imageInput.files.length > MAX_IMAGE_COUNT) throw new Error(`Please upload a maximum of ${MAX_IMAGE_COUNT} images.`);
 
         const answers = {};
         document.querySelectorAll("textarea[data-question-id]").forEach((el) => {
@@ -437,15 +531,22 @@ export const prerender = true;
         });
 
         const images = [];
+        let estimatedPayloadBytes = analyzedGpx.contentBase64.length;
         for (const file of imageInput.files) {
-          if (file.size > 6 * 1024 * 1024) {
+          if (file.size > MAX_IMAGE_BYTES_EACH) {
             throw new Error(`Image ${file.name} is too large. Keep each image under 6MB.`);
           }
+          const imageBase64 = await readFileAsBase64(file);
+          estimatedPayloadBytes += imageBase64.length;
           images.push({
             name: file.name,
             mimeType: file.type || "image/jpeg",
-            contentBase64: await readFileAsBase64(file),
+            contentBase64: imageBase64,
           });
+        }
+
+        if (estimatedPayloadBytes > MAX_ESTIMATED_PAYLOAD_BYTES) {
+          throw new Error("Upload payload is too large for serverless processing. Use fewer/smaller photos and retry.");
         }
 
         return {
