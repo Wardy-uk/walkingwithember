@@ -272,7 +272,9 @@ export const prerender = true;
 
       const MAX_IMAGE_COUNT = 6;
       const MAX_IMAGE_BYTES_EACH = 6 * 1024 * 1024;
-      const MAX_ESTIMATED_PAYLOAD_BYTES = 5_500_000;
+      const MAX_IMAGE_DIMENSION = 1800;
+      const OUTPUT_IMAGE_QUALITY = 0.82;
+      const MAX_ESTIMATED_PAYLOAD_BYTES = 5_800_000;
 
       const questionsEl = document.getElementById("questions");
       const statusEl = document.getElementById("status");
@@ -315,6 +317,78 @@ export const prerender = true;
           };
           reader.readAsDataURL(file);
         });
+      }
+
+      function loadImageElement(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const image = new Image();
+          image.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(image);
+          };
+          image.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error(`Failed decoding image ${file.name}`));
+          };
+          image.src = url;
+        });
+      }
+
+      function canvasToBase64(canvas, mimeType, quality) {
+        return new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Image optimization failed"));
+                return;
+              }
+              const reader = new FileReader();
+              reader.onerror = () => reject(new Error("Failed reading optimized image data"));
+              reader.onload = () => {
+                const result = String(reader.result || "");
+                const comma = result.indexOf(",");
+                resolve({
+                  contentBase64: comma >= 0 ? result.slice(comma + 1) : result,
+                  sizeBytes: blob.size,
+                });
+              };
+              reader.readAsDataURL(blob);
+            },
+            mimeType,
+            quality
+          );
+        });
+      }
+
+      async function optimizeImageForUpload(file) {
+        const image = await loadImageElement(file);
+        const width = image.naturalWidth || image.width;
+        const height = image.naturalHeight || image.height;
+        if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+          throw new Error(`Invalid image dimensions for ${file.name}`);
+        }
+
+        const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(width, height));
+        const targetWidth = Math.max(1, Math.round(width * scale));
+        const targetHeight = Math.max(1, Math.round(height * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          throw new Error("Unable to process images in this browser");
+        }
+        ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+        const output = await canvasToBase64(canvas, "image/jpeg", OUTPUT_IMAGE_QUALITY);
+        return {
+          name: file.name.replace(/\.[^.]+$/, "") + ".jpg",
+          mimeType: "image/jpeg",
+          contentBase64: output.contentBase64,
+          sizeBytes: output.sizeBytes,
+        };
       }
 
       async function requireAdminUser() {
@@ -536,12 +610,14 @@ export const prerender = true;
           if (file.size > MAX_IMAGE_BYTES_EACH) {
             throw new Error(`Image ${file.name} is too large. Keep each image under 6MB.`);
           }
-          const imageBase64 = await readFileAsBase64(file);
-          estimatedPayloadBytes += imageBase64.length;
+
+          setStatus(`Optimizing image ${images.length + 1} of ${imageInput.files.length}...`);
+          const optimized = await optimizeImageForUpload(file);
+          estimatedPayloadBytes += optimized.contentBase64.length;
           images.push({
-            name: file.name,
-            mimeType: file.type || "image/jpeg",
-            contentBase64: imageBase64,
+            name: optimized.name,
+            mimeType: optimized.mimeType,
+            contentBase64: optimized.contentBase64,
           });
         }
 
@@ -629,4 +705,5 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
 
