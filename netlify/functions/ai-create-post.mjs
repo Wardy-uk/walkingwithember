@@ -9,6 +9,7 @@ const CORS_HEADERS = {
 const REQUIRED_ENV_GENERATE = ["OPENAI_API_KEY", "GITHUB_TOKEN", "GITHUB_REPO"];
 
 export const handler = async (event) => {
+  try {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   }
@@ -178,6 +179,9 @@ export const handler = async (event) => {
     },
     200
   );
+  } catch (error) {
+    return json({ error: `Unexpected server error: ${String(error?.message || error)}` }, 500);
+  }
 };
 
 function json(body, statusCode = 200) {
@@ -264,8 +268,9 @@ function parseGpx(contentBase64, name) {
 
   const elevations = points.map((p) => p.ele).filter((v) => Number.isFinite(v));
   const hasElevation = elevations.length > 1;
-  const minElevationMeters = hasElevation ? Math.round(Math.min(...elevations)) : null;
-  const maxElevationMeters = hasElevation ? Math.round(Math.max(...elevations)) : null;
+    const minMaxElevation = getMinMax(elevations);
+  const minElevationMeters = hasElevation ? Math.round(minMaxElevation.min) : null;
+  const maxElevationMeters = hasElevation ? Math.round(minMaxElevation.max) : null;
   const timeValues = points.map((p) => p.timeMs).filter((v) => Number.isFinite(v));
   const hasTime = timeValues.length > 1;
   const elapsedSeconds = hasTime ? Math.max(0, Math.round((timeValues[timeValues.length - 1] - timeValues[0]) / 1000)) : null;
@@ -328,6 +333,19 @@ function extractPoints(xml, tagName) {
   }
 
   return points;
+}
+function getMinMax(values) {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const value of values) {
+    if (!Number.isFinite(value)) continue;
+    if (value < min) min = value;
+    if (value > max) max = value;
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    return { min: null, max: null };
+  }
+  return { min, max };
 }
 function formatDuration(totalSeconds) {
   const seconds = Number(totalSeconds || 0);
@@ -748,3 +766,5 @@ function quoteYaml(value) {
 function escapeInline(value) {
   return String(value || "").replace(/[\[\]]/g, "");
 }
+
+
