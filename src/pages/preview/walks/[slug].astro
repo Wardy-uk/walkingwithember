@@ -55,7 +55,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
         <div><span>Dog Access</span><strong>{walk.data.dogFriendly ? "Dog-friendly" : "Lead only / restricted areas"}</strong></div>
       </section>
 
-      <div class="map-panel" id="map"></div>
+      <div class="map-panel" id="map" data-lat={String(walk.data.routeMapLat)} data-lng={String(walk.data.routeMapLng)} data-zoom={String(walk.data.routeMapZoom)} data-map-api-key={mapApiKey} data-gpx-url={gpxUrl}></div>
       <section class="card planning-strip">
         <div>
           <h2>Map And Navigation</h2>
@@ -113,19 +113,15 @@ const estimatedHours = walk.data.difficulty === "Hard"
     })}
   </script>
 
-  <script
-    type="module"
-    define:vars={{
-      lat: walk.data.routeMapLat,
-      lng: walk.data.routeMapLng,
-      zoom: walk.data.routeMapZoom,
-      mapApiKey,
-      gpxUrl
-    }}
-  >
+  <script type="module">
     import L from "leaflet";
 
     const mapContainer = document.getElementById("map");
+    const lat = Number(mapContainer?.dataset.lat || "0");
+    const lng = Number(mapContainer?.dataset.lng || "0");
+    const zoom = Number(mapContainer?.dataset.zoom || "11");
+    const mapApiKey = mapContainer?.dataset.mapApiKey || "";
+    const gpxUrl = mapContainer?.dataset.gpxUrl || "";
 
     function showMapMessage(message) {
       if (!mapContainer) return;
@@ -205,3 +201,4 @@ const estimatedHours = walk.data.difficulty === "Hard"
     }
   </script>
 </BaseLayout>
+
