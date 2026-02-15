@@ -13,82 +13,66 @@ export const prerender = true;
     <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
     <title>Walking with Ember | Admin</title>
     <style>
+      main.admin-wrap {
+        min-height: auto;
+        padding-block: 0.5rem;
+      }
       .admin-wrap {
         width: min(var(--max), calc(100% - 2rem));
-        margin: 1rem auto;
-        display: grid;
-        gap: 0.5rem;
+        margin: 0 auto;
       }
-      .admin-top {
+      .admin-bar {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        gap: 0.45rem;
+        justify-content: space-between;
+        gap: 0.4rem;
         flex-wrap: wrap;
       }
       .admin-brand {
         text-decoration: none;
         color: #3d2718;
+        white-space: nowrap;
       }
       .admin-brand strong {
         font-family: "Unbounded", "Segoe UI", sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.02em;
       }
-      .admin-brand span {
-        display: block;
-        color: var(--muted);
-        font-size: 0.82rem;
-        margin-top: 0;
-        line-height: 1.1;
-      }
-      .admin-links {
+      .admin-actions {
         display: flex;
         gap: 0.4rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
+        white-space: nowrap;
       }
-      .admin-links a {
+      .admin-actions a,
+      .admin-actions button {
         display: inline-block;
-      }
-      .admin-combined {
-        display: grid;
-        gap: 0.4rem;
-      }
-      .admin-combined h1,
-      .admin-combined p {
-        margin: 0;
-      }
-      .identity-row {
-        display: flex;
-        gap: 0.4rem;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-top: 0.1rem;
       }
       #identity-status {
         color: var(--muted);
         font-weight: 600;
         line-height: 1;
+        margin-left: 0.2rem;
+      }
+      @media (max-width: 1100px) {
+        .admin-actions {
+          overflow-x: auto;
+          max-width: 100%;
+          padding-bottom: 0.2rem;
+        }
       }
     </style>
   </head>
   <body>
     <main class="admin-wrap">
-      <section class="card admin-combined">
-        <div class="admin-top">
-          <a class="admin-brand" href="/">
-            <strong>Walking with Ember</strong>
-            <span>Admin tools and publishing</span>
-          </a>
-          <div class="admin-links">
-            <a class="button ghost-dark" href="/">View site</a>
-            <a class="button" href="/admin/ai-walk/">AI Walk Creator</a>
-          </div>
-        </div>
-        <h1>CMS Admin</h1>
-        <p class="muted">Sign in with Netlify Identity to manage content or use the AI walk workflow.</p>
-        <div class="identity-row">
+      <section class="card admin-bar">
+        <a class="admin-brand" href="/">
+          <strong>Walking with Ember</strong>
+        </a>
+        <div class="admin-actions">
+          <a class="button ghost-dark" href="/">View site</a>
+          <a class="button" href="/admin/ai-walk/">AI Walk Creator</a>
           <button id="identity-login" type="button">Log in</button>
           <button id="identity-signup" type="button">Sign up</button>
           <button id="identity-recovery" type="button">Recover password</button>
