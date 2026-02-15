@@ -1,0 +1,548 @@
+---
+interface Props {
+  gpxUrl: string;
+  osApiKey?: string;
+  autoPlay?: boolean;
+  openTabHref?: string;
+  showOpenTab?: boolean;
+  panelTitle?: string;
+}
+
+const {
+  gpxUrl,
+  osApiKey = "",
+  autoPlay = false,
+  openTabHref = "",
+  showOpenTab = true,
+  panelTitle = "3D Flyby",
+} = Astro.props;
+---
+
+<section
+  class="card flyby-panel"
+  data-flyby-root
+  data-gpx-url={gpxUrl}
+  data-os-api-key={osApiKey}
+  data-auto-play={autoPlay ? "yes" : "no"}
+>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.2.0/dist/maplibre-gl.css" />
+  <div class="flyby-head">
+    <h2>{panelTitle}</h2>
+    {showOpenTab && openTabHref && (
+      <a class="button ghost-dark" href={openTabHref} target="_blank" rel="noreferrer">
+        Open In New Tab
+      </a>
+    )}
+  </div>
+  <div class="flyby-map-wrap">
+    <div class="flyby-map" data-flyby-map></div>
+    <canvas class="flyby-canvas" data-flyby-canvas></canvas>
+  </div>
+  <div class="flyby-controls">
+    <button class="button" type="button" data-flyby-play>Play</button>
+    <input class="flyby-range" type="range" min="0" max="100" value="0" data-flyby-scrub />
+    <select class="flyby-select" data-flyby-speed>
+      <option value="0.5">0.5x</option>
+      <option value="1">1x</option>
+      <option value="2" selected>2x</option>
+      <option value="4">4x</option>
+    </select>
+    <select class="flyby-select" data-flyby-preset>
+      <option value="cinematic">Cinematic</option>
+      <option value="balanced">Balanced</option>
+      <option value="chase">Chase</option>
+    </select>
+    <select class="flyby-select" data-flyby-map-type disabled={!osApiKey}>
+      {osApiKey ? (
+        <>
+          <option value="Outdoor_3857">OS Outdoor</option>
+          <option value="Road_3857">OS Road</option>
+          <option value="Light_3857">OS Light</option>
+        </>
+      ) : (
+        <option value="osm">OS key required</option>
+      )}
+    </select>
+    <div class="flyby-zoom">
+      <button class="button" type="button" data-flyby-zoom-out>Zoom -</button>
+      <span data-flyby-zoom-readout>13.60</span>
+      <button class="button" type="button" data-flyby-zoom-in>Zoom +</button>
+    </div>
+  </div>
+</section>
+
+<script type="module">
+  import maplibregl from "https://esm.sh/maplibre-gl@5.2.0";
+
+  const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const toDeg = (rad) => (rad * 180) / Math.PI;
+  const haversineMeters = (lat1, lon1, lat2, lon2) => {
+    const R = 6371000;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+  const bearingDeg = (lat1, lon1, lat2, lon2) => {
+    const phi1 = toRad(lat1);
+    const phi2 = toRad(lat2);
+    const lambda1 = toRad(lon1);
+    const lambda2 = toRad(lon2);
+    const y = Math.sin(lambda2 - lambda1) * Math.cos(phi2);
+    const x =
+      Math.cos(phi1) * Math.sin(phi2) -
+      Math.sin(phi1) * Math.cos(phi2) * Math.cos(lambda2 - lambda1);
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+  };
+  const shortestAngleDiff = (from, to) => ((to - from + 540) % 360) - 180;
+
+  const cameraPresets = {
+    cinematic: {
+      lookaheadMeters: 320,
+      chaseMeters: 135,
+      pitch: 72,
+      zoomBase: 13.6,
+      zoomMin: 11.5,
+      zoomMax: 14.2,
+      bearingSmoothing: 0.14,
+    },
+    balanced: {
+      lookaheadMeters: 250,
+      chaseMeters: 105,
+      pitch: 68,
+      zoomBase: 13.8,
+      zoomMin: 11.6,
+      zoomMax: 14.3,
+      bearingSmoothing: 0.16,
+    },
+    chase: {
+      lookaheadMeters: 180,
+      chaseMeters: 80,
+      pitch: 62,
+      zoomBase: 14.1,
+      zoomMin: 11.8,
+      zoomMax: 14.5,
+      bearingSmoothing: 0.2,
+    },
+  };
+
+  const terrainSourceId = "terrain-source";
+  const osLayerIds = new Set(["Outdoor_3857", "Road_3857", "Light_3857"]);
+
+  const interpolatePointAtDistance = (points, targetDistanceM) => {
+    if (points.length === 0) return { lat: 0, lon: 0, index: 0 };
+    if (points.length === 1) return { lat: points[0].lat, lon: points[0].lon, index: 0 };
+    const maxDistance = points[points.length - 1].distanceFromStartM;
+    const target = clamp(targetDistanceM, 0, Math.max(maxDistance, 0));
+    let low = 0;
+    let high = points.length - 1;
+    while (low < high) {
+      const mid = Math.floor((low + high) / 2);
+      if (points[mid].distanceFromStartM < target) low = mid + 1;
+      else high = mid;
+    }
+    const rightIndex = clamp(low, 1, points.length - 1);
+    const leftIndex = rightIndex - 1;
+    const left = points[leftIndex];
+    const right = points[rightIndex];
+    const span = Math.max(right.distanceFromStartM - left.distanceFromStartM, 0.0001);
+    const t = clamp((target - left.distanceFromStartM) / span, 0, 1);
+    return {
+      lat: lerp(left.lat, right.lat, t),
+      lon: lerp(left.lon, right.lon, t),
+      index: leftIndex,
+    };
+  };
+
+  const buildPlaybackPoints = (points, maxPoints = 1800) => {
+    if (points.length <= 2 || points.length <= maxPoints) return points;
+    const totalDistance = Math.max(points[points.length - 1].distanceFromStartM, 1);
+    const interval = totalDistance / (maxPoints - 1);
+    const sampled = [];
+    for (let i = 0; i < maxPoints; i += 1) {
+      const targetDistance = Math.min(totalDistance, i * interval);
+      const interp = interpolatePointAtDistance(points, targetDistance);
+      const nearest = points[interp.index] ?? points[0];
+      sampled.push({
+        lat: interp.lat,
+        lon: interp.lon,
+        ele: nearest.ele ?? null,
+        time: null,
+        distanceFromStartM: targetDistance,
+      });
+    }
+    return sampled;
+  };
+
+  const smoothPlaybackPoints = (points, radius = 2) => {
+    if (points.length <= 4 || radius <= 0) return points;
+    return points.map((point, i) => {
+      if (i === 0 || i === points.length - 1) return point;
+      let latSum = 0;
+      let lonSum = 0;
+      let wSum = 0;
+      for (let j = -radius; j <= radius; j += 1) {
+        const idx = clamp(i + j, 0, points.length - 1);
+        const w = radius + 1 - Math.abs(j);
+        latSum += points[idx].lat * w;
+        lonSum += points[idx].lon * w;
+        wSum += w;
+      }
+      return { ...point, lat: latSum / wSum, lon: lonSum / wSum };
+    });
+  };
+
+  const parseGpxPoints = (xmlText) => {
+    const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+    const trk = Array.from(doc.querySelectorAll("trkpt"));
+    const rte = Array.from(doc.querySelectorAll("rtept"));
+    const nodes = trk.length > 0 ? trk : rte;
+    const points = [];
+    let cumulative = 0;
+    for (let i = 0; i < nodes.length; i += 1) {
+      const node = nodes[i];
+      const lat = Number(node.getAttribute("lat"));
+      const lon = Number(node.getAttribute("lon"));
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+      const prev = points[points.length - 1];
+      if (prev) cumulative += haversineMeters(prev.lat, prev.lon, lat, lon);
+      points.push({ lat, lon, ele: null, time: null, distanceFromStartM: cumulative });
+    }
+    return points;
+  };
+
+  const buildStyle = (mapTypeId, osApiKey) => {
+    const useOs = osApiKey && osLayerIds.has(mapTypeId);
+    const tiles = useOs
+      ? [`https://api.os.uk/maps/raster/v1/zxy/${mapTypeId}/{z}/{x}/{y}.png?key=${encodeURIComponent(osApiKey)}`]
+      : ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"];
+    return {
+      version: 8,
+      sources: {
+        base: {
+          type: "raster",
+          tiles,
+          tileSize: 256,
+          maxzoom: 19,
+          attribution: useOs
+            ? "&copy; Crown copyright and database rights 2026 Ordnance Survey"
+            : "&copy; OpenStreetMap contributors",
+        },
+        [terrainSourceId]: {
+          type: "raster-dem",
+          tiles: ["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],
+          tileSize: 256,
+          encoding: "terrarium",
+          maxzoom: 13,
+        },
+      },
+      layers: [
+        { id: "base", type: "raster", source: "base" },
+        {
+          id: "terrain-hillshade",
+          type: "hillshade",
+          source: terrainSourceId,
+          paint: {
+            "hillshade-shadow-color": "#253347",
+            "hillshade-highlight-color": "#93a7c1",
+            "hillshade-exaggeration": 0.55,
+          },
+        },
+      ],
+      terrain: { source: terrainSourceId, exaggeration: 1.25 },
+    };
+  };
+
+  const roots = document.querySelectorAll("[data-flyby-root]");
+  for (const root of roots) {
+    if (root.dataset.flybyReady === "yes") continue;
+    root.dataset.flybyReady = "yes";
+
+    const gpxUrl = root.dataset.gpxUrl || "";
+    if (!gpxUrl) continue;
+    const osApiKey = root.dataset.osApiKey || "";
+    const autoPlay = root.dataset.autoPlay === "yes";
+
+    const mapEl = root.querySelector("[data-flyby-map]");
+    const canvas = root.querySelector("[data-flyby-canvas]");
+    const playBtn = root.querySelector("[data-flyby-play]");
+    const scrub = root.querySelector("[data-flyby-scrub]");
+    const speedSel = root.querySelector("[data-flyby-speed]");
+    const presetSel = root.querySelector("[data-flyby-preset]");
+    const mapTypeSel = root.querySelector("[data-flyby-map-type]");
+    const zoomOutBtn = root.querySelector("[data-flyby-zoom-out]");
+    const zoomInBtn = root.querySelector("[data-flyby-zoom-in]");
+    const zoomReadout = root.querySelector("[data-flyby-zoom-readout]");
+    if (
+      !mapEl ||
+      !canvas ||
+      !playBtn ||
+      !scrub ||
+      !speedSel ||
+      !presetSel ||
+      !mapTypeSel ||
+      !zoomOutBtn ||
+      !zoomInBtn ||
+      !zoomReadout
+    ) {
+      continue;
+    }
+
+    let playbackState = "idle";
+    let hasPlayed = false;
+    let progress = 0;
+    let speed = Number(speedSel.value || "2");
+    let zoomOffset = 0;
+    let mapTypeId = osApiKey ? "Outdoor_3857" : "osm";
+    let presetId = "cinematic";
+    let rafId = null;
+    let lastTs = null;
+    let lastCameraTs = 0;
+    let lastOverlayTs = 0;
+    let lastBearing = null;
+    let cameraState = null;
+    let playbackPoints = [];
+
+    const map = new maplibregl.Map({
+      container: mapEl,
+      style: buildStyle(mapTypeId, osApiKey),
+      center: [-2.6, 54.4],
+      zoom: 5.5,
+      pitch: 68,
+      bearing: -20,
+      maxPitch: 85,
+    });
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+
+    const drawOverlay = (force = false, nowMs = performance.now()) => {
+      if (!playbackPoints.length || !canvas) return;
+      if (!force && nowMs - lastOverlayTs < 16) return;
+      lastOverlayTs = nowMs;
+
+      const width = map.getContainer().clientWidth;
+      const height = map.getContainer().clientHeight;
+      if (width <= 0 || height <= 0) return;
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, width, height);
+
+      if (!hasPlayed && progress <= 0.0001) return;
+
+      const totalDistance = playbackPoints[playbackPoints.length - 1].distanceFromStartM;
+      const revealDistance = clamp(progress, 0, 1) * totalDistance;
+      const revealLonLat = [];
+
+      for (let i = 0; i < playbackPoints.length; i += 1) {
+        const point = playbackPoints[i];
+        if (point.distanceFromStartM <= revealDistance) {
+          revealLonLat.push([point.lon, point.lat]);
+          continue;
+        }
+        if (i > 0) {
+          const prev = playbackPoints[i - 1];
+          const span = Math.max(point.distanceFromStartM - prev.distanceFromStartM, 0.0001);
+          const t = clamp((revealDistance - prev.distanceFromStartM) / span, 0, 1);
+          revealLonLat.push([lerp(prev.lon, point.lon, t), lerp(prev.lat, point.lat, t)]);
+        }
+        break;
+      }
+
+      if (revealLonLat.length < 2) return;
+
+      ctx.beginPath();
+      for (let i = 0; i < revealLonLat.length; i += 1) {
+        const [lon, lat] = revealLonLat[i];
+        const pt = map.project([lon, lat]);
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.strokeStyle = "rgba(10, 10, 10, 0.9)";
+      ctx.lineWidth = 9;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255, 64, 64, 0.98)";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+    };
+
+    const updateCamera = (value, nowMs = performance.now(), force = false) => {
+      if (!playbackPoints.length) return;
+      if (!force && nowMs - lastCameraTs < 16) return;
+      lastCameraTs = nowMs;
+
+      const preset = cameraPresets[presetId] ?? cameraPresets.cinematic;
+      const totalDistance = playbackPoints[playbackPoints.length - 1].distanceFromStartM;
+      const targetDistance = clamp(value, 0, 1) * totalDistance;
+      const current = interpolatePointAtDistance(playbackPoints, targetDistance);
+      const lookahead = interpolatePointAtDistance(playbackPoints, targetDistance + preset.lookaheadMeters);
+      const behind = interpolatePointAtDistance(playbackPoints, targetDistance - preset.chaseMeters);
+
+      const lookDistance = haversineMeters(current.lat, current.lon, lookahead.lat, lookahead.lon);
+      const rawBearing =
+        lookDistance < 5 && lastBearing !== null
+          ? lastBearing
+          : bearingDeg(current.lat, current.lon, lookahead.lat, lookahead.lon);
+      const smoothedBearing = (() => {
+        if (lastBearing === null) return rawBearing;
+        const desired =
+          (lastBearing + shortestAngleDiff(lastBearing, rawBearing) * preset.bearingSmoothing + 360) %
+          360;
+        const turnStep = clamp(shortestAngleDiff(lastBearing, desired), -2.5, 2.5);
+        return (lastBearing + turnStep + 360) % 360;
+      })();
+      lastBearing = smoothedBearing;
+
+      const zoom = clamp(preset.zoomBase + zoomOffset, preset.zoomMin, preset.zoomMax);
+      zoomReadout.textContent = zoom.toFixed(2);
+      const desiredLon = lerp(current.lon, behind.lon, 0.74);
+      const desiredLat = lerp(current.lat, behind.lat, 0.74);
+      const follow = playbackState === "playing" ? 0.14 : 0.28;
+
+      const smoothedCamera = cameraState
+        ? {
+            lon: lerp(cameraState.lon, desiredLon, follow),
+            lat: lerp(cameraState.lat, desiredLat, follow),
+            zoom: lerp(cameraState.zoom, zoom, follow),
+            bearing:
+              (cameraState.bearing + shortestAngleDiff(cameraState.bearing, smoothedBearing) * follow + 360) %
+              360,
+            pitch: lerp(cameraState.pitch, preset.pitch, follow),
+          }
+        : { lon: desiredLon, lat: desiredLat, zoom, bearing: smoothedBearing, pitch: preset.pitch };
+      cameraState = smoothedCamera;
+
+      map.jumpTo({
+        center: [smoothedCamera.lon, smoothedCamera.lat],
+        bearing: smoothedCamera.bearing,
+        pitch: smoothedCamera.pitch,
+        zoom: smoothedCamera.zoom,
+      });
+      drawOverlay(false, nowMs);
+    };
+
+    const stopPlayback = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = null;
+      lastTs = null;
+    };
+
+    const tick = (timestamp) => {
+      if (!playbackPoints.length) {
+        stopPlayback();
+        return;
+      }
+      if (lastTs === null) lastTs = timestamp;
+      const delta = timestamp - lastTs;
+      lastTs = timestamp;
+
+      const totalDistance = Math.max(playbackPoints[playbackPoints.length - 1].distanceFromStartM, 1);
+      const baseDurationMs = clamp(totalDistance * 6, 25000, 150000);
+      const increment = delta / (baseDurationMs / speed);
+      progress = clamp(progress + increment, 0, 1);
+      scrub.value = String(Math.round(progress * 100));
+      updateCamera(progress, timestamp);
+
+      if (progress >= 1) {
+        playbackState = "paused";
+        playBtn.textContent = "Play";
+        stopPlayback();
+        return;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    const startPlayback = () => {
+      if (!playbackPoints.length) return;
+      if (progress >= 1) {
+        progress = 0;
+        scrub.value = "0";
+        lastBearing = null;
+        cameraState = null;
+      }
+      hasPlayed = true;
+      playbackState = "playing";
+      playBtn.textContent = "Pause";
+      if (rafId === null) rafId = requestAnimationFrame(tick);
+    };
+
+    const setPaused = () => {
+      playbackState = "paused";
+      playBtn.textContent = "Play";
+      stopPlayback();
+    };
+
+    playBtn.addEventListener("click", () => {
+      if (playbackState === "playing") setPaused();
+      else startPlayback();
+    });
+
+    scrub.addEventListener("input", () => {
+      progress = Number(scrub.value) / 100;
+      hasPlayed = hasPlayed || progress > 0;
+      updateCamera(progress, performance.now(), true);
+      drawOverlay(true);
+    });
+
+    speedSel.addEventListener("change", () => {
+      speed = Number(speedSel.value) || 2;
+    });
+
+    presetSel.addEventListener("change", () => {
+      presetId = presetSel.value in cameraPresets ? presetSel.value : "cinematic";
+      lastBearing = null;
+      cameraState = null;
+      updateCamera(progress, performance.now(), true);
+    });
+
+    mapTypeSel.addEventListener("change", () => {
+      mapTypeId = mapTypeSel.value;
+      map.setStyle(buildStyle(mapTypeId, osApiKey));
+    });
+
+    zoomInBtn.addEventListener("click", () => {
+      zoomOffset = clamp(zoomOffset + 0.2, -1.5, 1.5);
+      updateCamera(progress, performance.now(), true);
+    });
+
+    zoomOutBtn.addEventListener("click", () => {
+      zoomOffset = clamp(zoomOffset - 0.2, -1.5, 1.5);
+      updateCamera(progress, performance.now(), true);
+    });
+
+    map.on("resize", () => drawOverlay(true));
+    map.on("styledata", () => {
+      if (playbackPoints.length && (hasPlayed || progress > 0)) {
+        drawOverlay(true);
+      }
+    });
+
+    fetch(gpxUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error(`GPX fetch failed (${res.status})`);
+        return res.text();
+      })
+      .then((xml) => {
+        const rawPoints = parseGpxPoints(xml);
+        if (rawPoints.length < 2) return;
+        const sampled = buildPlaybackPoints(rawPoints, 1800);
+        playbackPoints = smoothPlaybackPoints(sampled, 2);
+        const start = playbackPoints[0];
+        map.jumpTo({ center: [start.lon, start.lat], zoom: cameraPresets.cinematic.zoomBase, pitch: 68, bearing: 0 });
+        if (autoPlay) {
+          startPlayback();
+        }
+      })
+      .catch(() => {
+        // Keep panel interactive even if GPX load fails.
+      });
+  }
+</script>

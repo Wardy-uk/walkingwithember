@@ -1,6 +1,7 @@
 ---
 import "leaflet/dist/leaflet.css";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import FlybyPanel from "../../../components/FlybyPanel.astro";
 import { getAllWalks, getRegions, getSiteSettings } from "../../../lib/content";
 
 export async function getStaticPaths() {
@@ -20,6 +21,7 @@ const encodedUrl = encodeURIComponent(pageUrl);
 const encodedTitle = encodeURIComponent(walk.data.title);
 const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
 const gpxUrl = walk.data.gpxDownload ?? "";
+const hasGpx = Boolean(gpxUrl);
 const isDraft = Boolean(walk.data.draft);
 const contentPath = `src/content/walks/${walk.slug}.md`;
 const liveWalkUrl = `/walks/${walk.slug}/`;
@@ -70,15 +72,27 @@ const estimatedHours = walk.data.difficulty === "Hard"
         <div><span>Dog Access</span><strong>{walk.data.dogFriendly ? "Dog-friendly" : "Lead only / restricted areas"}</strong></div>
       </section>
 
-      <div
-        class="map-panel"
-        id="map"
-        data-lat={String(walk.data.routeMapLat)}
-        data-lng={String(walk.data.routeMapLng)}
-        data-zoom={String(walk.data.routeMapZoom)}
-        data-map-api-key={mapApiKey}
-        data-gpx-url={gpxUrl}
-      ></div>
+      <section class:list={["map-compare", hasGpx && "two-panels"]}>
+        <div
+          class="map-panel"
+          id="map"
+          data-lat={String(walk.data.routeMapLat)}
+          data-lng={String(walk.data.routeMapLng)}
+          data-zoom={String(walk.data.routeMapZoom)}
+          data-map-api-key={mapApiKey}
+          data-gpx-url={gpxUrl}
+        ></div>
+        {hasGpx && (
+          <FlybyPanel
+            gpxUrl={gpxUrl}
+            osApiKey={mapApiKey}
+            autoPlay={false}
+            openTabHref={`/preview/flyby/${walk.slug}/?autoplay=1`}
+            showOpenTab={true}
+            panelTitle="3D Flyby"
+          />
+        )}
+      </section>
 
       <section class="card planning-strip">
         <div>

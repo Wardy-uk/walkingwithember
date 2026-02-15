@@ -1,0 +1,48 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import FlybyPanel from "../../../components/FlybyPanel.astro";
+import { getAllWalks, getRegions, getSiteSettings } from "../../../lib/content";
+
+export async function getStaticPaths() {
+  const walks = await getAllWalks();
+  return walks.map((walk) => ({
+    params: { slug: walk.slug },
+    props: { walk },
+  }));
+}
+
+const { walk } = Astro.props;
+const settings = await getSiteSettings();
+const regions = await getRegions();
+const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
+const gpxUrl = walk.data.gpxDownload ?? "";
+const autoPlay = Astro.url.searchParams.get("autoplay") === "1";
+const backHref = walk.data.draft ? `/preview/walks/${walk.slug}/` : `/walks/${walk.slug}/`;
+---
+
+<BaseLayout
+  title={`${walk.data.title} Flyby Preview | ${settings.siteName}`}
+  description={`3D flyby for ${walk.data.title}`}
+  regions={regions}
+  siteName={settings.siteName}
+  tagline={settings.tagline}
+>
+  <div class="container page-grid">
+    <section class="card">
+      <h1>{walk.data.title} - 3D Flyby</h1>
+      <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}{walk.data.draft ? " · Draft" : ""}</p>
+      <p>
+        <a class="button ghost-dark" href={backHref}>Back To Walk</a>
+      </p>
+    </section>
+    {gpxUrl && (
+      <FlybyPanel
+        gpxUrl={gpxUrl}
+        osApiKey={mapApiKey}
+        autoPlay={autoPlay}
+        showOpenTab={false}
+        panelTitle="3D Flyby"
+      />
+    )}
+  </div>
+</BaseLayout>
