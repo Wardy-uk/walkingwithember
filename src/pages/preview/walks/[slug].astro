@@ -55,7 +55,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
         <div><span>Dog Access</span><strong>{walk.data.dogFriendly ? "Dog-friendly" : "Lead only / restricted areas"}</strong></div>
       </section>
 
-      <div class="map-panel" id="map" data-lat={String(walk.data.routeMapLat)} data-lng={String(walk.data.routeMapLng)} data-zoom={String(walk.data.routeMapZoom)} data-map-api-key={mapApiKey} data-gpx-url={gpxUrl}></div>
+      <div class="map-panel" id="map" data-lat={String(walk.data.routeMapLat)} data-lng={String(walk.data.routeMapLng)} data-zoom={String(walk.data.routeMapZoom)} data-map-api-key={mapApiKey} data-gpx-url={gpxUrl}></div>`r`n      <details class="card" open>`r`n        <summary>Temporary Map Debug</summary>`r`n        <pre id="map-debug" style="white-space:pre-wrap; font-size:0.8rem; margin-top:0.7rem;"></pre>`r`n      </details>
       <section class="card planning-strip">
         <div>
           <h2>Map And Navigation</h2>
@@ -117,15 +117,26 @@ const estimatedHours = walk.data.difficulty === "Hard"
     import L from "leaflet";
 
     const mapContainer = document.getElementById("map");
+    const debugEl = document.getElementById("map-debug");
     const lat = Number(mapContainer?.dataset.lat || "0");
     const lng = Number(mapContainer?.dataset.lng || "0");
     const zoom = Number(mapContainer?.dataset.zoom || "11");
     const mapApiKey = mapContainer?.dataset.mapApiKey || "";
     const gpxUrl = mapContainer?.dataset.gpxUrl || "";
 
+    const logDebug = (message) => {
+      const t = new Date().toLocaleTimeString("en-GB", { hour12: false });
+      const line = `[${t}] ${message}`;
+      if (debugEl) {
+        debugEl.textContent += `${line}\n`;
+      }
+      console.log(line);
+    };
+
     function showMapMessage(message) {
       if (!mapContainer) return;
       mapContainer.innerHTML = `<div style="display:grid;place-items:center;height:100%;padding:1rem;color:#7c6654;font-size:0.95rem;">${message}</div>`;
+      logDebug(`Map message shown: ${message}`);
     }
 
     function extractTrackPoints(xmlText) {
@@ -143,37 +154,37 @@ const estimatedHours = walk.data.difficulty === "Hard"
       return points;
     }
 
-    if (mapContainer) {
+    logDebug(`Map script start. lat=${lat}, lng=${lng}, zoom=${zoom}, hasApiKey=${mapApiKey ? "yes" : "no"}, gpxUrl=${gpxUrl || "(empty)"}`);`r`n`r`n    if (mapContainer) {
       try {
-        const map = L.map(mapContainer).setView([lat, lng], zoom);
+        const map = L.map(mapContainer).setView([lat, lng], zoom);`r`n        logDebug("Leaflet map initialized.");
         if (mapApiKey) {
           L.tileLayer("https://api.os.uk/maps/raster/v1/zxy/Outdoor_3857/{z}/{x}/{y}.png?key={accessToken}", {
             accessToken: mapApiKey,
             maxZoom: 18,
             attribution: "&copy; Ordnance Survey"
-          }).addTo(map);
+          }).addTo(map);`r`n          logDebug("OS tile layer attached.");
         } else {
           L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 18,
             attribution: "&copy; OpenStreetMap contributors"
-          }).addTo(map);
+          }).addTo(map);`r`n          logDebug("OS tile layer attached.");
         }
 
-        const dropFallbackMarker = () => {
-          L.circleMarker([lat, lng], { radius: 5, color: "#be6d37", weight: 2, fillOpacity: 1 }).addTo(map);
+        const dropFallbackMarker = () => {`r`n          logDebug("Fallback marker rendered.");
+          L.circleMarker([lat, lng], { radius: 5, color: "#be6d37", weight: 2, fillOpacity: 1 }).addTo(map);`r`n          logDebug("OS tile layer attached.");
         };
 
         const drawRouteFromGpx = async () => {
-          if (!gpxUrl) {
+          if (!gpxUrl) {`r`n            logDebug("No GPX URL present in data attributes.");
             dropFallbackMarker();
             return;
           }
 
           try {
-            const response = await fetch(gpxUrl);
+            logDebug(`Fetching GPX: ${gpxUrl}`);`r`n            const response = await fetch(gpxUrl);`r`n            logDebug(`GPX fetch status: ${response.status}`);
             if (!response.ok) throw new Error(`GPX fetch failed: ${response.status}`);
-            const gpxXml = await response.text();
-            const routePoints = extractTrackPoints(gpxXml);
+            const gpxXml = await response.text();`r`n            logDebug(`GPX bytes loaded: ${gpxXml.length}`);
+            const routePoints = extractTrackPoints(gpxXml);`r`n            logDebug(`Route points extracted: ${routePoints.length}`);
 
             if (routePoints.length < 2) {
               dropFallbackMarker();
@@ -184,11 +195,11 @@ const estimatedHours = walk.data.difficulty === "Hard"
               color: "#be6d37",
               weight: 4,
               opacity: 0.9
-            }).addTo(map);
+            }).addTo(map);`r`n          logDebug("OS tile layer attached.");
 
-            map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
-            L.circleMarker(routePoints[0], { radius: 5, color: "#1f7a1f", weight: 2, fillOpacity: 1 }).addTo(map);
-            L.circleMarker(routePoints[routePoints.length - 1], { radius: 5, color: "#9e2a2a", weight: 2, fillOpacity: 1 }).addTo(map);
+            map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });`r`n            logDebug("Route polyline rendered and bounds fitted.");
+            L.circleMarker(routePoints[0], { radius: 5, color: "#1f7a1f", weight: 2, fillOpacity: 1 }).addTo(map);`r`n          logDebug("OS tile layer attached.");
+            L.circleMarker(routePoints[routePoints.length - 1], { radius: 5, color: "#9e2a2a", weight: 2, fillOpacity: 1 }).addTo(map);`r`n          logDebug("OS tile layer attached.");
           } catch {
             dropFallbackMarker();
           }
@@ -201,4 +212,5 @@ const estimatedHours = walk.data.difficulty === "Hard"
     }
   </script>
 </BaseLayout>
+
 
