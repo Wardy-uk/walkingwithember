@@ -56,7 +56,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
         window.dispatchEvent(new CustomEvent("ww-identity-change", { detail: { user, available } }));
       };
 
-      if (window.netlifyIdentity) {
+      let identityAttached = false;
+
+      const attachIdentity = () => {
+        if (identityAttached || !window.netlifyIdentity) return;
+        identityAttached = true;
+
         try {
           window.netlifyIdentity.on("init", (user) => {
             if (!user && window.location.hash.includes("invite_token")) {
@@ -84,9 +89,23 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
         } catch {
           setIdentityStatus("identity error", "error", null, false);
         }
-      } else {
-        setIdentityStatus("identity unavailable", "unavailable", null, false);
-      }
+      };
+
+      const waitForIdentity = (attempt = 0) => {
+        if (window.netlifyIdentity) {
+          attachIdentity();
+          return;
+        }
+
+        if (attempt < 40) {
+          setIdentityStatus("checking...", "checking", null, false);
+          setTimeout(() => waitForIdentity(attempt + 1), 250);
+        } else {
+          setIdentityStatus("identity unavailable", "unavailable", null, false);
+        }
+      };
+
+      waitForIdentity();
     </script>
 
     <script type="application/ld+json" is:inline define:vars={{ title, description, canonical }}>
@@ -100,3 +119,4 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
     </script>
   </body>
 </html>
+
