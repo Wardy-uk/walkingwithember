@@ -103,11 +103,11 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
             data-tags={walk.data.tags.join(",")}
             data-draft={walk.data.draft ? "yes" : "no"}
           >
-            <a href={walk.data.draft ? `/admin/#/collections/walks/entries/${walk.slug}` : `/walks/${walk.slug}/`} target={walk.data.draft ? "_blank" : undefined} rel={walk.data.draft ? "noreferrer" : undefined}>
+            <a href={walk.data.draft ? `/preview/walks/${walk.slug}/` : `/walks/${walk.slug}/`} target={walk.data.draft ? "_blank" : undefined} rel={walk.data.draft ? "noreferrer" : undefined}>
               <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
             </a>
             <div class="entry-card-body">
-              <h2><a href={walk.data.draft ? `/admin/#/collections/walks/entries/${walk.slug}` : `/walks/${walk.slug}/`} target={walk.data.draft ? "_blank" : undefined} rel={walk.data.draft ? "noreferrer" : undefined}>{walk.data.title}</a></h2>
+              <h2><a href={walk.data.draft ? `/preview/walks/${walk.slug}/` : `/walks/${walk.slug}/`} target={walk.data.draft ? "_blank" : undefined} rel={walk.data.draft ? "noreferrer" : undefined}>{walk.data.title}</a></h2>
               <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}{walk.data.draft ? " · Draft" : ""}</p>
               <p>{walk.data.summary}</p>
               <ul class="chip-list">
@@ -186,3 +186,4 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
     filterCards();
   </script>
 </BaseLayout>
+

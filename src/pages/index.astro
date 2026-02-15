@@ -60,11 +60,11 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
         <div class="v2-route-grid">
           {draftWalks.map((walk) => (
             <article class="v2-route-card" style="outline:2px dashed #be6d37; outline-offset:2px;">
-              <a href={`/admin/#/collections/walks/entries/${walk.slug}`} target="_blank" rel="noreferrer">
+              <a href={`/preview/walks/${walk.slug}/`} target="_blank" rel="noreferrer">
                 <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
               </a>
               <div>
-                <h3><a href={`/admin/#/collections/walks/entries/${walk.slug}`} target="_blank" rel="noreferrer">{walk.data.title}</a></h3>
+                <h3><a href={`/preview/walks/${walk.slug}/`} target="_blank" rel="noreferrer">{walk.data.title}</a></h3>
                 <p>{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty} · Draft</p>
               </div>
             </article>
@@ -108,3 +108,4 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
     }
   </script>
 </BaseLayout>
+
