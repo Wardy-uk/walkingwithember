@@ -110,6 +110,29 @@ export const handler = async (event) => {
       });
     }
 
+
+    if (action === "publish_draft") {
+      const validationError = validatePublishDraftPayload(payload);
+      if (validationError) return json({ error: validationError }, 400);
+
+      const branch = process.env.GITHUB_BRANCH || "main";
+      const publishResult = await publishDraftFile({
+        path: payload.contentPath,
+        branch,
+      });
+      if (!publishResult.ok) return json({ error: publishResult.error }, 502);
+
+      return json({
+        ok: true,
+        branch,
+        published: {
+          path: payload.contentPath,
+          slug: pathToSlug(payload.contentPath),
+          type: payload.contentPath.includes("/walks/") ? "walk" : "blog",
+        },
+        commit: publishResult.data?.commitUrl || null,
+      });
+    }
     if (action !== "generate_post") return json({ error: "Invalid action" }, 400);
 
     const validationError = validateGeneratePayload(payload);
@@ -253,6 +276,15 @@ function validateUploadAssetPayload(payload) {
   if (!["gpx", "image"].includes(payload.asset.kind)) return "asset.kind must be gpx or image";
   if (!payload.asset.name || !payload.asset.contentBase64) return "asset name and content are required";
   if (payload.asset.kind === "image" && !payload.asset.mimeType) return "asset mimeType is required for images";
+  return null;
+}
+
+function validatePublishDraftPayload(payload) {
+  if (!payload || typeof payload !== "object") return "Payload missing";
+  const contentPath = String(payload.contentPath || "");
+  if (!contentPath) return "contentPath is required";
+  const allowed = contentPath.startsWith("src/content/walks/") || contentPath.startsWith("src/content/blog/");
+  if (!allowed || !contentPath.endsWith(".md")) return "contentPath must be a walk/blog markdown file";
   return null;
 }
 
@@ -583,6 +615,49 @@ function createBlogMarkdown({ content, payload, publishDate, coverImage, include
   return lines.join("\n");
 }
 
+async function publishDraftFile({ path, branch }) {
+  const repo = process.env.GITHUB_REPO;
+  const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}`;
+
+  try {
+    const getResponse = await fetch(url + `?ref=${encodeURIComponent(branch)}`, {
+      method: "GET",
+      headers: githubHeaders(),
+    });
+
+    if (!getResponse.ok) {
+      const text = await getResponse.text();
+      return { ok: false, error: `GitHub read failed (${getResponse.status}): ${text}` };
+    }
+
+    const current = await getResponse.json();
+    const currentText = Buffer.from(String(current.content || "").replace(/\n/g, ""), "base64").toString("utf8");
+    const updatedText = setDraftFlag(currentText, false);
+    const contentBase64 = Buffer.from(updatedText, "utf8").toString("base64");
+
+    const putResponse = await fetch(url, {
+      method: "PUT",
+      headers: githubHeaders(),
+      body: JSON.stringify({
+        message: `chore(ai): publish draft ${path}`,
+        content: contentBase64,
+        sha: current.sha,
+        branch,
+      }),
+    });
+
+    if (!putResponse.ok) {
+      const text = await putResponse.text();
+      return { ok: false, error: `GitHub publish failed (${putResponse.status}): ${text}` };
+    }
+
+    const data = await putResponse.json();
+    return { ok: true, data: { path, sha: data.content?.sha, commitUrl: data.commit?.html_url } };
+  } catch (error) {
+    return { ok: false, error: `GitHub publish request failed: ${String(error?.message || error)}` };
+  }
+}
+
 async function upsertRepoFile({ path, contentBase64, message, branch }) {
   const repo = process.env.GITHUB_REPO;
   const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}`;
@@ -607,6 +682,29 @@ async function upsertRepoFile({ path, contentBase64, message, branch }) {
   } catch (error) {
     return { ok: false, error: `GitHub request failed: ${String(error?.message || error)}` };
   }
+}
+
+function setDraftFlag(markdown, draftValue) {
+  const text = String(markdown || "");
+  const match = text.match(/^---\n([\s\S]*?)\n---\n?/);
+  const flagLine = `draft: ${draftValue ? "true" : "false"}`;
+
+  if (!match) return text;
+
+  const frontmatter = match[1];
+  const body = text.slice(match[0].length);
+  const hasDraft = /^draft:\s*(true|false)\s*$/m.test(frontmatter);
+  const newFrontmatter = hasDraft
+    ? frontmatter.replace(/^draft:\s*(true|false)\s*$/m, flagLine)
+    : frontmatter + "\n" + flagLine;
+
+  return `---\n${newFrontmatter}\n---\n${body}`;
+}
+
+function pathToSlug(contentPath) {
+  const value = String(contentPath || "");
+  const match = value.match(/\/([^/]+)\.md$/);
+  return match ? match[1] : "";
 }
 
 function githubHeaders() {
@@ -718,3 +816,4 @@ function quoteYaml(value) {
 function escapeInline(value) {
   return String(value || "").replace(/[\[\]]/g, "");
 }
+

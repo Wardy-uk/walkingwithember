@@ -252,7 +252,11 @@ export const prerender = true;
         <div id="activityLog" class="activity-log">Activity log initialized.</div>
         <div id="draftLinks" class="actions hidden" style="margin-top:0.7rem;">
           <a id="openWalkDraftBtn" class="button hidden" href="#" target="_blank" rel="noopener noreferrer">Open Walk Draft</a>
+          <a id="editWalkDraftBtn" class="button ghost hidden" href="#" target="_blank" rel="noopener noreferrer">Edit Walk Draft</a>
+          <button id="publishWalkDraftBtn" class="hidden" type="button">Publish Walk Draft</button>
           <a id="openBlogDraftBtn" class="button hidden" href="#" target="_blank" rel="noopener noreferrer">Open Blog Draft</a>
+          <a id="editBlogDraftBtn" class="button ghost hidden" href="#" target="_blank" rel="noopener noreferrer">Edit Blog Draft</a>
+          <button id="publishBlogDraftBtn" class="hidden" type="button">Publish Blog Draft</button>
         </div>
       </section>
     </main>
@@ -305,9 +309,14 @@ export const prerender = true;
       const activityLogEl = document.getElementById("activityLog");
       const draftLinksEl = document.getElementById("draftLinks");
       const openWalkDraftBtn = document.getElementById("openWalkDraftBtn");
+      const editWalkDraftBtn = document.getElementById("editWalkDraftBtn");
+      const publishWalkDraftBtn = document.getElementById("publishWalkDraftBtn");
       const openBlogDraftBtn = document.getElementById("openBlogDraftBtn");
+      const editBlogDraftBtn = document.getElementById("editBlogDraftBtn");
+      const publishBlogDraftBtn = document.getElementById("publishBlogDraftBtn");
 
       let analyzedGpx = null;
+      let latestCreated = { walkPath: "", blogPath: "" };
 
       function appendActivity(message) {
         const stamp = new Date().toLocaleTimeString("en-GB", { hour12: false });
@@ -327,6 +336,12 @@ export const prerender = true;
         return match ? match[1] : "";
       }
 
+      function cmsDraftEditUrl(type, slug) {
+        if (!slug) return "#";
+        const collection = type === "walk" ? "walks" : "blog";
+        return "/admin/#/collections/" + collection + "/entries/" + slug;
+      }
+
       function updateDraftButtons(created) {
         const walkSlug = slugFromContentPath(created?.walkPath);
         const blogSlug = slugFromContentPath(created?.blogPath);
@@ -334,10 +349,18 @@ export const prerender = true;
         const hasBlog = Boolean(blogSlug);
 
         openWalkDraftBtn.classList.toggle("hidden", !hasWalk);
+        editWalkDraftBtn.classList.toggle("hidden", !hasWalk);
+        publishWalkDraftBtn.classList.toggle("hidden", !hasWalk);
+
         openBlogDraftBtn.classList.toggle("hidden", !hasBlog);
+        editBlogDraftBtn.classList.toggle("hidden", !hasBlog);
+        publishBlogDraftBtn.classList.toggle("hidden", !hasBlog);
 
         openWalkDraftBtn.href = hasWalk ? ("/walks/" + walkSlug + "/") : "#";
+        editWalkDraftBtn.href = hasWalk ? cmsDraftEditUrl("walk", walkSlug) : "#";
+
         openBlogDraftBtn.href = hasBlog ? ("/blog/" + blogSlug + "/") : "#";
+        editBlogDraftBtn.href = hasBlog ? cmsDraftEditUrl("blog", blogSlug) : "#";
 
         draftLinksEl.classList.toggle("hidden", !(hasWalk || hasBlog));
       }
@@ -781,8 +804,21 @@ export const prerender = true;
         return data;
       }
 
+      async function publishDraft(contentPath, label) {
+        if (!contentPath) throw new Error("No draft path available to publish.");
+        setStatus("Publishing " + label + " draft...");
+        const { token } = await requireAdminUser();
+        const result = await callAiTool(token, {
+          action: "publish_draft",
+          contentPath,
+        });
+        setStatus(label + " draft published live.");
+        appendActivity("Publish commit: " + (result.commit || "(no commit url returned)"));
+      }
+
       async function generate() {
         try {
+          latestCreated = { walkPath: "", blogPath: "" };
           draftLinksEl.classList.add("hidden");
           setStatus("Checking admin session...");
           const { token } = await requireAdminUser();
@@ -832,6 +868,10 @@ export const prerender = true;
           });
 
           const created = data.created || {};
+          latestCreated = {
+            walkPath: created.walkPath || "",
+            blogPath: created.blogPath || "",
+          };
           updateDraftButtons(created);
           const lines = ["Draft generation completed."];
           if (created.walkPath) lines.push(`Walk: ${created.walkPath}`);
@@ -860,6 +900,22 @@ export const prerender = true;
       document.getElementById("analyzeBtn").addEventListener("click", analyzeGpx);
       document.getElementById("generateBtn").addEventListener("click", generate);
       document.getElementById("clearBtn").addEventListener("click", clearAnswers);
+      publishWalkDraftBtn.addEventListener("click", async () => {
+        try {
+          await publishDraft(latestCreated.walkPath, "Walk");
+          publishWalkDraftBtn.classList.add("hidden");
+        } catch (error) {
+          setStatus(String(error.message || error), true);
+        }
+      });
+      publishBlogDraftBtn.addEventListener("click", async () => {
+        try {
+          await publishDraft(latestCreated.blogPath, "Blog");
+          publishBlogDraftBtn.classList.add("hidden");
+        } catch (error) {
+          setStatus(String(error.message || error), true);
+        }
+      });
 
       renderQuestions();
       appendActivity("AI Walk page ready.");
