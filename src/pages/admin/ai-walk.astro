@@ -288,6 +288,8 @@ export const prerender = true;
       const MAX_IMAGE_BYTES_EACH = 6 * 1024 * 1024;
       const MAX_IMAGE_DIMENSION = 1800;
       const OUTPUT_IMAGE_QUALITY = 0.82;
+      const MAX_GPX_UPLOAD_BASE64 = 5_500_000;
+      const MAX_GPX_POINTS_UPLOAD = 3500;
       
       const questionsEl = document.getElementById("questions");
       const statusEl = document.getElementById("status");
@@ -536,6 +538,63 @@ export const prerender = true;
         };
       }
 
+
+      function escapeXml(value) {
+        return String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&apos;");
+      }
+
+      function toBase64Utf8(text) {
+        return btoa(unescape(encodeURIComponent(String(text || ""))));
+      }
+
+      function buildLightweightGpxXml(points, originalName) {
+        const safeName = escapeXml(String(originalName || "walk").replace(/\.[^.]+$/, ""));
+        const pointLines = points.map((point) => {
+          const lat = Number(point.lat).toFixed(6);
+          const lon = Number(point.lon).toFixed(6);
+          const ele = Number.isFinite(point.ele) ? `<ele>${Number(point.ele).toFixed(1)}</ele>` : "";
+          const time = Number.isFinite(point.timeMs) ? `<time>${new Date(point.timeMs).toISOString()}</time>` : "";
+          return `<trkpt lat="${lat}" lon="${lon}">${ele}${time}</trkpt>`;
+        });
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Walking With Ember" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>${safeName}</name>
+    <trkseg>
+      ${pointLines.join("\n      ")}
+    </trkseg>
+  </trk>
+</gpx>`;
+      }
+
+      function buildUploadGpxBase64(gpxText, originalName) {
+        const points = parsePoints(gpxText, "trkpt");
+        const routePoints = points.length >= 2 ? points : parsePoints(gpxText, "rtept");
+        if (routePoints.length < 2) {
+          throw new Error("GPX did not contain enough points for upload.");
+        }
+
+        const step = Math.max(1, Math.ceil(routePoints.length / MAX_GPX_POINTS_UPLOAD));
+        const sampled = [];
+        for (let i = 0; i < routePoints.length; i += step) sampled.push(routePoints[i]);
+        const last = routePoints[routePoints.length - 1];
+        if (sampled[sampled.length - 1] !== last) sampled.push(last);
+
+        const xml = buildLightweightGpxXml(sampled, originalName);
+        const contentBase64 = toBase64Utf8(xml);
+        return {
+          contentBase64,
+          originalPoints: routePoints.length,
+          pointsUsed: sampled.length,
+          wasReduced: sampled.length < routePoints.length,
+        };
+      }
+
       function formatMetric(value, suffix = "") {
         if (value === null || value === undefined || value === "") return "N/A";
         return `${value}${suffix}`;
@@ -580,15 +639,22 @@ export const prerender = true;
 
           const gpxFile = gpxInput.files[0];
           setStatus("Reading GPX file...");
-          const [gpxBase64, gpxText] = await Promise.all([readFileAsBase64(gpxFile), gpxFile.text()]);
+          const gpxText = await gpxFile.text();
 
           setStatus("Analyzing route metrics locally...");
           const summary = parseGpxClient(gpxText, gpxFile.name);
 
+          setStatus("Preparing GPX for upload...");
+          const uploadGpx = buildUploadGpxBase64(gpxText, gpxFile.name);
+          if (uploadGpx.contentBase64.length > MAX_GPX_UPLOAD_BASE64) {
+            throw new Error("GPX file is still too large after simplification. Export a shorter/lower-detail GPX and retry.");
+          }
+          appendActivity(`GPX upload prep: points ${uploadGpx.originalPoints} -> ${uploadGpx.pointsUsed}, b64=${uploadGpx.contentBase64.length}`);
+
           analyzedGpx = {
             name: gpxFile.name,
-            contentBase64: gpxBase64,
-            sizeBytes: gpxFile.size,
+            contentBase64: uploadGpx.contentBase64,
+            sizeBytes: Math.round((uploadGpx.contentBase64.length * 3) / 4),
             summary,
           };
 
@@ -773,6 +839,7 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
 
 
 
