@@ -438,6 +438,16 @@ button:hover,
   border: 1px solid rgba(255, 222, 185, 0.6);
 }
 
+.draft-section {
+  border-style: dashed;
+  border-color: #c5926e;
+  background: linear-gradient(180deg, #fff5ea 0%, #f8e8d5 100%);
+}
+
+.draft-card {
+  border-color: #c5926e;
+}
+
 .button.ghost-dark {
   background: #fff5e8;
   border: 1px solid #d9b995;

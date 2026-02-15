@@ -5,6 +5,8 @@ import { getAllWalks, getRegions, getSiteSettings } from "../../lib/content";
 const settings = await getSiteSettings();
 const regions = await getRegions();
 const walks = await getAllWalks();
+const publishedWalks = walks.filter((walk) => !walk.data.draft);
+const draftWalks = walks.filter((walk) => walk.data.draft);
 const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((a, b) => a.localeCompare(b));
 ---
 
@@ -91,9 +93,9 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
       <p id="walk-count" class="muted"></p>
 
       <div id="walk-grid" class="card-grid">
-        {walks.map((walk) => (
+        {publishedWalks.map((walk) => (
           <article
-            class:list={["entry-card", "walk-card", walk.data.draft && "admin-draft-only", walk.data.draft && "hidden"]}
+            class:list={["entry-card", "walk-card"]}
             data-title={walk.data.title}
             data-location={walk.data.location}
             data-distance={walk.data.distance}
@@ -101,14 +103,14 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
             data-region={walk.data.region}
             data-dog={walk.data.dogFriendly ? "yes" : "no"}
             data-tags={walk.data.tags.join(",")}
-            data-draft={walk.data.draft ? "yes" : "no"}
+            data-draft="no"
           >
-            <a href={walk.data.draft ? `/preview/walks/${walk.slug}/` : `/walks/${walk.slug}/`} target={walk.data.draft ? "_blank" : undefined} rel={walk.data.draft ? "noreferrer" : undefined}>
+            <a href={`/walks/${walk.slug}/`}>
               <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
             </a>
             <div class="entry-card-body">
-              <h2><a href={walk.data.draft ? `/preview/walks/${walk.slug}/` : `/walks/${walk.slug}/`} target={walk.data.draft ? "_blank" : undefined} rel={walk.data.draft ? "noreferrer" : undefined}>{walk.data.title}</a></h2>
-              <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}{walk.data.draft ? " · Draft" : ""}</p>
+              <h2><a href={`/walks/${walk.slug}/`}>{walk.data.title}</a></h2>
+              <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}</p>
               <p>{walk.data.summary}</p>
               <ul class="chip-list">
                 <li class="chip">{walk.data.region}</li>
@@ -118,12 +120,49 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
           </article>
         ))}
       </div>
+
+      {draftWalks.length > 0 && (
+        <section id="draft-section" class="card draft-section hidden">
+          <h2>Draft Walks (Admin)</h2>
+          <p class="muted">Visible only when logged in as admin.</p>
+          <div id="draft-grid" class="card-grid">
+            {draftWalks.map((walk) => (
+              <article
+                class:list={["entry-card", "walk-card", "draft-card", "admin-draft-only", "hidden"]}
+                data-title={walk.data.title}
+                data-location={walk.data.location}
+                data-distance={walk.data.distance}
+                data-difficulty={walk.data.difficulty}
+                data-region={walk.data.region}
+                data-dog={walk.data.dogFriendly ? "yes" : "no"}
+                data-tags={walk.data.tags.join(",")}
+                data-draft="yes"
+              >
+                <a href={`/preview/walks/${walk.slug}/`} target="_blank" rel="noreferrer">
+                  <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
+                </a>
+                <div class="entry-card-body">
+                  <h2><a href={`/preview/walks/${walk.slug}/`} target="_blank" rel="noreferrer">{walk.data.title}</a></h2>
+                  <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty} · Draft</p>
+                  <p>{walk.data.summary}</p>
+                  <ul class="chip-list">
+                    <li class="chip">Draft</li>
+                    <li class="chip">{walk.data.region}</li>
+                    {walk.data.tags.slice(0, 1).map((tag) => <li class="chip">{tag}</li>)}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
     </section>
   </div>
 
   <script is:inline>
     const cards = Array.from(document.querySelectorAll(".walk-card"));
     const count = document.getElementById("walk-count");
+    const draftSection = document.getElementById("draft-section");
     const search = document.getElementById("filter-search");
     const distance = document.getElementById("filter-distance");
     const difficulty = document.getElementById("filter-difficulty");
@@ -141,6 +180,7 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
     function filterCards() {
       const query = (search?.value || "").toLowerCase();
       let visible = 0;
+      let visibleDrafts = 0;
 
       for (const card of cards) {
         const title = (card.dataset.title || "").toLowerCase();
@@ -163,7 +203,15 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
         const showByRole = !isDraft || showDraftsForAdmin;
         const show = showByRole && matchSearch && matchDistance && matchDifficulty && matchRegion && matchDog && matchTag;
         card.style.display = show ? "" : "none";
-        if (show) visible += 1;
+        if (show) {
+          visible += 1;
+          if (isDraft) visibleDrafts += 1;
+        }
+      }
+
+      if (draftSection) {
+        const showDraftBlock = showDraftsForAdmin && visibleDrafts > 0;
+        draftSection.classList.toggle("hidden", !showDraftBlock);
       }
       if (count) count.textContent = `${visible} walk${visible === 1 ? "" : "s"} found`;
     }
@@ -172,6 +220,9 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
 
     const syncDraftsFromIdentity = (user) => {
       showDraftsForAdmin = Boolean(user);
+      if (draftSection) {
+        draftSection.classList.toggle("hidden", !showDraftsForAdmin);
+      }
       filterCards();
     };
 
