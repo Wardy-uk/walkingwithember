@@ -530,6 +530,37 @@ export const prerender = true;
         return getIdentityClient(triesLeft - 1);
       }
 
+      function identitySnapshot(user) {
+        const appMeta = user?.app_metadata || {};
+        const userMeta = user?.user_metadata || {};
+        const identities = Array.isArray(appMeta.identities) ? appMeta.identities : [];
+        const providers = identities
+          .map((x) => String(x?.provider || "").trim())
+          .filter(Boolean);
+        const providerSet = Array.from(new Set([String(appMeta.provider || "").trim(), ...providers].filter(Boolean)));
+        return {
+          id: String(user?.id || "").trim(),
+          email: String(user?.email || "").trim(),
+          fullName: String(userMeta.full_name || userMeta.name || "").trim(),
+          provider: providerSet.join(", "),
+          roles: Array.isArray(appMeta.roles) ? appMeta.roles.join(", ") : "",
+          providerUserIds: identities
+            .map((x) => `${String(x?.provider || "").trim()}:${String(x?.user_id || "").trim()}`.replace(/:$/, ""))
+            .filter(Boolean)
+            .join(", "),
+        };
+      }
+
+      function logIdentityDetails(user, contextLabel) {
+        const d = identitySnapshot(user);
+        appendActivity(
+          `Identity ${contextLabel}: email=${d.email || "(none)"} provider=${d.provider || "(unknown)"} id=${d.id || "(none)"}`
+        );
+        if (d.fullName) appendActivity(`Identity name: ${d.fullName}`);
+        if (d.roles) appendActivity(`Identity roles: ${d.roles}`);
+        if (d.providerUserIds) appendActivity(`Identity links: ${d.providerUserIds}`);
+      }
+
       async function requireAdminUser() {
         const identity = await getIdentityClient();
         identity.init();
@@ -539,7 +570,9 @@ export const prerender = true;
           throw new Error("Please log in as admin first.");
         }
         const token = await user.jwt();
-        whoEl.textContent = user.email || "Admin logged in";
+        const d = identitySnapshot(user);
+        whoEl.textContent = d.email ? `${d.email}${d.provider ? ` (${d.provider})` : ""}` : "Admin logged in";
+        logIdentityDetails(user, "for API request");
         return { token };
       }
 
@@ -549,8 +582,10 @@ export const prerender = true;
           identity.init();
           const user = identity.currentUser();
           if (user) {
-            whoEl.textContent = user.email || "Admin logged in";
+            const d = identitySnapshot(user);
+            whoEl.textContent = d.email ? `${d.email}${d.provider ? ` (${d.provider})` : ""}` : "Admin logged in";
             appendActivity("Identity session detected.");
+            logIdentityDetails(user, "on page load");
             return;
           }
           whoEl.textContent = "Not logged in";
