@@ -250,6 +250,10 @@ export const prerender = true;
       <section class="card">
         <div id="status" class="status">Step 1: Upload and analyze GPX.</div>
         <div id="activityLog" class="activity-log">Activity log initialized.</div>
+        <div id="draftLinks" class="actions hidden" style="margin-top:0.7rem;">
+          <a id="openWalkDraftBtn" class="button hidden" href="#" target="_blank" rel="noopener noreferrer">Open Walk Draft</a>
+          <a id="openBlogDraftBtn" class="button hidden" href="#" target="_blank" rel="noopener noreferrer">Open Blog Draft</a>
+        </div>
       </section>
     </main>
 
@@ -299,6 +303,9 @@ export const prerender = true;
       const metricsGrid = document.getElementById("metricsGrid");
       const gpxInput = document.getElementById("gpxFile");
       const activityLogEl = document.getElementById("activityLog");
+      const draftLinksEl = document.getElementById("draftLinks");
+      const openWalkDraftBtn = document.getElementById("openWalkDraftBtn");
+      const openBlogDraftBtn = document.getElementById("openBlogDraftBtn");
 
       let analyzedGpx = null;
 
@@ -312,6 +319,27 @@ export const prerender = true;
         statusEl.textContent = message;
         statusEl.classList.toggle("error", Boolean(error));
         appendActivity(message);
+      }
+
+      function slugFromContentPath(path) {
+        const value = String(path || "").trim();
+        const match = value.match(/\/([^/]+)\.md$/);
+        return match ? match[1] : "";
+      }
+
+      function updateDraftButtons(created) {
+        const walkSlug = slugFromContentPath(created?.walkPath);
+        const blogSlug = slugFromContentPath(created?.blogPath);
+        const hasWalk = Boolean(walkSlug);
+        const hasBlog = Boolean(blogSlug);
+
+        openWalkDraftBtn.classList.toggle("hidden", !hasWalk);
+        openBlogDraftBtn.classList.toggle("hidden", !hasBlog);
+
+        openWalkDraftBtn.href = hasWalk ? ("/walks/" + walkSlug + "/") : "#";
+        openBlogDraftBtn.href = hasBlog ? ("/blog/" + blogSlug + "/") : "#";
+
+        draftLinksEl.classList.toggle("hidden", !(hasWalk || hasBlog));
       }
 
       function renderQuestions() {
@@ -755,6 +783,7 @@ export const prerender = true;
 
       async function generate() {
         try {
+          draftLinksEl.classList.add("hidden");
           setStatus("Checking admin session...");
           const { token } = await requireAdminUser();
 
@@ -803,12 +832,14 @@ export const prerender = true;
           });
 
           const created = data.created || {};
+          updateDraftButtons(created);
           const lines = ["Draft generation completed."];
           if (created.walkPath) lines.push(`Walk: ${created.walkPath}`);
           if (created.blogPath) lines.push(`Blog: ${created.blogPath}`);
           if (created.gpxPath) lines.push(`GPX: ${created.gpxPath}`);
           setStatus(lines.join(" "));
         } catch (error) {
+          draftLinksEl.classList.add("hidden");
           setStatus(String(error.message || error), true);
         }
       }
@@ -839,6 +870,7 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
 
 
 
