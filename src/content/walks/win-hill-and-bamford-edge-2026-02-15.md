@@ -21,7 +21,7 @@ tags:
 routeMapLat: 53.361255
 routeMapLng: -1.71059
 routeMapZoom: 12
-draft: true
+draft: false
 ---
 ## Why this route
 Chosen for a steady route with varied terrain and good access.
