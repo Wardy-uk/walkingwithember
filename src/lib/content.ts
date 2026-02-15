@@ -14,9 +14,14 @@ export async function getSiteSettings() {
   };
 }
 
-export async function getPublishedWalks() {
-  const walks = await getCollection("walks", ({ data }) => !data.draft);
+export async function getAllWalks() {
+  const walks = await getCollection("walks");
   return walks.sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());
+}
+
+export async function getPublishedWalks() {
+  const walks = await getAllWalks();
+  return walks.filter((walk) => !walk.data.draft);
 }
 
 export async function getPublishedBlogs() {
@@ -33,4 +38,5 @@ export async function getRegions() {
   const walks = await getPublishedWalks();
   return Array.from(new Set(walks.map((walk) => walk.data.region))).sort((a, b) => a.localeCompare(b));
 }
+
 

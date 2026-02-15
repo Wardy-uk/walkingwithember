@@ -1,11 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getPublishedWalks, getRegions, getSiteSettings } from "../lib/content";
+import { getAllWalks, getPublishedWalks, getRegions, getSiteSettings } from "../lib/content";
 
 const settings = await getSiteSettings();
 const regions = await getRegions();
-const allWalks = await getPublishedWalks();
-const walks = allWalks.slice(0, 3);
+const publishedWalks = await getPublishedWalks();
+const draftWalks = (await getAllWalks()).filter((walk) => walk.data.draft).slice(0, 3);
+const walks = publishedWalks.slice(0, 3);
 const mastheadImage = settings.homepage?.mastheadImage || "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG";
 const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 3);
 ---
@@ -46,9 +47,30 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
         ))}
       </div>
     ) : (
-      <article class="card">
+      <article id="noPublishedRoutes" class="card">
         <p>No published walks yet. Draft routes will appear here after you publish them.</p>
       </article>
+    )}
+
+    {draftWalks.length > 0 && (
+      <section class="admin-draft-only hidden">
+        <article class="card">
+          <p><strong>Admin preview:</strong> showing draft walks.</p>
+        </article>
+        <div class="v2-route-grid">
+          {draftWalks.map((walk) => (
+            <article class="v2-route-card" style="outline:2px dashed #be6d37; outline-offset:2px;">
+              <a href={`/admin/#/collections/walks/entries/${walk.slug}`} target="_blank" rel="noreferrer">
+                <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
+              </a>
+              <div>
+                <h3><a href={`/admin/#/collections/walks/entries/${walk.slug}`} target="_blank" rel="noreferrer">{walk.data.title}</a></h3>
+                <p>{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty} · Draft</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     )}
   </section>
 
@@ -67,6 +89,22 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
       ))}
     </div>
   </section>
+
+  <script is:inline>
+    const draftBlocks = Array.from(document.querySelectorAll(".admin-draft-only"));
+    const noPublished = document.getElementById("noPublishedRoutes");
+
+    function revealAdminDrafts() {
+      draftBlocks.forEach((el) => el.classList.remove("hidden"));
+      if (noPublished) noPublished.classList.add("hidden");
+    }
+
+    if (window.netlifyIdentity) {
+      try {
+        window.netlifyIdentity.init();
+        if (window.netlifyIdentity.currentUser()) revealAdminDrafts();
+        window.netlifyIdentity.on("login", revealAdminDrafts);
+      } catch {}
+    }
+  </script>
 </BaseLayout>
-
-

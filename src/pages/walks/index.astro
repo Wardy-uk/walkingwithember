@@ -1,10 +1,10 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getPublishedWalks, getRegions, getSiteSettings } from "../../lib/content";
+import { getAllWalks, getRegions, getSiteSettings } from "../../lib/content";
 
 const settings = await getSiteSettings();
 const regions = await getRegions();
-const walks = await getPublishedWalks();
+const walks = await getAllWalks();
 const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((a, b) => a.localeCompare(b));
 ---
 
@@ -93,7 +93,7 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
       <div id="walk-grid" class="card-grid">
         {walks.map((walk) => (
           <article
-            class="entry-card walk-card"
+            class:list={["entry-card", "walk-card", walk.data.draft && "admin-draft-only", walk.data.draft && "hidden"]}
             data-title={walk.data.title}
             data-location={walk.data.location}
             data-distance={walk.data.distance}
@@ -101,13 +101,14 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
             data-region={walk.data.region}
             data-dog={walk.data.dogFriendly ? "yes" : "no"}
             data-tags={walk.data.tags.join(",")}
+            data-draft={walk.data.draft ? "yes" : "no"}
           >
-            <a href={`/walks/${walk.slug}/`}>
+            <a href={walk.data.draft ? `/admin/#/collections/walks/entries/${walk.slug}` : `/walks/${walk.slug}/`} target={walk.data.draft ? "_blank" : undefined} rel={walk.data.draft ? "noreferrer" : undefined}>
               <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
             </a>
             <div class="entry-card-body">
-              <h2><a href={`/walks/${walk.slug}/`}>{walk.data.title}</a></h2>
-              <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}</p>
+              <h2><a href={walk.data.draft ? `/admin/#/collections/walks/entries/${walk.slug}` : `/walks/${walk.slug}/`} target={walk.data.draft ? "_blank" : undefined} rel={walk.data.draft ? "noreferrer" : undefined}>{walk.data.title}</a></h2>
+              <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}{walk.data.draft ? " · Draft" : ""}</p>
               <p>{walk.data.summary}</p>
               <ul class="chip-list">
                 <li class="chip">{walk.data.region}</li>
@@ -135,6 +136,8 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
       region.value = params.get("region");
     }
 
+    let showDraftsForAdmin = false;
+
     function filterCards() {
       const query = (search?.value || "").toLowerCase();
       let visible = 0;
@@ -156,7 +159,9 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
         const matchDog = !dog?.value || card.dataset.dog === dog.value;
         const matchTag = !tag?.value || (card.dataset.tags || "").split(",").includes(tag.value);
 
-        const show = matchSearch && matchDistance && matchDifficulty && matchRegion && matchDog && matchTag;
+        const isDraft = card.dataset.draft === "yes";
+        const showByRole = !isDraft || showDraftsForAdmin;
+        const show = showByRole && matchSearch && matchDistance && matchDifficulty && matchRegion && matchDog && matchTag;
         card.style.display = show ? "" : "none";
         if (show) visible += 1;
       }
@@ -164,6 +169,20 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
     }
 
     [search, distance, difficulty, region, dog, tag].forEach((el) => el?.addEventListener("input", filterCards));
+
+    if (window.netlifyIdentity) {
+      try {
+        window.netlifyIdentity.init();
+        if (window.netlifyIdentity.currentUser()) {
+          showDraftsForAdmin = true;
+        }
+        window.netlifyIdentity.on("login", () => {
+          showDraftsForAdmin = true;
+          filterCards();
+        });
+      } catch {}
+    }
+
     filterCards();
   </script>
 </BaseLayout>
