@@ -53,6 +53,10 @@ export const prerender = true;
         display: grid;
         gap: 0.8rem;
       }
+      .admin-combined {
+        display: grid;
+        gap: 0.85rem;
+      }
       .identity-row {
         display: flex;
         gap: 0.5rem;
@@ -67,18 +71,17 @@ export const prerender = true;
   </head>
   <body>
     <main class="admin-wrap">
-      <section class="card admin-top">
-        <a class="admin-brand" href="/">
-          <strong>Walking with Ember</strong>
-          <span>Admin tools and publishing</span>
-        </a>
-        <div class="admin-links">
-          <a class="button ghost-dark" href="/">View site</a>
-          <a class="button" href="/admin/ai-walk/">AI Walk Creator</a>
+      <section class="card admin-combined">
+        <div class="admin-top">
+          <a class="admin-brand" href="/">
+            <strong>Walking with Ember</strong>
+            <span>Admin tools and publishing</span>
+          </a>
+          <div class="admin-links">
+            <a class="button ghost-dark" href="/">View site</a>
+            <a class="button" href="/admin/ai-walk/">AI Walk Creator</a>
+          </div>
         </div>
-      </section>
-
-      <section class="card admin-grid">
         <h1>CMS Admin</h1>
         <p class="muted">Sign in with Netlify Identity to manage content or use the AI walk workflow.</p>
         <div class="identity-row">
