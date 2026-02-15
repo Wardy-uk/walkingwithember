@@ -139,6 +139,19 @@ export const prerender = true;
         font-weight: 800;
         color: #5d371d;
       }
+      .activity-log {
+        margin-top: 0.7rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 0.55rem;
+        background: #fff6e9;
+        color: #5d4431;
+        font-size: 0.82rem;
+        line-height: 1.35;
+        max-height: 220px;
+        overflow: auto;
+        white-space: pre-wrap;
+      }
       @media (max-width: 840px) {
         .grid { grid-template-columns: 1fr; }
         .metrics-grid { grid-template-columns: 1fr 1fr; }
@@ -236,6 +249,7 @@ export const prerender = true;
 
       <section class="card">
         <div id="status" class="status">Step 1: Upload and analyze GPX.</div>
+        <div id="activityLog" class="activity-log">Activity log initialized.</div>
       </section>
     </main>
 
@@ -282,12 +296,20 @@ export const prerender = true;
       const metricsSection = document.getElementById("metricsSection");
       const metricsGrid = document.getElementById("metricsGrid");
       const gpxInput = document.getElementById("gpxFile");
+      const activityLogEl = document.getElementById("activityLog");
 
       let analyzedGpx = null;
+
+      function appendActivity(message) {
+        const stamp = new Date().toLocaleTimeString("en-GB", { hour12: false });
+        const line = '[' + stamp + '] ' + String(message || '');
+        activityLogEl.textContent = (line + '\\n' + (activityLogEl.textContent || '')).trim();
+      }
 
       function setStatus(message, error) {
         statusEl.textContent = message;
         statusEl.classList.toggle("error", Boolean(error));
+        appendActivity(message);
       }
 
       function renderQuestions() {
@@ -731,6 +753,7 @@ export const prerender = true;
       document.getElementById("clearBtn").addEventListener("click", clearAnswers);
 
       renderQuestions();
+      appendActivity("AI Walk page ready.");
       requireAdminUser().catch((error) => {
         whoEl.textContent = "Not logged in";
         setStatus(error.message, true);
@@ -738,6 +761,9 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
+
+
 
 
 
