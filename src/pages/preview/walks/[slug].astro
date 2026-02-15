@@ -73,15 +73,28 @@ const estimatedHours = walk.data.difficulty === "Hard"
       </section>
 
       <section class:list={["map-compare", hasGpx && "two-panels"]}>
-        <div
-          class="map-panel"
-          id="map"
-          data-lat={String(walk.data.routeMapLat)}
-          data-lng={String(walk.data.routeMapLng)}
-          data-zoom={String(walk.data.routeMapZoom)}
-          data-map-api-key={mapApiKey}
-          data-gpx-url={gpxUrl}
-        ></div>
+        <section class="card map-card">
+          <div class="flyby-head">
+            <h2>Route Map</h2>
+            <a
+              class="button ghost-dark"
+              href={walk.data.osMapsLink ?? walk.data.gpxDownload}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open In New Tab
+            </a>
+          </div>
+          <div
+            class="map-panel"
+            id="map"
+            data-lat={String(walk.data.routeMapLat)}
+            data-lng={String(walk.data.routeMapLng)}
+            data-zoom={String(walk.data.routeMapZoom)}
+            data-map-api-key={mapApiKey}
+            data-gpx-url={gpxUrl}
+          ></div>
+        </section>
         {hasGpx && (
           <FlybyPanel
             gpxUrl={gpxUrl}

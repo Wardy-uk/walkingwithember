@@ -36,7 +36,6 @@ const {
   </div>
   <div class="flyby-map-wrap">
     <div class="flyby-map" data-flyby-map></div>
-    <canvas class="flyby-canvas" data-flyby-canvas></canvas>
   </div>
   <div class="flyby-controls">
     <button class="button" type="button" data-flyby-play>Play</button>
@@ -258,9 +257,11 @@ const {
   };
 
   const roots = document.querySelectorAll("[data-flyby-root]");
+  let flybyCounter = 0;
   for (const root of roots) {
     if (root.dataset.flybyReady === "yes") continue;
     root.dataset.flybyReady = "yes";
+    flybyCounter += 1;
 
     const gpxUrl = root.dataset.gpxUrl || "";
     if (!gpxUrl) continue;
@@ -268,7 +269,6 @@ const {
     const autoPlay = root.dataset.autoPlay === "yes";
 
     const mapEl = root.querySelector("[data-flyby-map]");
-    const canvas = root.querySelector("[data-flyby-canvas]");
     const playBtn = root.querySelector("[data-flyby-play]");
     const scrub = root.querySelector("[data-flyby-scrub]");
     const speedSel = root.querySelector("[data-flyby-speed]");
@@ -279,7 +279,6 @@ const {
     const zoomReadout = root.querySelector("[data-flyby-zoom-readout]");
     if (
       !mapEl ||
-      !canvas ||
       !playBtn ||
       !scrub ||
       !speedSel ||
@@ -292,6 +291,10 @@ const {
       continue;
     }
 
+    const routeSourceId = `flyby-route-${flybyCounter}`;
+    const routeCasingId = `flyby-route-casing-${flybyCounter}`;
+    const routeLineId = `flyby-route-line-${flybyCounter}`;
+
     let playbackState = "idle";
     let hasPlayed = false;
     let progress = 0;
@@ -302,10 +305,15 @@ const {
     let rafId = null;
     let lastTs = null;
     let lastCameraTs = 0;
-    let lastOverlayTs = 0;
+    let lastRouteTs = 0;
     let lastBearing = null;
     let cameraState = null;
     let playbackPoints = [];
+
+    const emptyFeatureCollection = {
+      type: "FeatureCollection",
+      features: [],
+    };
 
     const map = new maplibregl.Map({
       container: mapEl,
@@ -318,28 +326,81 @@ const {
     });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
 
-    const drawOverlay = (force = false, nowMs = performance.now()) => {
-      if (!playbackPoints.length || !canvas) return;
-      if (!force && nowMs - lastOverlayTs < 16) return;
-      lastOverlayTs = nowMs;
+    const ensureRouteLayers = () => {
+      if (!map.isStyleLoaded()) return;
+      if (map.getLayer(routeLineId)) map.removeLayer(routeLineId);
+      if (map.getLayer(routeCasingId)) map.removeLayer(routeCasingId);
+      if (map.getSource(routeSourceId)) map.removeSource(routeSourceId);
 
-      const width = map.getContainer().clientWidth;
-      const height = map.getContainer().clientHeight;
-      if (width <= 0 || height <= 0) return;
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
+      map.addSource(routeSourceId, {
+        type: "geojson",
+        data: emptyFeatureCollection,
+      });
+      map.addLayer({
+        id: routeCasingId,
+        type: "line",
+        source: routeSourceId,
+        paint: {
+          "line-color": "#111111",
+          "line-width": 8,
+          "line-opacity": 0.92,
+        },
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+      });
+      map.addLayer({
+        id: routeLineId,
+        type: "line",
+        source: routeSourceId,
+        paint: {
+          "line-color": "#ff4040",
+          "line-width": 4.5,
+          "line-opacity": 0.98,
+        },
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+      });
+    };
+
+    const setRouteCoords = (coords) => {
+      const source = map.getSource(routeSourceId);
+      if (!source || typeof source.setData !== "function") return;
+      if (!coords || coords.length < 2) {
+        source.setData(emptyFeatureCollection);
+        return;
       }
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      ctx.clearRect(0, 0, width, height);
+      source.setData({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "LineString",
+              coordinates: coords,
+            },
+          },
+        ],
+      });
+    };
 
-      if (!hasPlayed && progress <= 0.0001) return;
+    const drawRoute = (force = false, nowMs = performance.now()) => {
+      if (!playbackPoints.length) return;
+      if (!force && nowMs - lastRouteTs < 33) return;
+      lastRouteTs = nowMs;
+
+      if (!hasPlayed && progress <= 0.0001) {
+        setRouteCoords([]);
+        return;
+      }
 
       const totalDistance = playbackPoints[playbackPoints.length - 1].distanceFromStartM;
       const revealDistance = clamp(progress, 0, 1) * totalDistance;
       const revealLonLat = [];
-
       for (let i = 0; i < playbackPoints.length; i += 1) {
         const point = playbackPoints[i];
         if (point.distanceFromStartM <= revealDistance) {
@@ -354,24 +415,7 @@ const {
         }
         break;
       }
-
-      if (revealLonLat.length < 2) return;
-
-      ctx.beginPath();
-      for (let i = 0; i < revealLonLat.length; i += 1) {
-        const [lon, lat] = revealLonLat[i];
-        const pt = map.project([lon, lat]);
-        if (i === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-      }
-      ctx.strokeStyle = "rgba(10, 10, 10, 0.9)";
-      ctx.lineWidth = 9;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(255, 64, 64, 0.98)";
-      ctx.lineWidth = 5;
-      ctx.stroke();
+      setRouteCoords(revealLonLat);
     };
 
     const updateCamera = (value, nowMs = performance.now(), force = false) => {
@@ -426,7 +470,7 @@ const {
         pitch: smoothedCamera.pitch,
         zoom: smoothedCamera.zoom,
       });
-      drawOverlay(false, nowMs);
+      drawRoute(false, nowMs);
     };
 
     const stopPlayback = () => {
@@ -489,7 +533,7 @@ const {
       progress = Number(scrub.value) / 100;
       hasPlayed = hasPlayed || progress > 0;
       updateCamera(progress, performance.now(), true);
-      drawOverlay(true);
+      drawRoute(true);
     });
 
     speedSel.addEventListener("change", () => {
@@ -518,11 +562,14 @@ const {
       updateCamera(progress, performance.now(), true);
     });
 
-    map.on("resize", () => drawOverlay(true));
+    map.on("load", () => {
+      ensureRouteLayers();
+      setRouteCoords([]);
+    });
+
     map.on("styledata", () => {
-      if (playbackPoints.length && (hasPlayed || progress > 0)) {
-        drawOverlay(true);
-      }
+      ensureRouteLayers();
+      drawRoute(true);
     });
 
     fetch(gpxUrl)
@@ -536,10 +583,20 @@ const {
         const sampled = buildPlaybackPoints(rawPoints, 1800);
         playbackPoints = smoothPlaybackPoints(sampled, 2);
         const start = playbackPoints[0];
-        map.jumpTo({ center: [start.lon, start.lat], zoom: cameraPresets.cinematic.zoomBase, pitch: 68, bearing: 0 });
-        if (autoPlay) {
-          startPlayback();
+        const bounds = new maplibregl.LngLatBounds([start.lon, start.lat], [start.lon, start.lat]);
+        for (let i = 1; i < playbackPoints.length; i += 1) {
+          bounds.extend([playbackPoints[i].lon, playbackPoints[i].lat]);
         }
+        map.fitBounds(bounds, {
+          padding: 40,
+          maxZoom: 14,
+          duration: 0,
+          pitch: 68,
+          bearing: 0,
+        });
+        updateCamera(0, performance.now(), true);
+        setRouteCoords([]);
+        if (autoPlay) startPlayback();
       })
       .catch(() => {
         // Keep panel interactive even if GPX load fails.
