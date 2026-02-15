@@ -44,8 +44,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
     <CookieBanner />
     <div id="identity-status" class="identity-status" data-state="checking">Admin: checking...</div>
 
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <script is:inline>
+    <script type="module">
+      import netlifyIdentity from "netlify-identity-widget";
+
       const identityStatus = document.getElementById("identity-status");
       const setIdentityStatus = (label, state, user = null, available = true) => {
         if (identityStatus) {
@@ -56,56 +57,36 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
         window.dispatchEvent(new CustomEvent("ww-identity-change", { detail: { user, available } }));
       };
 
-      let identityAttached = false;
+      try {
+        // Keep compatibility with existing page scripts that reference window.netlifyIdentity.
+        window.netlifyIdentity = netlifyIdentity;
 
-      const attachIdentity = () => {
-        if (identityAttached || !window.netlifyIdentity) return;
-        identityAttached = true;
-
-        try {
-          window.netlifyIdentity.on("init", (user) => {
-            if (!user && window.location.hash.includes("invite_token")) {
-              window.netlifyIdentity.open("signup");
-            }
-            setIdentityStatus(user ? "logged in" : "logged out", user ? "in" : "out", user, true);
-          });
-
-          window.netlifyIdentity.on("login", (user) => {
-            setIdentityStatus("logged in", "in", user, true);
-          });
-
-          window.netlifyIdentity.on("logout", () => {
-            setIdentityStatus("logged out", "out", null, true);
-          });
-
-          window.netlifyIdentity.init();
-
-          const currentUser = window.netlifyIdentity.currentUser?.();
-          if (currentUser) {
-            setIdentityStatus("logged in", "in", currentUser, true);
-          } else {
-            setIdentityStatus("logged out", "out", null, true);
+        netlifyIdentity.on("init", (user) => {
+          if (!user && window.location.hash.includes("invite_token")) {
+            netlifyIdentity.open("signup");
           }
-        } catch {
-          setIdentityStatus("identity error", "error", null, false);
-        }
-      };
+          setIdentityStatus(user ? "logged in" : "logged out", user ? "in" : "out", user, true);
+        });
 
-      const waitForIdentity = (attempt = 0) => {
-        if (window.netlifyIdentity) {
-          attachIdentity();
-          return;
-        }
+        netlifyIdentity.on("login", (user) => {
+          setIdentityStatus("logged in", "in", user, true);
+        });
 
-        if (attempt < 40) {
-          setIdentityStatus("checking...", "checking", null, false);
-          setTimeout(() => waitForIdentity(attempt + 1), 250);
+        netlifyIdentity.on("logout", () => {
+          setIdentityStatus("logged out", "out", null, true);
+        });
+
+        netlifyIdentity.init();
+
+        const currentUser = netlifyIdentity.currentUser?.();
+        if (currentUser) {
+          setIdentityStatus("logged in", "in", currentUser, true);
         } else {
-          setIdentityStatus("identity unavailable", "unavailable", null, false);
+          setIdentityStatus("logged out", "out", null, true);
         }
-      };
-
-      waitForIdentity();
+      } catch {
+        setIdentityStatus("identity error", "error", null, false);
+      }
     </script>
 
     <script type="application/ld+json" is:inline define:vars={{ title, description, canonical }}>
@@ -119,4 +100,5 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
     </script>
   </body>
 </html>
+
 
