@@ -1,4 +1,5 @@
 ---
+import "leaflet/dist/leaflet.css";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getPublishedWalks, getRegions, getSiteSettings } from "../../lib/content";
 
@@ -112,10 +113,8 @@ const estimatedHours = walk.data.difficulty === "Hard"
     })}
   </script>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script
-    is:inline
+    type="module"
     define:vars={{
       lat: walk.data.routeMapLat,
       lng: walk.data.routeMapLng,
@@ -124,7 +123,14 @@ const estimatedHours = walk.data.difficulty === "Hard"
       gpxUrl
     }}
   >
+    import L from "leaflet";
+
     const mapContainer = document.getElementById("map");
+    if (!mapContainer) return;
+
+    function showMapMessage(message) {
+      mapContainer.innerHTML = `<div style="display:grid;place-items:center;height:100%;padding:1rem;color:#7c6654;font-size:0.95rem;">${message}</div>`;
+    }
 
     function extractTrackPoints(xmlText) {
       const doc = new DOMParser().parseFromString(xmlText, "application/xml");
@@ -141,23 +147,23 @@ const estimatedHours = walk.data.difficulty === "Hard"
       return points;
     }
 
-    if (mapContainer && window.L) {
-      const map = window.L.map(mapContainer).setView([lat, lng], zoom);
+    try {
+      const map = L.map(mapContainer).setView([lat, lng], zoom);
       if (mapApiKey) {
-        window.L.tileLayer("https://api.os.uk/maps/raster/v1/zxy/Outdoor_3857/{z}/{x}/{y}.png?key={accessToken}", {
+        L.tileLayer("https://api.os.uk/maps/raster/v1/zxy/Outdoor_3857/{z}/{x}/{y}.png?key={accessToken}", {
           accessToken: mapApiKey,
           maxZoom: 18,
           attribution: "&copy; Ordnance Survey"
         }).addTo(map);
       } else {
-        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           maxZoom: 18,
           attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
       }
 
       const dropFallbackMarker = () => {
-        window.L.marker([lat, lng]).addTo(map);
+        L.circleMarker([lat, lng], { radius: 5, color: "#be6d37", weight: 2, fillOpacity: 1 }).addTo(map);
       };
 
       const drawRouteFromGpx = async () => {
@@ -177,21 +183,23 @@ const estimatedHours = walk.data.difficulty === "Hard"
             return;
           }
 
-          const routeLine = window.L.polyline(routePoints, {
+          const routeLine = L.polyline(routePoints, {
             color: "#be6d37",
             weight: 4,
             opacity: 0.9
           }).addTo(map);
 
           map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
-          window.L.circleMarker(routePoints[0], { radius: 5, color: "#1f7a1f", weight: 2, fillOpacity: 1 }).addTo(map);
-          window.L.circleMarker(routePoints[routePoints.length - 1], { radius: 5, color: "#9e2a2a", weight: 2, fillOpacity: 1 }).addTo(map);
+          L.circleMarker(routePoints[0], { radius: 5, color: "#1f7a1f", weight: 2, fillOpacity: 1 }).addTo(map);
+          L.circleMarker(routePoints[routePoints.length - 1], { radius: 5, color: "#9e2a2a", weight: 2, fillOpacity: 1 }).addTo(map);
         } catch {
           dropFallbackMarker();
         }
       };
 
       drawRouteFromGpx();
+    } catch {
+      showMapMessage("Map failed to load on this page.");
     }
   </script>
 </BaseLayout>
