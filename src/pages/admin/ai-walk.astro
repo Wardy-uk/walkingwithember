@@ -216,11 +216,11 @@ export const prerender = true;
             </div>
             <div class="field">
               <label for="stravaRecord">Strava record URL</label>
-              <input id="stravaRecord" type="url" required />
+              <input id="stravaRecord" type="url" />
             </div>
             <div class="field">
               <label for="stravaFlyby">Strava flyby URL</label>
-              <input id="stravaFlyby" type="url" required />
+              <input id="stravaFlyby" type="url" />
             </div>
             <div class="field">
               <label for="images">Photos (1-6)</label>
@@ -737,7 +737,6 @@ export const prerender = true;
         const extraNotes = document.getElementById("extraNotes").value.trim();
         const imageInput = document.getElementById("images");
 
-        if (!stravaRecord || !stravaFlyby) throw new Error("Strava record and flyby URLs are required.");
         if (!imageInput.files || imageInput.files.length < 1) throw new Error("Please upload at least one image.");
         if (imageInput.files.length > MAX_IMAGE_COUNT) throw new Error(`Please upload a maximum of ${MAX_IMAGE_COUNT} images.`);
 

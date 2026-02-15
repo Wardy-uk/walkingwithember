@@ -292,7 +292,6 @@ function validateGeneratePayload(payload) {
   if (!payload || typeof payload !== "object") return "Payload missing";
   if (!["walk", "blog", "both"].includes(payload.postMode)) return "Invalid postMode";
   if (!payload.answers || typeof payload.answers !== "object") return "answers are required";
-  if (!payload.stravaRecord || !payload.stravaFlyby) return "Strava URLs are required";
   if (!payload.gpxAsset || !payload.gpxAsset.path || !payload.gpxAsset.publicPath) return "gpxAsset is required";
   if (!payload.gpxSummary || typeof payload.gpxSummary !== "object") return "gpxSummary is required";
   if (!Array.isArray(payload.imageAssets) || payload.imageAssets.length === 0) return "At least one image asset is required";
@@ -551,6 +550,8 @@ async function generateContent({ payload, gpxSummary, walkSlug, blogSlug, publis
 function createWalkMarkdown({ content, payload, gpxSummary, publishDate, gpxPublicUrl, heroImage, imageSummaries }) {
   const walk = content.walk;
   const tags = dedupeStrings(walk.tags).slice(0, 8);
+  const stravaRecord = String(payload.stravaRecord || "").trim();
+  const stravaFlyby = String(payload.stravaFlyby || "").trim();
 
   return [
     "---",
@@ -565,8 +566,8 @@ function createWalkMarkdown({ content, payload, gpxSummary, publishDate, gpxPubl
     `dogFriendly: ${walk.dogFriendly ? "true" : "false"}`,
     `parking: ${quoteYaml(walk.parking)}`,
     `gpxDownload: ${quoteYaml(gpxPublicUrl)}`,
-    `stravaRecord: ${quoteYaml(payload.stravaRecord)}`,
-    `stravaFlyby: ${quoteYaml(payload.stravaFlyby)}`,
+    ...(stravaRecord ? [`stravaRecord: ${quoteYaml(stravaRecord)}`] : []),
+    ...(stravaFlyby ? [`stravaFlyby: ${quoteYaml(stravaFlyby)}`] : []),
     "tags:",
     ...tags.map((tag) => `  - ${quoteYaml(tag)}`),
     `routeMapLat: ${gpxSummary.centerLat}`,
