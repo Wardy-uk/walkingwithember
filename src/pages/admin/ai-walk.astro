@@ -261,7 +261,6 @@ export const prerender = true;
       </section>
     </main>
 
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <script>
       const QUESTION_ITEMS = [
         ["where_walked", "Where did you walk?"],
@@ -475,12 +474,58 @@ export const prerender = true;
         };
       }
 
+      async function loadScriptOnce(src, timeoutMs = 5000) {
+        return new Promise((resolve, reject) => {
+          const existing = document.querySelector(`script[data-identity-src="${src}"]`);
+          if (existing) {
+            resolve();
+            return;
+          }
+
+          const script = document.createElement("script");
+          script.src = src;
+          script.async = true;
+          script.dataset.identitySrc = src;
+
+          const timer = setTimeout(() => {
+            script.remove();
+            reject(new Error("timeout"));
+          }, timeoutMs);
+
+          script.onload = () => {
+            clearTimeout(timer);
+            resolve();
+          };
+          script.onerror = () => {
+            clearTimeout(timer);
+            script.remove();
+            reject(new Error("failed"));
+          };
+
+          document.head.appendChild(script);
+        });
+      }
+
+      async function ensureIdentityLoaded() {
+        if (window.netlifyIdentity) return;
+        const sources = [
+          "https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js",
+          "https://identity.netlify.com/v1/netlify-identity-widget.js",
+          "https://cdn.jsdelivr.net/npm/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js",
+        ];
+        for (const src of sources) {
+          try {
+            await loadScriptOnce(src);
+            if (window.netlifyIdentity) return;
+          } catch {}
+        }
+      }
+
       async function getIdentityClient(triesLeft = 40) {
+        await ensureIdentityLoaded();
         const identity = window.netlifyIdentity;
         if (identity) return identity;
-        if (triesLeft <= 0) {
-          throw new Error("Netlify Identity is unavailable.");
-        }
+        if (triesLeft <= 0) throw new Error("Netlify Identity is unavailable.");
         await new Promise((resolve) => setTimeout(resolve, 250));
         return getIdentityClient(triesLeft - 1);
       }
