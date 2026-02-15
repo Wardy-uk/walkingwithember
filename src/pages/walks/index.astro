@@ -172,18 +172,21 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
 
     if (window.netlifyIdentity) {
       try {
-        window.netlifyIdentity.init();
-        if (window.netlifyIdentity.currentUser()) {
-          showDraftsForAdmin = true;
-        }
-        window.netlifyIdentity.on("login", () => {
+        const enableAdminDrafts = () => {
           showDraftsForAdmin = true;
           filterCards();
+        };
+        window.netlifyIdentity.on("init", (user) => {
+          if (user) enableAdminDrafts();
         });
+        window.netlifyIdentity.on("login", enableAdminDrafts);
+        window.netlifyIdentity.init();
+        if (window.netlifyIdentity.currentUser()) enableAdminDrafts();
       } catch {}
     }
 
     filterCards();
   </script>
 </BaseLayout>
+
 

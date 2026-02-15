@@ -44,10 +44,14 @@ const posts = await getAllBlogs();
 
     if (window.netlifyIdentity) {
       try {
+        window.netlifyIdentity.on("init", (user) => {
+          if (user) revealAdminDrafts();
+        });
+        window.netlifyIdentity.on("login", revealAdminDrafts);
         window.netlifyIdentity.init();
         if (window.netlifyIdentity.currentUser()) revealAdminDrafts();
-        window.netlifyIdentity.on("login", revealAdminDrafts);
       } catch {}
     }
   </script>
 </BaseLayout>
+

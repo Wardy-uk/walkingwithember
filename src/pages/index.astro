@@ -101,11 +101,15 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
 
     if (window.netlifyIdentity) {
       try {
+        window.netlifyIdentity.on("init", (user) => {
+          if (user) revealAdminDrafts();
+        });
+        window.netlifyIdentity.on("login", revealAdminDrafts);
         window.netlifyIdentity.init();
         if (window.netlifyIdentity.currentUser()) revealAdminDrafts();
-        window.netlifyIdentity.on("login", revealAdminDrafts);
       } catch {}
     }
   </script>
 </BaseLayout>
+
 
