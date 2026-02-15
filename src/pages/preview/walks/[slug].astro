@@ -20,6 +20,9 @@ const encodedUrl = encodeURIComponent(pageUrl);
 const encodedTitle = encodeURIComponent(walk.data.title);
 const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
 const gpxUrl = walk.data.gpxDownload ?? "";
+const isDraft = Boolean(walk.data.draft);
+const contentPath = `src/content/walks/${walk.slug}.md`;
+const liveWalkUrl = `/walks/${walk.slug}/`;
 const estimatedHours = walk.data.difficulty === "Hard"
   ? Math.max(3, Math.round(walk.data.distance / 2))
   : walk.data.difficulty === "Moderate"
@@ -44,6 +47,18 @@ const estimatedHours = walk.data.difficulty === "Hard"
       </p>
       <p>{walk.data.summary}</p>
 
+      {isDraft && (
+        <section class="card" id="draftActions" data-content-path={contentPath} data-live-url={liveWalkUrl}>
+          <h2>Draft Preview</h2>
+          <p>This walk is still a draft. Publish it here to make it live on the main walks pages.</p>
+          <div class="actions">
+            <button id="publishWalkBtn" class="button" type="button">Publish This Walk</button>
+            <a id="openLiveWalkBtn" class="button ghost-dark hidden" href={liveWalkUrl}>Open Live Walk</a>
+          </div>
+          <p id="publishStatus" class="muted"></p>
+        </section>
+      )}
+
       <ul class="chip-list">
         {walk.data.tags.map((tag) => <li class="chip">{tag}</li>)}
       </ul>
@@ -63,7 +78,8 @@ const estimatedHours = walk.data.difficulty === "Hard"
         data-zoom={String(walk.data.routeMapZoom)}
         data-map-api-key={mapApiKey}
         data-gpx-url={gpxUrl}
-      ></div>`n
+      ></div>
+
       <section class="card planning-strip">
         <div>
           <h2>Map And Navigation</h2>
@@ -125,6 +141,12 @@ const estimatedHours = walk.data.difficulty === "Hard"
     import L from "leaflet";
 
     const mapContainer = document.getElementById("map");
+    const publishBtn = document.getElementById("publishWalkBtn");
+    const publishStatusEl = document.getElementById("publishStatus");
+    const openLiveWalkBtn = document.getElementById("openLiveWalkBtn");
+    const draftActions = document.getElementById("draftActions");
+    const draftContentPath = draftActions?.dataset.contentPath || "";
+    const liveUrl = draftActions?.dataset.liveUrl || "";
 
     const lat = Number(mapContainer?.dataset.lat || "0");
     const lng = Number(mapContainer?.dataset.lng || "0");
@@ -136,6 +158,69 @@ const estimatedHours = walk.data.difficulty === "Hard"
       const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
       const line = `[${ts}] ${message}`;
       console.log(line);
+    }
+
+    function setPublishStatus(message, isError = false) {
+      if (!publishStatusEl) return;
+      publishStatusEl.textContent = message;
+      publishStatusEl.style.color = isError ? "#8f3a2b" : "";
+    }
+
+    async function requireAdminToken() {
+      const identity = window.netlifyIdentity;
+      if (!identity) throw new Error("Netlify Identity is unavailable.");
+      identity.init();
+      const user = identity.currentUser();
+      if (!user) {
+        identity.open("login");
+        throw new Error("Please log in as admin first.");
+      }
+      return user.jwt();
+    }
+
+    async function publishDraftFromPreview() {
+      if (!draftContentPath) throw new Error("Missing draft content path.");
+      setPublishStatus("Publishing draft...");
+      if (publishBtn) publishBtn.disabled = true;
+      try {
+        const token = await requireAdminToken();
+        const response = await fetch("/.netlify/functions/ai-create-post", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            action: "publish_draft",
+            contentPath: draftContentPath,
+          }),
+        });
+
+        const raw = await response.text();
+        let data = {};
+        try { data = raw ? JSON.parse(raw) : {}; } catch {}
+
+        if (!response.ok) {
+          const detail = data.error || raw || response.statusText || "Unknown error";
+          throw new Error(`Publish failed (${response.status}): ${String(detail).trim()}`);
+        }
+
+        setPublishStatus("Draft published. It will appear on live pages after deploy completes.");
+        if (publishBtn) {
+          publishBtn.disabled = true;
+          publishBtn.textContent = "Published";
+        }
+        if (openLiveWalkBtn && liveUrl) {
+          openLiveWalkBtn.classList.remove("hidden");
+        }
+      } catch (error) {
+        setPublishStatus(String(error?.message || error), true);
+        if (publishBtn) publishBtn.disabled = false;
+      }
+    }
+
+    if (publishBtn) {
+      publishBtn.addEventListener("click", publishDraftFromPreview);
     }
 
     function showMapMessage(message) {
@@ -232,5 +317,3 @@ const estimatedHours = walk.data.difficulty === "Hard"
     }
   </script>
 </BaseLayout>
-
-
