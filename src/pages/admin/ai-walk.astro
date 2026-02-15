@@ -40,6 +40,12 @@ export const prerender = true;
         margin-bottom: 1rem;
         flex-wrap: wrap;
       }
+      .topbar-actions {
+        display: flex;
+        gap: 0.45rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
       a.button,
       button {
         border: 0;
@@ -164,7 +170,11 @@ export const prerender = true;
   <body>
     <main class="wrap">
       <div class="topbar">
-        <a class="button ghost" href="/admin/">Back to CMS</a>
+        <div class="topbar-actions">
+          <a class="button ghost" href="/admin/">Back to CMS</a>
+          <button id="identityLoginBtn" type="button" class="ghost">Log in</button>
+          <button id="identityLogoutBtn" type="button" class="ghost">Log out</button>
+        </div>
         <span id="who" class="status">Checking admin session...</span>
       </div>
 
@@ -313,6 +323,8 @@ export const prerender = true;
       const gpxInput = document.getElementById("gpxFile");
       const activityLogEl = document.getElementById("activityLog");
       const draftLinksEl = document.getElementById("draftLinks");
+      const identityLoginBtn = document.getElementById("identityLoginBtn");
+      const identityLogoutBtn = document.getElementById("identityLogoutBtn");
       const openWalkDraftBtn = document.getElementById("openWalkDraftBtn");
       const editWalkDraftBtn = document.getElementById("editWalkDraftBtn");
       const publishWalkDraftBtn = document.getElementById("publishWalkDraftBtn");
@@ -561,6 +573,11 @@ export const prerender = true;
         if (d.providerUserIds) appendActivity(`Identity links: ${d.providerUserIds}`);
       }
 
+      function isGithubIdentity(user) {
+        const d = identitySnapshot(user);
+        return String(d.provider || "").toLowerCase().split(",").map((x) => x.trim()).includes("github");
+      }
+
       async function requireAdminUser() {
         const identity = await getIdentityClient();
         identity.init();
@@ -568,6 +585,10 @@ export const prerender = true;
         if (!user) {
           identity.open("login");
           throw new Error("Please log in as admin first.");
+        }
+        if (!isGithubIdentity(user)) {
+          logIdentityDetails(user, "rejected (non-github)");
+          throw new Error("Use GitHub login for admin access. Click Log out, then log in with GitHub.");
         }
         const token = await user.jwt();
         const d = identitySnapshot(user);
@@ -586,6 +607,9 @@ export const prerender = true;
             whoEl.textContent = d.email ? `${d.email}${d.provider ? ` (${d.provider})` : ""}` : "Admin logged in";
             appendActivity("Identity session detected.");
             logIdentityDetails(user, "on page load");
+            if (!isGithubIdentity(user)) {
+              setStatus("Signed in, but not with GitHub. Log out and use GitHub login.", true);
+            }
             return;
           }
           whoEl.textContent = "Not logged in";
@@ -1018,6 +1042,25 @@ export const prerender = true;
       document.getElementById("analyzeBtn").addEventListener("click", analyzeGpx);
       document.getElementById("generateBtn").addEventListener("click", generate);
       document.getElementById("clearBtn").addEventListener("click", clearAnswers);
+      identityLoginBtn?.addEventListener("click", async () => {
+        try {
+          const identity = await getIdentityClient();
+          identity.open("login");
+        } catch (error) {
+          setStatus(String(error.message || error), true);
+        }
+      });
+      identityLogoutBtn?.addEventListener("click", async () => {
+        try {
+          const identity = await getIdentityClient();
+          await identity.logout();
+          whoEl.textContent = "Not logged in";
+          appendActivity("Identity session cleared.");
+          setStatus("Logged out. Click Log in and choose GitHub.");
+        } catch (error) {
+          setStatus(String(error.message || error), true);
+        }
+      });
       publishWalkDraftBtn.addEventListener("click", async () => {
         try {
           await publishDraft(latestCreated.walkPath, "Walk");

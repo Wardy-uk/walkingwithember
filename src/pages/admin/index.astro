@@ -74,8 +74,7 @@ export const prerender = true;
           <a class="button ghost-dark" href="/">View site</a>
           <a class="button" href="/admin/ai-walk/">AI Walk Creator</a>
           <button id="identity-login" type="button">Log in</button>
-          <button id="identity-signup" type="button">Sign up</button>
-          <button id="identity-recovery" type="button">Recover password</button>
+          <button id="identity-logout" type="button">Log out</button>
           <span id="identity-status">Loading login widget...</span>
         </div>
       </section>
@@ -94,17 +93,18 @@ export const prerender = true;
 
       function bindIdentity(identity) {
         identity.init();
-        setStatus("Identity ready", "#5b7f3f");
+        setStatus("Identity ready (use GitHub login)", "#5b7f3f");
 
         document.getElementById("identity-login")?.addEventListener("click", () => identity.open("login"));
-        document.getElementById("identity-signup")?.addEventListener("click", () => identity.open("signup"));
-        document.getElementById("identity-recovery")?.addEventListener("click", () => identity.open("recovery"));
+        document.getElementById("identity-logout")?.addEventListener("click", async () => {
+          await identity.logout();
+          setStatus("Logged out", "#7c6654");
+        });
 
         const hash = window.location.hash || "";
-        if (hash.includes("invite_token")) {
-          identity.open("signup");
-        } else if (hash.includes("recovery_token")) {
-          identity.open("recovery");
+        if (hash.includes("invite_token") || hash.includes("recovery_token")) {
+          setStatus("Invites/recovery disabled here. Use GitHub login.", "#b00020");
+          identity.close();
         }
 
         identity.on("init", (user) => {
