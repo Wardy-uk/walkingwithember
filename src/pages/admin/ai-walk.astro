@@ -316,7 +316,7 @@ export const prerender = true;
       const publishBlogDraftBtn = document.getElementById("publishBlogDraftBtn");
 
       let analyzedGpx = null;
-      let latestCreated = { walkPath: "", blogPath: "" };
+      let latestCreated = { walkPath: "", blogPath: "", walkPublished: false, blogPublished: false };
 
       function appendActivity(message) {
         const stamp = new Date().toLocaleTimeString("en-GB", { hour12: false });
@@ -347,6 +347,8 @@ export const prerender = true;
         const blogSlug = slugFromContentPath(created?.blogPath);
         const hasWalk = Boolean(walkSlug);
         const hasBlog = Boolean(blogSlug);
+        const walkLiveUrl = hasWalk ? ("/walks/" + walkSlug + "/") : "#";
+        const blogLiveUrl = hasBlog ? ("/blog/" + blogSlug + "/") : "#";
 
         openWalkDraftBtn.classList.toggle("hidden", !hasWalk);
         editWalkDraftBtn.classList.toggle("hidden", !hasWalk);
@@ -356,10 +358,12 @@ export const prerender = true;
         editBlogDraftBtn.classList.toggle("hidden", !hasBlog);
         publishBlogDraftBtn.classList.toggle("hidden", !hasBlog);
 
-        openWalkDraftBtn.href = hasWalk ? ("/walks/" + walkSlug + "/") : "#";
+        openWalkDraftBtn.href = hasWalk ? (created?.walkPublished ? walkLiveUrl : cmsDraftEditUrl("walk", walkSlug)) : "#";
+        openWalkDraftBtn.textContent = created?.walkPublished ? "Open Walk Post" : "Preview Walk Draft";
         editWalkDraftBtn.href = hasWalk ? cmsDraftEditUrl("walk", walkSlug) : "#";
 
-        openBlogDraftBtn.href = hasBlog ? ("/blog/" + blogSlug + "/") : "#";
+        openBlogDraftBtn.href = hasBlog ? (created?.blogPublished ? blogLiveUrl : cmsDraftEditUrl("blog", blogSlug)) : "#";
+        openBlogDraftBtn.textContent = created?.blogPublished ? "Open Blog Post" : "Preview Blog Draft";
         editBlogDraftBtn.href = hasBlog ? cmsDraftEditUrl("blog", blogSlug) : "#";
 
         draftLinksEl.classList.toggle("hidden", !(hasWalk || hasBlog));
@@ -818,7 +822,7 @@ export const prerender = true;
 
       async function generate() {
         try {
-          latestCreated = { walkPath: "", blogPath: "" };
+          latestCreated = { walkPath: "", blogPath: "", walkPublished: false, blogPublished: false };
           draftLinksEl.classList.add("hidden");
           setStatus("Checking admin session...");
           const { token } = await requireAdminUser();
@@ -871,6 +875,8 @@ export const prerender = true;
           latestCreated = {
             walkPath: created.walkPath || "",
             blogPath: created.blogPath || "",
+            walkPublished: false,
+            blogPublished: false,
           };
           updateDraftButtons(created);
           const lines = ["Draft generation completed."];
@@ -904,6 +910,8 @@ export const prerender = true;
         try {
           await publishDraft(latestCreated.walkPath, "Walk");
           publishWalkDraftBtn.classList.add("hidden");
+          latestCreated.walkPublished = true;
+          updateDraftButtons(latestCreated);
         } catch (error) {
           setStatus(String(error.message || error), true);
         }
@@ -912,6 +920,8 @@ export const prerender = true;
         try {
           await publishDraft(latestCreated.blogPath, "Blog");
           publishBlogDraftBtn.classList.add("hidden");
+          latestCreated.blogPublished = true;
+          updateDraftButtons(latestCreated);
         } catch (error) {
           setStatus(String(error.message || error), true);
         }
