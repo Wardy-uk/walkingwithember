@@ -31,19 +31,25 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
       <h2>Flagship Routes</h2>
       <a href="/walks/">View all walks</a>
     </div>
-    <div class="v2-route-grid">
-      {walks.map((walk) => (
-        <article class="v2-route-card">
-          <a href={`/walks/${walk.slug}/`}>
-            <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
-          </a>
-          <div>
-            <h3><a href={`/walks/${walk.slug}/`}>{walk.data.title}</a></h3>
-            <p>{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}</p>
-          </div>
-        </article>
-      ))}
-    </div>
+    {walks.length > 0 ? (
+      <div class="v2-route-grid">
+        {walks.map((walk) => (
+          <article class="v2-route-card">
+            <a href={`/walks/${walk.slug}/`}>
+              <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
+            </a>
+            <div>
+              <h3><a href={`/walks/${walk.slug}/`}>{walk.data.title}</a></h3>
+              <p>{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <article class="card">
+        <p>No published walks yet. Draft routes will appear here after you publish them.</p>
+      </article>
+    )}
   </section>
 
   <section class="container v2-ethos">
@@ -62,4 +68,5 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
     </div>
   </section>
 </BaseLayout>
+
 
