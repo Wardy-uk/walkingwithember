@@ -1,10 +1,10 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getPublishedBlogs, getRegions, getSiteSettings } from "../../lib/content";
+import { getAllBlogs, getRegions, getSiteSettings } from "../../lib/content";
 
 const settings = await getSiteSettings();
 const regions = await getRegions();
-const posts = await getPublishedBlogs();
+const posts = await getAllBlogs();
 ---
 
 <BaseLayout
@@ -21,17 +21,33 @@ const posts = await getPublishedBlogs();
     </section>
     <section class="card-grid">
       {posts.map((post) => (
-        <article class="entry-card">
-          <a href={`/blog/${post.slug}/`}>
+        <article class:list={["entry-card", post.data.draft && "admin-draft-only", post.data.draft && "hidden"]}>
+          <a href={post.data.draft ? `/preview/blog/${post.slug}/` : `/blog/${post.slug}/`} target={post.data.draft ? "_blank" : undefined} rel={post.data.draft ? "noreferrer" : undefined}>
             <img src={post.data.coverImage} alt={post.data.title} loading="lazy" />
           </a>
           <div class="entry-card-body">
-            <h2><a href={`/blog/${post.slug}/`}>{post.data.title}</a></h2>
-            <p class="muted">{post.data.author} · {post.data.publishDate.toLocaleDateString("en-GB")}</p>
+            <h2><a href={post.data.draft ? `/preview/blog/${post.slug}/` : `/blog/${post.slug}/`} target={post.data.draft ? "_blank" : undefined} rel={post.data.draft ? "noreferrer" : undefined}>{post.data.title}</a></h2>
+            <p class="muted">{post.data.author} · {post.data.publishDate.toLocaleDateString("en-GB")}{post.data.draft ? " · Draft" : ""}</p>
             <p>{post.data.excerpt}</p>
           </div>
         </article>
       ))}
     </section>
   </div>
+
+  <script is:inline>
+    const draftBlocks = Array.from(document.querySelectorAll(".admin-draft-only"));
+
+    function revealAdminDrafts() {
+      draftBlocks.forEach((el) => el.classList.remove("hidden"));
+    }
+
+    if (window.netlifyIdentity) {
+      try {
+        window.netlifyIdentity.init();
+        if (window.netlifyIdentity.currentUser()) revealAdminDrafts();
+        window.netlifyIdentity.on("login", revealAdminDrafts);
+      } catch {}
+    }
+  </script>
 </BaseLayout>

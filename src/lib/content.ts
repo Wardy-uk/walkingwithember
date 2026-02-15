@@ -24,9 +24,14 @@ export async function getPublishedWalks() {
   return walks.filter((walk) => !walk.data.draft);
 }
 
-export async function getPublishedBlogs() {
-  const posts = await getCollection("blog", ({ data }) => !data.draft);
+export async function getAllBlogs() {
+  const posts = await getCollection("blog");
   return posts.sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());
+}
+
+export async function getPublishedBlogs() {
+  const posts = await getAllBlogs();
+  return posts.filter((post) => !post.data.draft);
 }
 
 export async function getPublishedGallery() {
@@ -38,5 +43,3 @@ export async function getRegions() {
   const walks = await getPublishedWalks();
   return Array.from(new Set(walks.map((walk) => walk.data.region))).sort((a, b) => a.localeCompare(b));
 }
-
-
