@@ -656,6 +656,12 @@ export const prerender = true;
       }
 
       async function callAiTool(token, payload) {
+        const action = payload?.action || "unknown";
+        const kind = payload?.asset?.kind || "";
+        const name = payload?.asset?.name || "";
+        const b64Len = payload?.asset?.contentBase64 ? payload.asset.contentBase64.length : 0;
+        appendActivity(`API request: ${action}${kind ? ` (${kind})` : ""}${name ? ` ${name}` : ""}${b64Len ? ` b64=${b64Len}` : ""}`);
+
         const response = await fetch("/.netlify/functions/ai-create-post", {
           method: "POST",
           headers: {
@@ -668,10 +674,16 @@ export const prerender = true;
         const raw = await response.text();
         let data = {};
         try { data = raw ? JSON.parse(raw) : {}; } catch {}
+
+        appendActivity(`API response: ${action} status=${response.status} bodyBytes=${raw.length}`);
+
         if (!response.ok) {
-          const detail = data.error || raw || response.statusText;
-          throw new Error(`Request failed (${response.status}): ${detail}`);
+          const detail = data.error || raw || response.statusText || "Unknown error";
+          const compactDetail = String(detail).replace(/\s+/g, " ").trim() || "<empty>";
+          appendActivity(`API error: ${action} ${compactDetail}`);
+          throw new Error(`Request failed (${response.status}): ${compactDetail}`);
         }
+
         return data;
       }
 
@@ -761,6 +773,7 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
 
 
 
