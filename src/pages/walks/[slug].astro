@@ -18,15 +18,12 @@ const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
 const encodedUrl = encodeURIComponent(pageUrl);
 const encodedTitle = encodeURIComponent(walk.data.title);
 const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
+const gpxUrl = walk.data.gpxDownload ?? "";
 const estimatedHours = walk.data.difficulty === "Hard"
   ? Math.max(3, Math.round(walk.data.distance / 2))
   : walk.data.difficulty === "Moderate"
     ? Math.max(2, Math.round(walk.data.distance / 2.4))
     : Math.max(1, Math.round(walk.data.distance / 2.8));
-const stravaActivityMatch = walk.data.stravaRecord?.match(/activities\/(\d+)/i) ?? walk.data.stravaRecord?.match(/\/(\d{6,})/);
-const stravaActivityId = stravaActivityMatch?.[1] ?? "";
-const stravaEmbedUrl = stravaActivityId ? `https://www.strava.com/activities/${stravaActivityId}/embed` : "";
-const stravaFlybyUrl = walk.data.stravaFlyby || "";
 ---
 
 <BaseLayout
@@ -61,7 +58,7 @@ const stravaFlybyUrl = walk.data.stravaFlyby || "";
       <section class="card planning-strip">
         <div>
           <h2>Map And Navigation</h2>
-          <p>Use OS mapping where possible, and keep an offline backup before setting off.</p>
+          <p>Route line is drawn from this walk GPX on OS mapping where available.</p>
         </div>
         <div class="planning-links">
           {walk.data.osMapsLink && <a class="button" href={walk.data.osMapsLink} target="_blank" rel="noreferrer">Open OS Maps Route</a>}
@@ -82,44 +79,6 @@ const stravaFlybyUrl = walk.data.stravaFlyby || "";
       <section class="card">
         <h2>Route Notes</h2>
         <Content />
-      </section>
-
-      <section class="card">
-        <h2>Strava Route and Flyby</h2>
-        <div class="page-grid">
-          <div>
-            <h3>Route</h3>
-            {stravaEmbedUrl ? (
-              <iframe
-                title={`Strava route for ${walk.data.title}`}
-                src={stravaEmbedUrl}
-                width="100%"
-                height="480"
-                style="border:0;"
-                loading="lazy"
-              ></iframe>
-            ) : (
-              <p class="muted">No valid Strava activity is available to embed for this walk yet.</p>
-            )}
-          </div>
-          <div>
-            <h3>Flyby</h3>
-            {stravaFlybyUrl ? (
-              <iframe
-                title={`Strava flyby for ${walk.data.title}`}
-                src={stravaFlybyUrl}
-                width="100%"
-                height="480"
-                style="border:0;"
-                loading="lazy"
-                sandbox="allow-same-origin allow-scripts"
-                referrerpolicy="no-referrer"
-              ></iframe>
-            ) : (
-              <p class="muted">No Flyby link is available for this walk.</p>
-            )}
-          </div>
-        </div>
       </section>
 
       <section class="card">
@@ -161,10 +120,27 @@ const stravaFlybyUrl = walk.data.stravaFlyby || "";
       lat: walk.data.routeMapLat,
       lng: walk.data.routeMapLng,
       zoom: walk.data.routeMapZoom,
-      mapApiKey
+      mapApiKey,
+      gpxUrl
     }}
   >
     const mapContainer = document.getElementById("map");
+
+    function extractTrackPoints(xmlText) {
+      const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+      const points = [];
+      const trk = Array.from(doc.querySelectorAll("trkpt"));
+      const rte = Array.from(doc.querySelectorAll("rtept"));
+      const nodes = trk.length > 0 ? trk : rte;
+
+      for (const node of nodes) {
+        const pLat = Number(node.getAttribute("lat"));
+        const pLng = Number(node.getAttribute("lon"));
+        if (Number.isFinite(pLat) && Number.isFinite(pLng)) points.push([pLat, pLng]);
+      }
+      return points;
+    }
+
     if (mapContainer && window.L) {
       const map = window.L.map(mapContainer).setView([lat, lng], zoom);
       if (mapApiKey) {
@@ -179,14 +155,43 @@ const stravaFlybyUrl = walk.data.stravaFlyby || "";
           attribution: "&copy; OpenStreetMap contributors"
         }).addTo(map);
       }
-      window.L.marker([lat, lng]).addTo(map);
+
+      const dropFallbackMarker = () => {
+        window.L.marker([lat, lng]).addTo(map);
+      };
+
+      const drawRouteFromGpx = async () => {
+        if (!gpxUrl) {
+          dropFallbackMarker();
+          return;
+        }
+
+        try {
+          const response = await fetch(gpxUrl);
+          if (!response.ok) throw new Error(`GPX fetch failed: ${response.status}`);
+          const gpxXml = await response.text();
+          const routePoints = extractTrackPoints(gpxXml);
+
+          if (routePoints.length < 2) {
+            dropFallbackMarker();
+            return;
+          }
+
+          const routeLine = window.L.polyline(routePoints, {
+            color: "#be6d37",
+            weight: 4,
+            opacity: 0.9
+          }).addTo(map);
+
+          map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
+          window.L.circleMarker(routePoints[0], { radius: 5, color: "#1f7a1f", weight: 2, fillOpacity: 1 }).addTo(map);
+          window.L.circleMarker(routePoints[routePoints.length - 1], { radius: 5, color: "#9e2a2a", weight: 2, fillOpacity: 1 }).addTo(map);
+        } catch {
+          dropFallbackMarker();
+        }
+      };
+
+      drawRouteFromGpx();
     }
   </script>
 </BaseLayout>
-
-
-
-
-
-
-
