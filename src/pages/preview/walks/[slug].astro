@@ -63,13 +63,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
         data-zoom={String(walk.data.routeMapZoom)}
         data-map-api-key={mapApiKey}
         data-gpx-url={gpxUrl}
-      ></div>
-
-      <details class="card" open>
-        <summary>Temporary Map Debug</summary>
-        <pre id="map-debug" style="white-space: pre-wrap; font-size: 0.8rem; margin-top: 0.7rem;"></pre>
-      </details>
-
+      ></div>`n
       <section class="card planning-strip">
         <div>
           <h2>Map And Navigation</h2>
@@ -131,7 +125,6 @@ const estimatedHours = walk.data.difficulty === "Hard"
     import L from "leaflet";
 
     const mapContainer = document.getElementById("map");
-    const debugEl = document.getElementById("map-debug");
 
     const lat = Number(mapContainer?.dataset.lat || "0");
     const lng = Number(mapContainer?.dataset.lng || "0");
@@ -142,7 +135,6 @@ const estimatedHours = walk.data.difficulty === "Hard"
     function logDebug(message) {
       const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
       const line = `[${ts}] ${message}`;
-      if (debugEl) debugEl.textContent += `${line}\n`;
       console.log(line);
     }
 
@@ -240,4 +232,5 @@ const estimatedHours = walk.data.difficulty === "Hard"
     }
   </script>
 </BaseLayout>
+
 
