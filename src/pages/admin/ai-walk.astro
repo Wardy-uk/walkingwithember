@@ -261,7 +261,7 @@ export const prerender = true;
       </section>
     </main>
 
-    <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <script>
       const QUESTION_ITEMS = [
         ["where_walked", "Where did you walk?"],
@@ -475,9 +475,18 @@ export const prerender = true;
         };
       }
 
-      async function requireAdminUser() {
+      async function getIdentityClient(triesLeft = 40) {
         const identity = window.netlifyIdentity;
-        if (!identity) throw new Error("Netlify Identity is unavailable.");
+        if (identity) return identity;
+        if (triesLeft <= 0) {
+          throw new Error("Netlify Identity is unavailable.");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        return getIdentityClient(triesLeft - 1);
+      }
+
+      async function requireAdminUser() {
+        const identity = await getIdentityClient();
         identity.init();
         const user = identity.currentUser();
         if (!user) {
@@ -487,6 +496,24 @@ export const prerender = true;
         const token = await user.jwt();
         whoEl.textContent = user.email || "Admin logged in";
         return { token };
+      }
+
+      async function initIdentityStatus() {
+        try {
+          const identity = await getIdentityClient();
+          identity.init();
+          const user = identity.currentUser();
+          if (user) {
+            whoEl.textContent = user.email || "Admin logged in";
+            appendActivity("Identity session detected.");
+            return;
+          }
+          whoEl.textContent = "Not logged in";
+          appendActivity("No active identity session.");
+        } catch (error) {
+          whoEl.textContent = "Not logged in";
+          setStatus(String(error.message || error), true);
+        }
       }
 
       function parsePoints(xml, tagName) {
@@ -934,10 +961,7 @@ export const prerender = true;
 
       renderQuestions();
       appendActivity("AI Walk page ready.");
-      requireAdminUser().catch((error) => {
-        whoEl.textContent = "Not logged in";
-        setStatus(error.message, true);
-      });
+      initIdentityStatus();
     </script>
   </body>
 </html>
