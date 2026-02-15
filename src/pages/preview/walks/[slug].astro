@@ -126,9 +126,9 @@ const estimatedHours = walk.data.difficulty === "Hard"
     import L from "leaflet";
 
     const mapContainer = document.getElementById("map");
-    if (!mapContainer) return;
 
     function showMapMessage(message) {
+      if (!mapContainer) return;
       mapContainer.innerHTML = `<div style="display:grid;place-items:center;height:100%;padding:1rem;color:#7c6654;font-size:0.95rem;">${message}</div>`;
     }
 
@@ -147,59 +147,61 @@ const estimatedHours = walk.data.difficulty === "Hard"
       return points;
     }
 
-    try {
-      const map = L.map(mapContainer).setView([lat, lng], zoom);
-      if (mapApiKey) {
-        L.tileLayer("https://api.os.uk/maps/raster/v1/zxy/Outdoor_3857/{z}/{x}/{y}.png?key={accessToken}", {
-          accessToken: mapApiKey,
-          maxZoom: 18,
-          attribution: "&copy; Ordnance Survey"
-        }).addTo(map);
-      } else {
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 18,
-          attribution: "&copy; OpenStreetMap contributors"
-        }).addTo(map);
-      }
-
-      const dropFallbackMarker = () => {
-        L.circleMarker([lat, lng], { radius: 5, color: "#be6d37", weight: 2, fillOpacity: 1 }).addTo(map);
-      };
-
-      const drawRouteFromGpx = async () => {
-        if (!gpxUrl) {
-          dropFallbackMarker();
-          return;
+    if (mapContainer) {
+      try {
+        const map = L.map(mapContainer).setView([lat, lng], zoom);
+        if (mapApiKey) {
+          L.tileLayer("https://api.os.uk/maps/raster/v1/zxy/Outdoor_3857/{z}/{x}/{y}.png?key={accessToken}", {
+            accessToken: mapApiKey,
+            maxZoom: 18,
+            attribution: "&copy; Ordnance Survey"
+          }).addTo(map);
+        } else {
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 18,
+            attribution: "&copy; OpenStreetMap contributors"
+          }).addTo(map);
         }
 
-        try {
-          const response = await fetch(gpxUrl);
-          if (!response.ok) throw new Error(`GPX fetch failed: ${response.status}`);
-          const gpxXml = await response.text();
-          const routePoints = extractTrackPoints(gpxXml);
+        const dropFallbackMarker = () => {
+          L.circleMarker([lat, lng], { radius: 5, color: "#be6d37", weight: 2, fillOpacity: 1 }).addTo(map);
+        };
 
-          if (routePoints.length < 2) {
+        const drawRouteFromGpx = async () => {
+          if (!gpxUrl) {
             dropFallbackMarker();
             return;
           }
 
-          const routeLine = L.polyline(routePoints, {
-            color: "#be6d37",
-            weight: 4,
-            opacity: 0.9
-          }).addTo(map);
+          try {
+            const response = await fetch(gpxUrl);
+            if (!response.ok) throw new Error(`GPX fetch failed: ${response.status}`);
+            const gpxXml = await response.text();
+            const routePoints = extractTrackPoints(gpxXml);
 
-          map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
-          L.circleMarker(routePoints[0], { radius: 5, color: "#1f7a1f", weight: 2, fillOpacity: 1 }).addTo(map);
-          L.circleMarker(routePoints[routePoints.length - 1], { radius: 5, color: "#9e2a2a", weight: 2, fillOpacity: 1 }).addTo(map);
-        } catch {
-          dropFallbackMarker();
-        }
-      };
+            if (routePoints.length < 2) {
+              dropFallbackMarker();
+              return;
+            }
 
-      drawRouteFromGpx();
-    } catch {
-      showMapMessage("Map failed to load on this page.");
+            const routeLine = L.polyline(routePoints, {
+              color: "#be6d37",
+              weight: 4,
+              opacity: 0.9
+            }).addTo(map);
+
+            map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
+            L.circleMarker(routePoints[0], { radius: 5, color: "#1f7a1f", weight: 2, fillOpacity: 1 }).addTo(map);
+            L.circleMarker(routePoints[routePoints.length - 1], { radius: 5, color: "#9e2a2a", weight: 2, fillOpacity: 1 }).addTo(map);
+          } catch {
+            dropFallbackMarker();
+          }
+        };
+
+        drawRouteFromGpx();
+      } catch {
+        showMapMessage("Map failed to load on this page.");
+      }
     }
   </script>
 </BaseLayout>

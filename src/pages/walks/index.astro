@@ -170,23 +170,19 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
 
     [search, distance, difficulty, region, dog, tag].forEach((el) => el?.addEventListener("input", filterCards));
 
-    if (window.netlifyIdentity) {
-      try {
-        const enableAdminDrafts = () => {
-          showDraftsForAdmin = true;
-          filterCards();
-        };
-        window.netlifyIdentity.on("init", (user) => {
-          if (user) enableAdminDrafts();
-        });
-        window.netlifyIdentity.on("login", enableAdminDrafts);
-        window.netlifyIdentity.init();
-        if (window.netlifyIdentity.currentUser()) enableAdminDrafts();
-      } catch {}
-    }
+    const syncDraftsFromIdentity = (user) => {
+      showDraftsForAdmin = Boolean(user);
+      filterCards();
+    };
+
+    syncDraftsFromIdentity(window.__wwIdentityUser || null);
+    window.addEventListener("ww-identity-change", (event) => {
+      syncDraftsFromIdentity(event.detail?.user || null);
+    });
 
     filterCards();
   </script>
 </BaseLayout>
+
 
 

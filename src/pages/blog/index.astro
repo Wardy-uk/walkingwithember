@@ -42,16 +42,19 @@ const posts = await getAllBlogs();
       draftBlocks.forEach((el) => el.classList.remove("hidden"));
     }
 
-    if (window.netlifyIdentity) {
-      try {
-        window.netlifyIdentity.on("init", (user) => {
-          if (user) revealAdminDrafts();
-        });
-        window.netlifyIdentity.on("login", revealAdminDrafts);
-        window.netlifyIdentity.init();
-        if (window.netlifyIdentity.currentUser()) revealAdminDrafts();
-      } catch {}
-    }
+    const syncDraftsFromIdentity = (user) => {
+      if (user) {
+        revealAdminDrafts();
+      } else {
+        draftBlocks.forEach((el) => el.classList.add("hidden"));
+      }
+    };
+
+    syncDraftsFromIdentity(window.__wwIdentityUser || null);
+    window.addEventListener("ww-identity-change", (event) => {
+      syncDraftsFromIdentity(event.detail?.user || null);
+    });
   </script>
 </BaseLayout>
+
 

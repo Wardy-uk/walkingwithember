@@ -42,14 +42,50 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
     </main>
     <SiteFooter />
     <CookieBanner />
+    <div id="identity-status" class="identity-status" data-state="checking">Admin: checking...</div>
+
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <script is:inline>
+      const identityStatus = document.getElementById("identity-status");
+      const setIdentityStatus = (label, state, user = null, available = true) => {
+        if (identityStatus) {
+          identityStatus.textContent = `Admin: ${label}`;
+          identityStatus.dataset.state = state;
+        }
+        window.__wwIdentityUser = user;
+        window.dispatchEvent(new CustomEvent("ww-identity-change", { detail: { user, available } }));
+      };
+
       if (window.netlifyIdentity) {
-        window.netlifyIdentity.on("init", (user) => {
-          if (!user && window.location.hash.includes("invite_token")) {
-            window.netlifyIdentity.open("signup");
+        try {
+          window.netlifyIdentity.on("init", (user) => {
+            if (!user && window.location.hash.includes("invite_token")) {
+              window.netlifyIdentity.open("signup");
+            }
+            setIdentityStatus(user ? "logged in" : "logged out", user ? "in" : "out", user, true);
+          });
+
+          window.netlifyIdentity.on("login", (user) => {
+            setIdentityStatus("logged in", "in", user, true);
+          });
+
+          window.netlifyIdentity.on("logout", () => {
+            setIdentityStatus("logged out", "out", null, true);
+          });
+
+          window.netlifyIdentity.init();
+
+          const currentUser = window.netlifyIdentity.currentUser?.();
+          if (currentUser) {
+            setIdentityStatus("logged in", "in", currentUser, true);
+          } else {
+            setIdentityStatus("logged out", "out", null, true);
           }
-        });
+        } catch {
+          setIdentityStatus("identity error", "error", null, false);
+        }
+      } else {
+        setIdentityStatus("identity unavailable", "unavailable", null, false);
       }
     </script>
 

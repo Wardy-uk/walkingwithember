@@ -789,3 +789,36 @@ button:hover,
     grid-template-columns: 1fr;
   }
 }
+
+.identity-status {
+  position: fixed;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  z-index: 45;
+  border: 1px solid #d6bc9f;
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  background: #fff7ee;
+  color: #5f4633;
+  box-shadow: 0 10px 20px rgba(33, 17, 8, 0.2);
+}
+
+.identity-status[data-state="in"] {
+  border-color: #8fba8f;
+  background: #edf9ed;
+  color: #245824;
+}
+
+.identity-status[data-state="out"] {
+  border-color: #d6bc9f;
+  background: #fff7ee;
+  color: #5f4633;
+}
+
+.identity-status[data-state="unavailable"],
+.identity-status[data-state="error"] {
+  border-color: #d9a4a4;
+  background: #fff1f1;
+  color: #7a2323;
+}

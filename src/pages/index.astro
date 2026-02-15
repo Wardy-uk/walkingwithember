@@ -99,17 +99,21 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
       if (noPublished) noPublished.classList.add("hidden");
     }
 
-    if (window.netlifyIdentity) {
-      try {
-        window.netlifyIdentity.on("init", (user) => {
-          if (user) revealAdminDrafts();
-        });
-        window.netlifyIdentity.on("login", revealAdminDrafts);
-        window.netlifyIdentity.init();
-        if (window.netlifyIdentity.currentUser()) revealAdminDrafts();
-      } catch {}
-    }
+    const syncDraftsFromIdentity = (user) => {
+      if (user) {
+        revealAdminDrafts();
+      } else {
+        draftBlocks.forEach((el) => el.classList.add("hidden"));
+        if (noPublished) noPublished.classList.remove("hidden");
+      }
+    };
+
+    syncDraftsFromIdentity(window.__wwIdentityUser || null);
+    window.addEventListener("ww-identity-change", (event) => {
+      syncDraftsFromIdentity(event.detail?.user || null);
+    });
   </script>
 </BaseLayout>
+
 
 
