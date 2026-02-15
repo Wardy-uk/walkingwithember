@@ -44,49 +44,70 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
     <CookieBanner />
     <div id="identity-status" class="identity-status" data-state="checking">Admin: checking...</div>
 
-    <script type="module">
-      import netlifyIdentity from "netlify-identity-widget";
-
-      const identityStatus = document.getElementById("identity-status");
-      const setIdentityStatus = (label, state, user = null, available = true) => {
-        if (identityStatus) {
-          identityStatus.textContent = `Admin: ${label}`;
-          identityStatus.dataset.state = state;
-        }
-        window.__wwIdentityUser = user;
-        window.dispatchEvent(new CustomEvent("ww-identity-change", { detail: { user, available } }));
-      };
-
-      try {
-        // Keep compatibility with existing page scripts that reference window.netlifyIdentity.
-        window.netlifyIdentity = netlifyIdentity;
-
-        netlifyIdentity.on("init", (user) => {
-          if (!user && window.location.hash.includes("invite_token")) {
-            netlifyIdentity.open("signup");
+    <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js" defer></script>
+    <script is:inline>
+      (() => {
+        const identityStatus = document.getElementById("identity-status");
+        const setIdentityStatus = (label, state, user = null, available = true) => {
+          if (identityStatus) {
+            identityStatus.textContent = `Admin: ${label}`;
+            identityStatus.dataset.state = state;
           }
-          setIdentityStatus(user ? "logged in" : "logged out", user ? "in" : "out", user, true);
-        });
+          window.__wwIdentityUser = user;
+          window.dispatchEvent(new CustomEvent("ww-identity-change", { detail: { user, available } }));
+        };
 
-        netlifyIdentity.on("login", (user) => {
-          setIdentityStatus("logged in", "in", user, true);
-        });
+        const bindIdentity = (identity) => {
+          if (!identity || typeof identity.init !== "function") {
+            setIdentityStatus("identity unavailable", "unavailable", null, false);
+            return;
+          }
 
-        netlifyIdentity.on("logout", () => {
-          setIdentityStatus("logged out", "out", null, true);
-        });
+          try {
+            identity.on("init", (user) => {
+              if (!user && window.location.hash.includes("invite_token")) {
+                identity.open("signup");
+              }
+              setIdentityStatus(user ? "logged in" : "logged out", user ? "in" : "out", user, true);
+            });
 
-        netlifyIdentity.init();
+            identity.on("login", (user) => {
+              setIdentityStatus("logged in", "in", user, true);
+            });
 
-        const currentUser = netlifyIdentity.currentUser?.();
-        if (currentUser) {
-          setIdentityStatus("logged in", "in", currentUser, true);
+            identity.on("logout", () => {
+              setIdentityStatus("logged out", "out", null, true);
+            });
+
+            identity.init();
+            const currentUser = identity.currentUser?.();
+            setIdentityStatus(currentUser ? "logged in" : "logged out", currentUser ? "in" : "out", currentUser || null, true);
+          } catch {
+            setIdentityStatus("identity error", "error", null, false);
+          }
+        };
+
+        const tryLoadIdentity = (attempt = 0) => {
+          const identity = window.netlifyIdentity;
+          if (identity) {
+            bindIdentity(identity);
+            return;
+          }
+
+          if (attempt >= 20) {
+            setIdentityStatus("identity unavailable", "unavailable", null, false);
+            return;
+          }
+
+          window.setTimeout(() => tryLoadIdentity(attempt + 1), 150);
+        };
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", () => tryLoadIdentity(0), { once: true });
         } else {
-          setIdentityStatus("logged out", "out", null, true);
+          tryLoadIdentity(0);
         }
-      } catch {
-        setIdentityStatus("identity error", "error", null, false);
-      }
+      })();
     </script>
 
     <script type="application/ld+json" is:inline define:vars={{ title, description, canonical }}>
