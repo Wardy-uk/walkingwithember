@@ -430,6 +430,28 @@ function average(values) {
 
 async function generateContent({ payload, gpxSummary, walkSlug, blogSlug, publishDate }) {
   const answers = payload.answers || {};
+  const voiceProfile = "Use direct first-person UK hiking language. Keep it practical, specific, and unsentimental.";
+  const bannedPhrases = [
+    "rewarding day",
+    "memorable terrain",
+    "with the right prep",
+    "strong day out",
+    "good balance of effort",
+    "typical for the season",
+  ];
+
+  const landmarks = splitDetailItems(answers.route_landmarks);
+  const conditionDetails = splitDetailItems(answers.condition_specifics);
+  const detailErrors = [];
+  if (landmarks.length < 3) detailErrors.push("add at least 3 specific route landmarks");
+  if (conditionDetails.length < 2) detailErrors.push("add at least 2 specific condition notes");
+  if (!String(answers.day_mistake_lesson || "").trim()) detailErrors.push("add one mistake or lesson from the day");
+  if (detailErrors.length) {
+    return {
+      ok: false,
+      error: `Need more concrete detail before generating: ${detailErrors.join("; ")}.`,
+    };
+  }
 
   const walkLocation = nonEmpty(payload.walkTitle, answers.where_walked, answers.familiar_or_new, "Peak District");
   const walkTitle = nonEmpty(payload.walkTitle, titleCaseFromSlug(walkSlug), `Walk ${publishDate}`);
@@ -439,10 +461,14 @@ async function generateContent({ payload, gpxSummary, walkSlug, blogSlug, publis
   const difficulty = distance >= 10 || ascentFt >= 2200 ? "Hard" : distance >= 6 || ascentFt >= 1200 ? "Moderate" : "Easy";
 
   const summary = truncate(
-    nonEmpty(
-      answers.why_route_today,
-      answers.conditions_impact,
-      "A reflective route day with practical trail notes and conditions captured from the walk."
+    sanitizeVoiceText(
+      nonEmpty(
+        answers.why_route_today,
+        answers.conditions_impact,
+        answers.during_after_feeling,
+        "A practical day in the hills with route notes, conditions, and lessons from the trail."
+      ),
+      bannedPhrases
     ),
     230
   );
@@ -456,28 +482,87 @@ async function generateContent({ payload, gpxSummary, walkSlug, blogSlug, publis
     answers.kit_layers,
   ]).slice(0, 8);
 
+  const walkIntro = truncate(
+    sanitizeVoiceText(
+      nonEmpty(
+        answers.why_route_today,
+        answers.where_walked,
+        "This route gives you solid climbing, big views, and enough variety to stay interesting throughout."
+      ),
+      bannedPhrases
+    ),
+    280
+  );
+
+  const landmarkLines = formatDetailList(
+    landmarks,
+    ["Start point and first junction", "Key turn on open ground", "Final descent marker"]
+  );
+  const conditionLines = formatDetailList(
+    conditionDetails,
+    ["Wind strength and direction on high ground", "Ground firmness or bogginess in key sections"]
+  );
+
   const routeNotesMarkdown = [
-    "## Why this route",
-    nonEmpty(answers.why_route_today, "Chosen for a steady route with varied terrain and good access."),
+    "## Route overview",
+    voiceProfile,
     "",
-    "## Conditions and pacing",
-    nonEmpty(answers.weather_trail_conditions, "Conditions were mixed with typical hill exposure."),
+    walkIntro,
     "",
-    nonEmpty(answers.pace_comfort, "Pacing felt controlled for the day."),
+    "## Important before you go",
+    `- ${nonEmpty(answers.safety_notes, "Carry and use navigation confidently, especially on open moorland or unclear path sections.")}`,
+    `- ${nonEmpty(answers.weather_trail_conditions, "Check the latest weather before setting off and be ready for quick changes on higher ground.")}`,
+    `- ${nonEmpty(answers.parking_toilets, "Confirm parking and facilities before travel.")}`,
     "",
-    "## Standout sections",
-    nonEmpty(answers.standout_sections, "Several sections offered strong views and useful route markers."),
+    "## Navigation and landmarks",
+    ...landmarkLines.map((item) => `- ${item}`),
     "",
-    "## Kit and lessons",
-    nonEmpty(answers.kit_layers, "Layering and kit were selected for variable UK hill conditions."),
+    "## Route notes",
+    sanitizeVoiceText(
+      nonEmpty(answers.familiar_or_new, "The route starts steadily, then gets rougher where line choice matters."),
+      bannedPhrases
+    ),
     "",
-    nonEmpty(answers.gear_lessons, "No major gear issues; small refinements noted for the next outing."),
+    sanitizeVoiceText(
+      nonEmpty(answers.standout_sections, "The middle section is the one that defines this route and where the day opens up."),
+      bannedPhrases
+    ),
     "",
-    "## Ember on route",
-    nonEmpty(answers.ember_experience, "Ember settled well and handled the route rhythm throughout."),
+    sanitizeVoiceText(nonEmpty(answers.pace_comfort, "I kept the pace honest and steady for the conditions."), bannedPhrases),
     "",
-    "## Reflection",
-    nonEmpty(answers.what_it_meant, answers.what_it_taught, "A strong day out with both practical and reflective value."),
+    "## Conditions on the day",
+    ...conditionLines.map((item) => `- ${item}`),
+    "",
+    sanitizeVoiceText(
+      nonEmpty(answers.conditions_impact, "Conditions changed how fast I could move and where I needed to be careful."),
+      bannedPhrases
+    ),
+    "",
+    "## Kit and what I would do next time",
+    sanitizeVoiceText(nonEmpty(answers.kit_layers, "Layering was set for mixed UK hill weather."), bannedPhrases),
+    "",
+    sanitizeVoiceText(nonEmpty(answers.gear_lessons, "A couple of kit choices worked, one or two need changing."), bannedPhrases),
+    "",
+    "## Mistakes and lessons",
+    sanitizeVoiceText(
+      nonEmpty(answers.day_mistake_lesson, "I made one route-choice error and corrected quickly with map checks."),
+      bannedPhrases
+    ),
+    "",
+    "## Walking with Ember",
+    sanitizeVoiceText(nonEmpty(answers.ember_experience, "Ember handled the route well and stayed engaged all day."), bannedPhrases),
+    "",
+    `- Lead/off-lead: ${nonEmpty(answers.ember_lead_offlead, "Mostly on lead where stock, roads, or steep drops were nearby.")}`,
+    `- Triggers and control: ${nonEmpty(answers.ember_triggers, "Watched for stock and other dogs; recalled early to avoid pressure points.")}`,
+    `- Aftercare: ${nonEmpty(answers.ember_aftercare, "Water, quick check of paws, then a proper rest once home.")}`,
+    "",
+    sanitizeVoiceText(nonEmpty(answers.ember_rhythm, "Some sections needed tighter control and clearer pacing cues."), bannedPhrases),
+    "",
+    "## Final thoughts",
+    sanitizeVoiceText(
+      nonEmpty(answers.what_it_meant, answers.what_it_taught, answers.overall_rating, "I would do this one again, but with a smarter line choice in the rougher sections."),
+      bannedPhrases
+    ),
   ].join("\n");
 
   const finalBlogTitle = nonEmpty(payload.blogTitle, `Walk Notes: ${walkTitle}`, titleCaseFromSlug(blogSlug));
@@ -491,28 +576,42 @@ async function generateContent({ payload, gpxSummary, walkSlug, blogSlug, publis
   );
 
   const blogBody = [
-    "This post was generated from your walk inputs and GPX metrics, then saved as a draft for review.",
+    "This write-up is from my own route notes and GPX stats, then edited before publish.",
     "",
-    "## Route context",
+    "## Route snapshot",
     `- Distance: ${gpxSummary.distanceMiles} mi`,
     `- Elevation gain: ${gpxSummary.elevationGainFeet} ft`,
     ...(gpxSummary.elapsedHms ? [`- Elapsed time: ${gpxSummary.elapsedHms}`] : []),
     ...(gpxSummary.avgPaceMinPerMile ? [`- Average pace: ${gpxSummary.avgPaceMinPerMile} min/mi`] : []),
     "",
-    "## How the day felt",
-    nonEmpty(answers.during_after_feeling, "Effort and pace were manageable for the route profile."),
+    "## Why this route",
+    sanitizeVoiceText(
+      nonEmpty(answers.why_route_today, "I picked this route for solid climbing, good distance, and proper hill time."),
+      bannedPhrases
+    ),
     "",
-    "## What stood out",
-    nonEmpty(answers.standout_sections, "Terrain variation and views were key highlights."),
+    "## Start and first impressions",
+    sanitizeVoiceText(nonEmpty(answers.before_setting_off, "I started steady and watched how the weather was going to behave."), bannedPhrases),
     "",
-    "## Kit and trail learning",
-    nonEmpty(answers.gear_lessons, "Gear choices were mostly sound with a few notes for improvement."),
+    "## On the trail",
+    sanitizeVoiceText(nonEmpty(answers.weather_trail_conditions, "Conditions shifted through the walk and dictated the pace."), bannedPhrases),
     "",
-    "## Ember update",
-    nonEmpty(answers.ember_experience, "Ember was steady and engaged throughout the route."),
+    sanitizeVoiceText(nonEmpty(answers.standout_sections, "One climb and one exposed section were the defining parts of the day."), bannedPhrases),
     "",
-    "## Closing note",
-    nonEmpty(answers.what_it_meant, answers.what_it_taught, "Another useful route day to build on."),
+    "## Where I nearly got it wrong",
+    sanitizeVoiceText(nonEmpty(answers.day_mistake_lesson, "I made one judgement call that cost time, then corrected it early."), bannedPhrases),
+    "",
+    "## Gear and takeaways",
+    sanitizeVoiceText(nonEmpty(answers.gear_lessons, "Most kit worked, but I would change one item next time."), bannedPhrases),
+    "",
+    "## Ember notes",
+    sanitizeVoiceText(nonEmpty(answers.ember_experience, "Ember was strong throughout, with a couple of sections needing closer handling."), bannedPhrases),
+    "",
+    `- Lead/off-lead: ${nonEmpty(answers.ember_lead_offlead, "Kept lead decisions tied to terrain and nearby stock.")}`,
+    `- Triggers: ${nonEmpty(answers.ember_triggers, "Stayed ahead of obvious trigger points and reset early when needed.")}`,
+    "",
+    "## Would I do it again?",
+    sanitizeVoiceText(nonEmpty(answers.walk_again, answers.overall_rating, "Yes, and I would run the same route with small tactical changes."), bannedPhrases),
   ].join("\n");
 
   const blogTags = dedupeStrings([
@@ -583,6 +682,10 @@ function createWalkMarkdown({ content, payload, gpxSummary, publishDate, gpxPubl
     ...(gpxSummary.elapsedHms ? [`- GPX elapsed time: ${gpxSummary.elapsedHms}`] : []),
     ...(gpxSummary.avgMph ? [`- Average speed (from GPX time): ${gpxSummary.avgMph} mph`] : []),
     ...(gpxSummary.avgPaceMinPerMile ? [`- Average pace (from GPX time): ${gpxSummary.avgPaceMinPerMile} min/mi`] : []),
+    "",
+    "## Map and navigation",
+    "- Always carry navigation backup and know how to use it.",
+    "- Downloaded GPX is provided for route guidance only; conditions and access can change.",
     "",
     "## Photo highlights",
     ...(imageSummaries.length
@@ -808,6 +911,31 @@ function dedupeStrings(values) {
     out.push(value);
   }
   return out;
+}
+
+function splitDetailItems(value) {
+  return String(value || "")
+    .split(/\r?\n|,|;|\u2022| - /)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 3);
+}
+
+function formatDetailList(items, fallback) {
+  return dedupeStrings([...(items || []), ...(fallback || [])]).slice(0, Math.max((items || []).length, 3));
+}
+
+function sanitizeVoiceText(value, bannedPhrases) {
+  let text = String(value || "").trim();
+  for (const phrase of bannedPhrases || []) {
+    if (!phrase) continue;
+    const pattern = new RegExp(escapeRegex(phrase), "ig");
+    text = text.replace(pattern, "").replace(/\s{2,}/g, " ").trim();
+  }
+  return text || String(value || "").trim();
+}
+
+function escapeRegex(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function quoteYaml(value) {
