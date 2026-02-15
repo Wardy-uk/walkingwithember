@@ -26,6 +26,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
 const stravaActivityMatch = walk.data.stravaRecord?.match(/activities\/(\d+)/i) ?? walk.data.stravaRecord?.match(/\/(\d{6,})/);
 const stravaActivityId = stravaActivityMatch?.[1] ?? "";
 const stravaEmbedUrl = stravaActivityId ? `https://www.strava.com/activities/${stravaActivityId}/embed` : "";
+const stravaFlybyUrl = walk.data.stravaFlyby || "";
 ---
 
 <BaseLayout
@@ -84,19 +85,41 @@ const stravaEmbedUrl = stravaActivityId ? `https://www.strava.com/activities/${s
       </section>
 
       <section class="card">
-        <h2>Strava Route</h2>
-        {stravaEmbedUrl ? (
-          <iframe
-            title={`Strava route for ${walk.data.title}`}
-            src={stravaEmbedUrl}
-            width="100%"
-            height="520"
-            style="border:0;"
-            loading="lazy"
-          ></iframe>
-        ) : (
-          <p class="muted">No valid Strava activity is available to embed for this walk yet.</p>
-        )}
+        <h2>Strava Route and Flyby</h2>
+        <div class="page-grid">
+          <div>
+            <h3>Route</h3>
+            {stravaEmbedUrl ? (
+              <iframe
+                title={`Strava route for ${walk.data.title}`}
+                src={stravaEmbedUrl}
+                width="100%"
+                height="480"
+                style="border:0;"
+                loading="lazy"
+              ></iframe>
+            ) : (
+              <p class="muted">No valid Strava activity is available to embed for this walk yet.</p>
+            )}
+          </div>
+          <div>
+            <h3>Flyby</h3>
+            {stravaFlybyUrl ? (
+              <iframe
+                title={`Strava flyby for ${walk.data.title}`}
+                src={stravaFlybyUrl}
+                width="100%"
+                height="480"
+                style="border:0;"
+                loading="lazy"
+                sandbox="allow-same-origin allow-scripts"
+                referrerpolicy="no-referrer"
+              ></iframe>
+            ) : (
+              <p class="muted">No Flyby link is available for this walk.</p>
+            )}
+          </div>
+        </div>
       </section>
 
       <section class="card">
@@ -160,6 +183,8 @@ const stravaEmbedUrl = stravaActivityId ? `https://www.strava.com/activities/${s
     }
   </script>
 </BaseLayout>
+
+
 
 
 
