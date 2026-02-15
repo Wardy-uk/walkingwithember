@@ -401,6 +401,7 @@ h1 {
   gap: 0.35rem;
   font-size: 0.9rem;
   color: var(--muted);
+  min-width: 0;
 }
 
 input,
@@ -411,6 +412,10 @@ textarea {
   padding: 0.55rem 0.65rem;
   font: inherit;
   background: #fffaf2;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 button,
