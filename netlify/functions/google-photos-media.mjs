@@ -41,11 +41,20 @@ export const handler = async (event) => {
       return json({ error: "Invalid JSON payload" }, 400);
     }
 
-    for (const key of REQUIRED_ENV) {
-      if (!process.env[key]) return json({ error: `Missing required environment variable: ${key}` }, 500);
+    const action = String(payload?.action || "").toLowerCase();
+    if (action === "setup") {
+      const missingEnv = getMissingEnvVars(REQUIRED_ENV);
+      return json({ ok: true, configured: missingEnv.length === 0, missingEnv }, 200);
     }
 
-    const action = String(payload?.action || "").toLowerCase();
+    const missingEnv = getMissingEnvVars(REQUIRED_ENV);
+    if (missingEnv.length > 0) {
+      return json({
+        error: `Google Photos integration is not configured. Missing: ${missingEnv.join(", ")}`,
+        missingEnv,
+      }, 500);
+    }
+
     const accessToken = await getGoogleAccessToken();
 
     if (action === "list_albums") {
@@ -328,6 +337,10 @@ function stringifyError(value) {
   }
 }
 
+
+function getMissingEnvVars(names) {
+  return names.filter((key) => !process.env[key]);
+}
 function githubHeaders() {
   return {
     Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
@@ -336,3 +349,4 @@ function githubHeaders() {
     "User-Agent": "walking-with-ember-media-library",
   };
 }
+

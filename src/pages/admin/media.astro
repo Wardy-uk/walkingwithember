@@ -98,9 +98,11 @@ export const prerender = true;
       const albumSelect = document.getElementById("albumSelect");
       const mediaGrid = document.getElementById("mediaGrid");
       const moreBtn = document.getElementById("moreBtn");
+      const loadBtn = document.getElementById("loadBtn");
 
       let mediaPageToken = "";
       let currentAlbumId = "";
+      let integrationConfigured = false;
 
       function appendLog(message) {
         const stamp = new Date().toLocaleTimeString("en-GB", { hour12: false });
@@ -112,6 +114,17 @@ export const prerender = true;
         statusEl.textContent = message;
         statusEl.classList.toggle("error", Boolean(error));
         appendLog(message);
+      }
+
+      function setMediaControlsEnabled(enabled) {
+        albumSelect.disabled = !enabled;
+        loadBtn.disabled = !enabled;
+        moreBtn.disabled = !enabled || !mediaPageToken;
+      }
+
+      function setupHint(missingEnv) {
+        const vars = (missingEnv || []).join(", ");
+        return `Google Photos is not configured yet. Add these Netlify env vars and redeploy: ${vars}`;
       }
 
       async function getIdentityClient(triesLeft = 30) {
@@ -147,10 +160,28 @@ export const prerender = true;
         let data = {};
         try { data = raw ? JSON.parse(raw) : {}; } catch {}
         if (!response.ok) {
+          const missingEnv = Array.isArray(data.missingEnv) ? data.missingEnv : [];
+          if (missingEnv.length) {
+            throw new Error(setupHint(missingEnv));
+          }
           const detail = data.error || raw || response.statusText || "Unknown error";
           throw new Error(`Request failed (${response.status}): ${String(detail).trim()}`);
         }
         return data;
+      }
+
+      async function checkIntegrationSetup() {
+        const token = await requireAdminToken();
+        const data = await apiCall(token, { action: "setup" });
+        integrationConfigured = Boolean(data?.configured);
+        if (!integrationConfigured) {
+          const missing = Array.isArray(data?.missingEnv) ? data.missingEnv : [];
+          setStatus(setupHint(missing), true);
+          setMediaControlsEnabled(false);
+          return false;
+        }
+        setMediaControlsEnabled(true);
+        return true;
       }
 
       function renderMedia(items, append = false) {
@@ -224,6 +255,10 @@ export const prerender = true;
       }
 
       async function loadAlbums() {
+        if (!integrationConfigured) {
+          setStatus("Google Photos integration is not configured yet.", true);
+          return;
+        }
         try {
           setStatus("Loading Google Photos albums...");
           const token = await requireAdminToken();
@@ -250,6 +285,10 @@ export const prerender = true;
       }
 
       async function loadMedia(append = false) {
+        if (!integrationConfigured) {
+          setStatus("Google Photos integration is not configured yet.", true);
+          return;
+        }
         try {
           setStatus(append ? "Loading more photos..." : "Loading photos...");
           const token = await requireAdminToken();
@@ -303,6 +342,7 @@ export const prerender = true;
           await identity.logout();
           whoEl.textContent = "Not logged in";
           setStatus("Logged out.");
+          setMediaControlsEnabled(false);
         } catch (error) {
           setStatus(String(error?.message || error), true);
         }
@@ -320,8 +360,17 @@ export const prerender = true;
       });
 
       appendLog("Google Photos media page ready.");
-      initIdentityStatus();
-      loadAlbums();
+      setMediaControlsEnabled(false);
+      (async () => {
+        await initIdentityStatus();
+        try {
+          const ready = await checkIntegrationSetup();
+          if (ready) await loadAlbums();
+        } catch (error) {
+          setStatus(String(error?.message || error), true);
+        }
+      })();
     </script>
   </body>
 </html>
+
