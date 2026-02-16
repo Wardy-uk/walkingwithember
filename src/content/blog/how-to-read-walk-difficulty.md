@@ -1,7 +1,7 @@
 ---
 title: "How To Read Walk Difficulty Before You Set Off"
 excerpt: "Distance alone is not a reliable predictor; here is the framework we use for route grading."
-coverImage: "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20district%2014.jpg"
+coverImage: "/images/walk-river-loop.svg"
 author: "Walking with Ember"
 publishDate: 2026-01-25
 tags:
@@ -21,4 +21,5 @@ Difficulty labels are only useful when they combine distance, ascent, terrain, a
 - **Hard**: sustained ascent, rough terrain, or exposed sections
 
 Always check forecast, terrain conditions, and daylight in addition to the route grade.
+
 

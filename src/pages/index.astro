@@ -7,7 +7,7 @@ const regions = await getRegions();
 const publishedWalks = await getPublishedWalks();
 const draftWalks = (await getAllWalks()).filter((walk) => walk.data.draft).slice(0, 3);
 const walks = publishedWalks.slice(0, 3);
-const mastheadImage = settings.homepage?.mastheadImage || "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG";
+const mastheadImage = settings.homepage?.mastheadImage || "/images/uk-ridge-dawn.svg";
 const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 3);
 ---
 
@@ -84,7 +84,7 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
       <a class="button ghost-dark" href="/blog/">Read trail stories</a>
     </article>
     <div class="v2-image-stack">
-      {(galleryImages.length > 0 ? galleryImages : ["https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20district%2012.jpg"]).map((image, idx) => (
+      {(galleryImages.length > 0 ? galleryImages : ["/images/lakeside-fell-trail.svg"]).map((image, idx) => (
         <img src={image} alt={`Walking with Ember gallery ${idx + 1}`} loading="lazy" />
       ))}
     </div>
@@ -114,6 +114,7 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
     });
   </script>
 </BaseLayout>
+
 
 
 

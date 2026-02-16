@@ -1,7 +1,7 @@
 ---
 title: "Upper Wharfedale River Loop"
 summary: "A lower-level circular route with riverside paths, village sections, and steady gradients."
-heroImage: "https://commons.wikimedia.org/wiki/Special:FilePath/The%20peak%20District.jpg"
+heroImage: "/images/uk-ridge-dawn.svg"
 publishDate: 2026-01-22
 difficulty: "Easy"
 distance: 5.4
@@ -33,4 +33,5 @@ The walk follows sections of the River Wharfe, crosses low pasture, and returns 
 - Mixed tracks and grass paths
 - Few steep sections
 - Sections may be muddy in winter
+
 

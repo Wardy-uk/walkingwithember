@@ -1,7 +1,7 @@
 ---
 title: "Coastal Headland Circuit"
 summary: "A sea-view route on open coastal paths with short climbs and exposed cliff-top sections."
-heroImage: "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20district%2C%20near%20Sparrowpit.jpg"
+heroImage: "/images/walk-river-loop.svg"
 publishDate: 2026-01-12
 difficulty: "Moderate"
 distance: 6.8
@@ -33,4 +33,5 @@ Leave the harbour, follow clifftop rights of way northbound, then return inland 
 - Wind-exposed sections
 - Uneven clifftop path in places
 - Keep distance from unstable cliff edges
+
 

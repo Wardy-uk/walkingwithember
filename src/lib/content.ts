@@ -8,8 +8,8 @@ export async function getSiteSettings() {
     baseUrl: "https://example.com",
     social: {},
     homepage: {
-      mastheadImage: "https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20District.JPG",
-      galleryImages: ["https://commons.wikimedia.org/wiki/Special:FilePath/Peak%20district%2012.jpg"],
+      mastheadImage: "/images/uk-ridge-dawn.svg",
+      galleryImages: ["/images/lakeside-fell-trail.svg"],
     }
   };
 }
@@ -43,3 +43,4 @@ export async function getRegions() {
   const walks = await getPublishedWalks();
   return Array.from(new Set(walks.map((walk) => walk.data.region))).sort((a, b) => a.localeCompare(b));
 }
+
