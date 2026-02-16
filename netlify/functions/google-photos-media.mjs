@@ -289,29 +289,39 @@ async function upsertRepoFile({ path, contentBase64, message, branch }) {
   const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}`;
 
   try {
-    const existingResponse = await fetch(url + `?ref=${encodeURIComponent(branch)}`, {
-      method: "GET",
-      headers: githubHeaders(),
-    });
-    let sha;
-    if (existingResponse.ok) {
-      const existing = await existingResponse.json();
-      sha = existing.sha;
-    }
+    const maxAttempts = 4;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const existingResponse = await fetch(url + `?ref=${encodeURIComponent(branch)}`, {
+        method: "GET",
+        headers: githubHeaders(),
+      });
+      let sha;
+      if (existingResponse.ok) {
+        const existing = await existingResponse.json();
+        sha = existing.sha;
+      }
 
-    const response = await fetch(url, {
-      method: "PUT",
-      headers: githubHeaders(),
-      body: JSON.stringify({ message, content: contentBase64, branch, ...(sha ? { sha } : {}) }),
-    });
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: githubHeaders(),
+        body: JSON.stringify({ message, content: contentBase64, branch, ...(sha ? { sha } : {}) }),
+      });
 
-    if (!response.ok) {
+      if (response.ok) {
+        const data = await response.json();
+        return { ok: true, data: { path, sha: data.content?.sha, commitUrl: data.commit?.html_url } };
+      }
+
       const text = await response.text();
+      if (response.status === 409 && attempt < maxAttempts) {
+        await wait(120 * attempt);
+        continue;
+      }
+
       return { ok: false, error: `GitHub commit failed (${response.status}): ${text}` };
     }
 
-    const data = await response.json();
-    return { ok: true, data: { path, sha: data.content?.sha, commitUrl: data.commit?.html_url } };
+    return { ok: false, error: "GitHub commit failed after retries" };
   } catch (error) {
     return { ok: false, error: `GitHub request failed: ${String(error?.message || error)}` };
   }
@@ -357,6 +367,10 @@ function encodeURIComponentPath(path) {
   return path.split("/").map((part) => encodeURIComponent(part)).join("/");
 }
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function clampNumber(value, min, max, fallback) {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
@@ -395,5 +409,7 @@ function githubHeaders() {
     "User-Agent": "walking-with-ember-media-library",
   };
 }
+
+
 
 
