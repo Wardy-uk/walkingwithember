@@ -53,12 +53,9 @@ If `flybyCore` changes there, sync into this repo:
 - `powershell -ExecutionPolicy Bypass -File "C:\Git\gpx flyby\scripts\sync-flyby-core.ps1"`
 
 ## Known priorities / TODO
-1. Harden `publish_draft` path validation in `netlify/functions/ai-create-post.mjs` (normalize path, block traversal).
-2. Decide whether identity details should remain in admin activity log in `src/pages/admin/ai-walk.astro`.
-3. Keep `src/components/FlybyPanel.astro` and `src/lib/flybyCore.ts` in sync with standalone flyby behavior.
-4. Add tests for flyby preset selection and map playback behavior.
-
-## What should not be committed?
-- `.env`
-- backup env files (for example `.env.bak`)
-- any file containing real API keys/tokens
+1. Remove manual media import step in `src/pages/admin/media.astro` and auto-import all selected Google Picker items once selection is confirmed.
+2. Create an admin media library page to browse/search all images already available in site storage (`/uploads/images`) for reuse across pages.
+3. Harden `publish_draft` path validation in `netlify/functions/ai-create-post.mjs` (normalize path, block traversal).
+4. Decide whether identity details should remain in admin activity log in `src/pages/admin/ai-walk.astro`.
+5. Keep `src/components/FlybyPanel.astro` and `src/lib/flybyCore.ts` in sync with standalone flyby behavior.
+6. Add tests for flyby preset selection and map playback behavior.
