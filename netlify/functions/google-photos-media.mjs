@@ -241,7 +241,6 @@ async function getGoogleAccessToken() {
     client_secret: process.env.GOOGLE_PHOTOS_CLIENT_SECRET,
     refresh_token: process.env.GOOGLE_PHOTOS_REFRESH_TOKEN,
     grant_type: "refresh_token",
-    scope: process.env.GOOGLE_PHOTOS_SCOPE || "https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
   });
 
   const response = await fetch(GOOGLE_TOKEN_URL, {
@@ -251,7 +250,11 @@ async function getGoogleAccessToken() {
   });
   const data = await parseJson(response);
   if (!response.ok || !data.access_token) {
-    throw new Error(`Google token exchange failed (${response.status}): ${stringifyError(data)}`);
+    const detail = stringifyError(data);
+    const hint = response.status === 400
+      ? " Regenerate GOOGLE_PHOTOS_REFRESH_TOKEN using the same client ID/secret with scope https://www.googleapis.com/auth/photospicker.mediaitems.readonly."
+      : "";
+    throw new Error(`Google token exchange failed (${response.status}): ${detail}${hint}`);
   }
   return String(data.access_token);
 }
@@ -392,4 +395,5 @@ function githubHeaders() {
     "User-Agent": "walking-with-ember-media-library",
   };
 }
+
 
