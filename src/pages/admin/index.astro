@@ -97,7 +97,7 @@ const posts = await getAllBlogs();
         </a>
         <div class="admin-actions">
           <a class="button ghost-dark" href="/">View site</a>
-          <a class="button" href="/admin/ai-walk/">AI Walk Creator</a>
+          <a class="button" href="/admin/ai-walk/">AI Walk Creator</a>`r`n          <a class="button ghost" href="/admin/media/">Google Photos</a>
           <button id="identity-login" type="button">Log in</button>
           <button id="identity-logout" type="button">Log out</button>
           <span id="identity-status">Loading login widget...</span>
@@ -169,24 +169,8 @@ const posts = await getAllBlogs();
         statusEl.textContent = message;
         statusEl.style.color = color || "#7c6654";
       }
-
-      function identitySnapshot(user) {
-        const appMeta = user?.app_metadata || {};
-        const identities = Array.isArray(appMeta.identities) ? appMeta.identities : [];
-        const providers = identities.map((x) => String(x?.provider || "").trim()).filter(Boolean);
-        const providerSet = Array.from(new Set([String(appMeta.provider || "").trim(), ...providers].filter(Boolean)));
-        return {
-          provider: providerSet.join(", "),
-        };
-      }
-
-      function isGithubIdentity(user) {
-        const d = identitySnapshot(user);
-        return String(d.provider || "").toLowerCase().split(",").map((x) => x.trim()).includes("github");
-      }
-
       function updateAdminControlVisibility(user) {
-        const isAdmin = Boolean(user && isGithubIdentity(user));
+        const isAdmin = Boolean(user);
         adminControls.forEach((el) => el.classList.toggle("hidden", !isAdmin));
         document.body.classList.toggle("is-admin", isAdmin);
       }
@@ -199,11 +183,7 @@ const posts = await getAllBlogs();
         if (!user) {
           identity.open("login");
           throw new Error("Please log in as admin first.");
-        }
-        if (!isGithubIdentity(user)) {
-          throw new Error("Use GitHub login for admin access.");
-        }
-        return user.jwt();
+        }        return user.jwt();
       }
 
       async function manageCard(card, operation) {
@@ -308,3 +288,7 @@ const posts = await getAllBlogs();
     </script>
   </body>
 </html>
+
+
+
+

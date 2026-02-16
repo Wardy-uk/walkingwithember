@@ -230,22 +230,6 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
       }
       if (count) count.textContent = `${visible} walk${visible === 1 ? "" : "s"} found`;
     }
-
-    function identitySnapshot(user) {
-      const appMeta = user?.app_metadata || {};
-      const identities = Array.isArray(appMeta.identities) ? appMeta.identities : [];
-      const providers = identities.map((x) => String(x?.provider || "").trim()).filter(Boolean);
-      const providerSet = Array.from(new Set([String(appMeta.provider || "").trim(), ...providers].filter(Boolean)));
-      return {
-        provider: providerSet.join(", "),
-      };
-    }
-
-    function isGithubIdentity(user) {
-      const d = identitySnapshot(user);
-      return String(d.provider || "").toLowerCase().split(",").map((x) => x.trim()).includes("github");
-    }
-
     async function getIdentityClient(triesLeft = 30) {
       const identity = window.netlifyIdentity;
       if (identity) return identity;
@@ -261,11 +245,7 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
       if (!user) {
         identity.open("login");
         throw new Error("Please log in as admin first.");
-      }
-      if (!isGithubIdentity(user)) {
-        throw new Error("Use GitHub login for admin access.");
-      }
-      return user.jwt();
+      }      return user.jwt();
     }
 
     async function manageCard(card, operation) {
@@ -307,7 +287,7 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
     [search, distance, difficulty, region, dog, tag].forEach((el) => el?.addEventListener("input", filterCards));
 
     const syncDraftsFromIdentity = (user) => {
-      showDraftsForAdmin = Boolean(user && isGithubIdentity(user));
+      showDraftsForAdmin = Boolean(user);
       document.body.classList.toggle("is-admin", showDraftsForAdmin);
       adminControls.forEach((el) => el.classList.toggle("hidden", !showDraftsForAdmin));
       if (draftSection) {
@@ -340,6 +320,9 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
     filterCards();
   </script>
 </BaseLayout>
+
+
+
 
 
 
