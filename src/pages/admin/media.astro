@@ -34,7 +34,7 @@ export const prerender = true;
       .card { background: linear-gradient(180deg, var(--card) 0%, #f6ebdc 100%); border: 1px solid var(--line); border-radius: 16px; padding: 0.9rem; }
       h1,h2 { margin: 0 0 0.5rem; font-family: "Fraunces", Georgia, serif; }
       p { margin: 0 0 0.6rem; color: var(--muted); }
-      button, .button, select {
+      button, .button {
         border: 0;
         border-radius: 999px;
         padding: 0.55rem 0.95rem;
@@ -44,20 +44,19 @@ export const prerender = true;
         cursor: pointer;
         font-weight: 700;
       }
-      select { border-radius: 10px; background: #fffaf2; color: var(--text); border: 1px solid #d7bda0; min-width: 280px; }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
       .ghost { background: #fff5e8; border: 1px solid #d9b995; color: #6f3f20; }
       .status { padding: 0.65rem 0.75rem; border-radius: 10px; border: 1px solid var(--line); background: #f8ecdc; color: #5a3a22; font-weight: 700; }
       .status.error { background: #fff0ea; color: #8a3f1d; border-color: #e6bfa1; }
       .controls { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
-      .grid { display: grid; gap: 0.8rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .tile { border: 1px solid #d8bea0; border-radius: 14px; overflow: hidden; background: #fffdf8; display: grid; }
-      .tile img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: #f2e5d5; }
-      .tile-body { padding: 0.65rem; display: grid; gap: 0.5rem; }
       .tiny { font-size: 0.78rem; color: #7c6654; word-break: break-all; }
+      .grid { display: grid; gap: 0.8rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .tile { border: 1px solid #d8bea0; border-radius: 14px; overflow: hidden; background: #fffdf8; display: grid; }
+      .tile-media { aspect-ratio: 16 / 9; display: grid; place-items: center; background: #f4e8d8; color: #74573e; font-weight: 700; }
+      .tile-body { padding: 0.65rem; display: grid; gap: 0.5rem; }
       .tile-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; }
       .log { border: 1px solid var(--line); border-radius: 10px; background: #fff6e9; padding: 0.6rem; max-height: 220px; overflow: auto; white-space: pre-wrap; font-size: 0.82rem; color: #5d4431; }
-      @media (max-width: 980px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-      @media (max-width: 760px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } select { min-width: 220px; } }
+      @media (max-width: 980px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
       @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
     </style>
   </head>
@@ -73,17 +72,20 @@ export const prerender = true;
       </section>
 
       <section class="card">
-        <h1>Google Photos Media Library</h1>
-        <p>Browse Google Photos, use direct URLs, or import into central site storage (`/uploads/images`).</p>
+        <h1>Google Photos Media Hub</h1>
+        <p>New flow: create Picker session, open Google Picker, then import selected photos into <code>/uploads/images</code>.</p>
         <div class="controls">
-          <select id="albumSelect"></select>
-          <button id="loadBtn" type="button">Load Photos</button>
-          <button id="moreBtn" type="button" class="ghost">Load More</button>
+          <button id="startBtn" type="button">Start Picker Session</button>
+          <button id="openPickerBtn" type="button" class="ghost" disabled>Open Picker</button>
+          <button id="checkBtn" type="button" class="ghost" disabled>Check Session</button>
+          <button id="loadBtn" type="button" class="ghost" disabled>Load Selected</button>
+          <button id="moreBtn" type="button" class="ghost" disabled>Load More</button>
         </div>
+        <p id="sessionInfo" class="tiny">No active picker session.</p>
       </section>
 
       <section class="card">
-        <div id="status" class="status">Log in and load media.</div>
+        <div id="status" class="status">Log in and start a picker session.</div>
         <div id="log" class="log">Media tool ready.</div>
       </section>
 
@@ -95,14 +97,20 @@ export const prerender = true;
       const whoEl = document.getElementById("who");
       const statusEl = document.getElementById("status");
       const logEl = document.getElementById("log");
-      const albumSelect = document.getElementById("albumSelect");
       const mediaGrid = document.getElementById("mediaGrid");
-      const moreBtn = document.getElementById("moreBtn");
-      const loadBtn = document.getElementById("loadBtn");
+      const sessionInfoEl = document.getElementById("sessionInfo");
 
+      const startBtn = document.getElementById("startBtn");
+      const openPickerBtn = document.getElementById("openPickerBtn");
+      const checkBtn = document.getElementById("checkBtn");
+      const loadBtn = document.getElementById("loadBtn");
+      const moreBtn = document.getElementById("moreBtn");
+
+      let sessionId = "";
+      let pickerUri = "";
       let mediaPageToken = "";
-      let currentAlbumId = "";
       let integrationConfigured = false;
+      let importConfigured = false;
 
       function appendLog(message) {
         const stamp = new Date().toLocaleTimeString("en-GB", { hour12: false });
@@ -116,15 +124,29 @@ export const prerender = true;
         appendLog(message);
       }
 
-      function setMediaControlsEnabled(enabled) {
-        albumSelect.disabled = !enabled;
-        loadBtn.disabled = !enabled;
-        moreBtn.disabled = !enabled || !mediaPageToken;
-      }
-
       function setupHint(missingEnv) {
         const vars = (missingEnv || []).join(", ");
-        return `Google Photos is not configured yet. Add these Netlify env vars and redeploy: ${vars}`;
+        return `Google Photos Picker is not configured yet. Add these Netlify env vars and redeploy: ${vars}`;
+      }
+
+      function refreshButtons() {
+        const hasSession = Boolean(sessionId);
+        startBtn.disabled = !integrationConfigured;
+        openPickerBtn.disabled = !integrationConfigured || !hasSession || !pickerUri;
+        checkBtn.disabled = !integrationConfigured || !hasSession;
+        loadBtn.disabled = !integrationConfigured || !hasSession;
+        moreBtn.disabled = !integrationConfigured || !hasSession || !mediaPageToken;
+      }
+
+      function setSession(data) {
+        sessionId = String(data?.id || "");
+        pickerUri = String(data?.pickerUri || "");
+        const mediaItemsSet = Boolean(data?.mediaItemsSet);
+        const expireTime = String(data?.expireTime || "");
+        sessionInfoEl.textContent = sessionId
+          ? `Session: ${sessionId} | Selected: ${mediaItemsSet ? "yes" : "no"} | Expires: ${expireTime || "unknown"}`
+          : "No active picker session.";
+        refreshButtons();
       }
 
       async function getIdentityClient(triesLeft = 30) {
@@ -161,9 +183,7 @@ export const prerender = true;
         try { data = raw ? JSON.parse(raw) : {}; } catch {}
         if (!response.ok) {
           const missingEnv = Array.isArray(data.missingEnv) ? data.missingEnv : [];
-          if (missingEnv.length) {
-            throw new Error(setupHint(missingEnv));
-          }
+          if (missingEnv.length) throw new Error(setupHint(missingEnv));
           const detail = data.error || raw || response.statusText || "Unknown error";
           throw new Error(`Request failed (${response.status}): ${String(detail).trim()}`);
         }
@@ -173,29 +193,38 @@ export const prerender = true;
       async function checkIntegrationSetup() {
         const token = await requireAdminToken();
         const data = await apiCall(token, { action: "setup" });
+
         integrationConfigured = Boolean(data?.configured);
+        importConfigured = Boolean(data?.importConfigured);
+
         if (!integrationConfigured) {
-          const missing = Array.isArray(data?.missingEnv) ? data.missingEnv : [];
+          const missing = Array.isArray(data?.missingGoogleEnv) ? data.missingGoogleEnv : [];
           setStatus(setupHint(missing), true);
-          setMediaControlsEnabled(false);
+          refreshButtons();
           return false;
         }
-        setMediaControlsEnabled(true);
+
+        if (!importConfigured) {
+          const missingImport = Array.isArray(data?.missingImportEnv) ? data.missingImportEnv.join(", ") : "GITHUB_TOKEN, GITHUB_REPO";
+          setStatus(`Picker works, but import is not configured yet. Missing: ${missingImport}`, true);
+        } else {
+          setStatus("Google Photos Picker configured. Start a session.");
+        }
+
+        refreshButtons();
         return true;
       }
 
       function renderMedia(items, append = false) {
         if (!append) mediaGrid.innerHTML = "";
+
         for (const item of items || []) {
           const tile = document.createElement("article");
           tile.className = "tile";
-          tile.dataset.mediaItemId = item.id;
-          tile.dataset.baseUrl = item.baseUrl || "";
-          tile.dataset.filename = item.filename || "photo";
 
-          const img = document.createElement("img");
-          img.src = item.baseUrl ? `${item.baseUrl}=w700-h700` : "";
-          img.alt = item.filename || "Google photo";
+          const media = document.createElement("div");
+          media.className = "tile-media";
+          media.textContent = String(item.mimeType || "").startsWith("video/") ? "Video" : "Photo";
 
           const body = document.createElement("div");
           body.className = "tile-body";
@@ -204,26 +233,17 @@ export const prerender = true;
           name.className = "tiny";
           name.textContent = item.filename || item.id;
 
-          const url = document.createElement("div");
-          url.className = "tiny";
-          url.textContent = item.baseUrl || "";
+          const meta = document.createElement("div");
+          meta.className = "tiny";
+          meta.textContent = `${item.mimeType || "unknown"}${item.createTime ? ` | ${item.createTime}` : ""}`;
 
           const actions = document.createElement("div");
           actions.className = "tile-actions";
 
-          const copyBtn = document.createElement("button");
-          copyBtn.type = "button";
-          copyBtn.className = "ghost";
-          copyBtn.textContent = "Use Google URL";
-          copyBtn.addEventListener("click", async () => {
-            const direct = item.baseUrl ? `${item.baseUrl}=d` : "";
-            await navigator.clipboard.writeText(direct);
-            setStatus("Copied Google photo URL to clipboard.");
-          });
-
           const importBtn = document.createElement("button");
           importBtn.type = "button";
           importBtn.textContent = "Import to Site";
+          importBtn.disabled = !importConfigured;
           importBtn.addEventListener("click", async () => {
             importBtn.disabled = true;
             try {
@@ -232,81 +252,79 @@ export const prerender = true;
               const result = await apiCall(token, {
                 action: "import_media",
                 mediaItemId: item.id,
+                baseUrl: item.baseUrl,
+                mimeType: item.mimeType,
+                filename: item.filename,
               });
               const localPath = result?.imported?.publicPath || "";
               if (localPath) {
                 await navigator.clipboard.writeText(localPath);
                 setStatus(`Imported. Local path copied: ${localPath}`);
               } else {
-                setStatus("Imported photo into site storage.");
+                setStatus("Imported media into site storage.");
               }
             } catch (error) {
               setStatus(String(error?.message || error), true);
             } finally {
-              importBtn.disabled = false;
+              importBtn.disabled = !importConfigured;
             }
           });
 
-          actions.append(copyBtn, importBtn);
-          body.append(name, url, actions);
-          tile.append(img, body);
+          actions.append(importBtn);
+          body.append(name, meta, actions);
+          tile.append(media, body);
           mediaGrid.appendChild(tile);
         }
       }
 
-      async function loadAlbums() {
-        if (!integrationConfigured) {
-          setStatus("Google Photos integration is not configured yet.", true);
+      async function startPickerSession() {
+        setStatus("Creating picker session...");
+        const token = await requireAdminToken();
+        const data = await apiCall(token, { action: "create_session", maxItemCount: 200 });
+        setSession(data.session || {});
+        mediaPageToken = "";
+        mediaGrid.innerHTML = "";
+        setStatus("Picker session created. Click Open Picker and select photos.");
+      }
+
+      async function checkSession() {
+        if (!sessionId) {
+          setStatus("Start a picker session first.", true);
           return;
         }
-        try {
-          setStatus("Loading Google Photos albums...");
-          const token = await requireAdminToken();
-          const data = await apiCall(token, { action: "list_albums", pageSize: 50 });
-          const albums = data.albums || [];
-          albumSelect.innerHTML = "";
-
-          const all = document.createElement("option");
-          all.value = "";
-          all.textContent = "All Photos";
-          albumSelect.appendChild(all);
-
-          for (const album of albums) {
-            const opt = document.createElement("option");
-            opt.value = album.id;
-            opt.textContent = `${album.title} (${album.itemCount || 0})`;
-            albumSelect.appendChild(opt);
-          }
-
-          setStatus(`Loaded ${albums.length} album(s).`);
-        } catch (error) {
-          setStatus(String(error?.message || error), true);
+        setStatus("Checking picker session...");
+        const token = await requireAdminToken();
+        const data = await apiCall(token, { action: "get_session", sessionId });
+        setSession(data.session || {});
+        if (data?.session?.mediaItemsSet) {
+          setStatus("Selections detected. Click Load Selected.");
+        } else {
+          const poll = data?.session?.pollingConfig?.pollInterval || "";
+          setStatus(`No selections yet. Complete selection in Picker and check again.${poll ? ` Suggested poll: ${poll}` : ""}`);
         }
       }
 
-      async function loadMedia(append = false) {
-        if (!integrationConfigured) {
-          setStatus("Google Photos integration is not configured yet.", true);
+      async function loadSelected(append = false) {
+        if (!sessionId) {
+          setStatus("Start a picker session first.", true);
           return;
         }
-        try {
-          setStatus(append ? "Loading more photos..." : "Loading photos...");
-          const token = await requireAdminToken();
-          const payload = {
-            action: "list_media",
-            albumId: currentAlbumId,
-            pageSize: 30,
-            ...(append && mediaPageToken ? { pageToken: mediaPageToken } : {}),
-          };
-          const data = await apiCall(token, payload);
-          const items = data.mediaItems || [];
-          mediaPageToken = data.nextPageToken || "";
-          moreBtn.disabled = !mediaPageToken;
-          renderMedia(items, append);
-          setStatus(`Loaded ${items.length} photo(s).`);
-        } catch (error) {
-          setStatus(String(error?.message || error), true);
-        }
+
+        setStatus(append ? "Loading more selected items..." : "Loading selected items...");
+        const token = await requireAdminToken();
+        const payload = {
+          action: "list_picked_media",
+          sessionId,
+          pageSize: 30,
+          ...(append && mediaPageToken ? { pageToken: mediaPageToken } : {}),
+        };
+        const data = await apiCall(token, payload);
+        const items = data.mediaItems || [];
+        mediaPageToken = data.nextPageToken || "";
+        moreBtn.disabled = !mediaPageToken;
+
+        renderMedia(items, append);
+        setStatus(`Loaded ${items.length} selected item(s).`);
       }
 
       async function initIdentityStatus() {
@@ -342,30 +360,65 @@ export const prerender = true;
           await identity.logout();
           whoEl.textContent = "Not logged in";
           setStatus("Logged out.");
-          setMediaControlsEnabled(false);
+          integrationConfigured = false;
+          importConfigured = false;
+          setSession({});
+          mediaPageToken = "";
+          refreshButtons();
         } catch (error) {
           setStatus(String(error?.message || error), true);
         }
       });
 
-      document.getElementById("loadBtn")?.addEventListener("click", async () => {
-        currentAlbumId = albumSelect.value || "";
-        mediaPageToken = "";
-        await loadMedia(false);
+      startBtn?.addEventListener("click", async () => {
+        try {
+          await startPickerSession();
+        } catch (error) {
+          setStatus(String(error?.message || error), true);
+        }
+      });
+
+      openPickerBtn?.addEventListener("click", () => {
+        if (!pickerUri) {
+          setStatus("No picker URL yet. Start session first.", true);
+          return;
+        }
+        window.open(`${pickerUri}/autoclose`, "_blank", "noopener");
+        setStatus("Opened Google Picker. Make selections, then return here.");
+      });
+
+      checkBtn?.addEventListener("click", async () => {
+        try {
+          await checkSession();
+        } catch (error) {
+          setStatus(String(error?.message || error), true);
+        }
+      });
+
+      loadBtn?.addEventListener("click", async () => {
+        try {
+          mediaPageToken = "";
+          await loadSelected(false);
+        } catch (error) {
+          setStatus(String(error?.message || error), true);
+        }
       });
 
       moreBtn?.addEventListener("click", async () => {
-        if (!mediaPageToken) return;
-        await loadMedia(true);
+        try {
+          if (!mediaPageToken) return;
+          await loadSelected(true);
+        } catch (error) {
+          setStatus(String(error?.message || error), true);
+        }
       });
 
       appendLog("Google Photos media page ready.");
-      setMediaControlsEnabled(false);
+      refreshButtons();
       (async () => {
         await initIdentityStatus();
         try {
-          const ready = await checkIntegrationSetup();
-          if (ready) await loadAlbums();
+          await checkIntegrationSetup();
         } catch (error) {
           setStatus(String(error?.message || error), true);
         }
@@ -373,4 +426,3 @@ export const prerender = true;
     </script>
   </body>
 </html>
-

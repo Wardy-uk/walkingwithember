@@ -6,16 +6,16 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const REQUIRED_ENV = [
-  "GITHUB_TOKEN",
-  "GITHUB_REPO",
+const REQUIRED_GOOGLE_ENV = [
   "GOOGLE_PHOTOS_CLIENT_ID",
   "GOOGLE_PHOTOS_CLIENT_SECRET",
   "GOOGLE_PHOTOS_REFRESH_TOKEN",
 ];
 
+const REQUIRED_IMPORT_ENV = ["GITHUB_TOKEN", "GITHUB_REPO"];
+
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const GOOGLE_PHOTOS_API = "https://photoslibrary.googleapis.com/v1";
+const GOOGLE_PICKER_API = "https://photospicker.googleapis.com/v1";
 
 export const handler = async (event) => {
   try {
@@ -43,102 +43,113 @@ export const handler = async (event) => {
 
     const action = String(payload?.action || "").toLowerCase();
     if (action === "setup") {
-      const missingEnv = getMissingEnvVars(REQUIRED_ENV);
-      return json({ ok: true, configured: missingEnv.length === 0, missingEnv }, 200);
+      const missingGoogleEnv = getMissingEnvVars(REQUIRED_GOOGLE_ENV);
+      const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
+      return json({
+        ok: true,
+        configured: missingGoogleEnv.length === 0,
+        importConfigured: missingImportEnv.length === 0,
+        missingGoogleEnv,
+        missingImportEnv,
+      }, 200);
     }
 
-    const missingEnv = getMissingEnvVars(REQUIRED_ENV);
-    if (missingEnv.length > 0) {
+    const missingGoogleEnv = getMissingEnvVars(REQUIRED_GOOGLE_ENV);
+    if (missingGoogleEnv.length > 0) {
       return json({
-        error: `Google Photos integration is not configured. Missing: ${missingEnv.join(", ")}`,
-        missingEnv,
+        error: `Google Photos Picker integration is not configured. Missing: ${missingGoogleEnv.join(", ")}`,
+        missingEnv: missingGoogleEnv,
       }, 500);
     }
 
     const accessToken = await getGoogleAccessToken();
 
-    if (action === "list_albums") {
-      const pageSize = clampNumber(payload.pageSize, 1, 50, 25);
-      const pageToken = String(payload.pageToken || "").trim();
-      const query = new URLSearchParams({ pageSize: String(pageSize) });
-      if (pageToken) query.set("pageToken", pageToken);
+    if (action === "create_session") {
+      const maxItemCount = clampNumber(payload.maxItemCount, 1, 2000, 200);
+      const response = await fetch(`${GOOGLE_PICKER_API}/sessions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ pickingConfig: { maxItemCount: String(maxItemCount) } }),
+      });
+      const data = await parseJson(response);
+      if (!response.ok) {
+        return json({ error: `Picker session create failed (${response.status}): ${stringifyError(data)}` }, 502);
+      }
+      return json({ ok: true, session: toSessionResponse(data) }, 200);
+    }
 
-      const response = await fetch(`${GOOGLE_PHOTOS_API}/albums?${query.toString()}`, {
+    if (action === "get_session") {
+      const sessionId = String(payload.sessionId || "").trim();
+      if (!sessionId) return json({ error: "sessionId is required" }, 400);
+
+      const response = await fetch(`${GOOGLE_PICKER_API}/sessions/${encodeURIComponent(sessionId)}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const data = await parseJson(response);
       if (!response.ok) {
-        return json({ error: `Google Photos albums failed (${response.status}): ${stringifyError(data)}` }, 502);
+        return json({ error: `Picker session get failed (${response.status}): ${stringifyError(data)}` }, 502);
       }
-
-      const albums = Array.isArray(data.albums) ? data.albums.map((a) => ({
-        id: String(a.id || ""),
-        title: String(a.title || "Untitled"),
-        itemCount: Number(a.mediaItemsCount || 0),
-        coverBaseUrl: String(a.coverPhotoBaseUrl || ""),
-      })) : [];
-
-      return json({ ok: true, albums, nextPageToken: String(data.nextPageToken || "") }, 200);
+      return json({ ok: true, session: toSessionResponse(data) }, 200);
     }
 
-    if (action === "list_media") {
-      const pageSize = clampNumber(payload.pageSize, 1, 50, 30);
+    if (action === "list_picked_media" || action === "list_media") {
+      const sessionId = String(payload.sessionId || "").trim();
+      if (!sessionId) return json({ error: "sessionId is required" }, 400);
+
+      const pageSize = clampNumber(payload.pageSize, 1, 100, 30);
       const pageToken = String(payload.pageToken || "").trim();
-      const albumId = String(payload.albumId || "").trim();
+      const query = new URLSearchParams({ sessionId, pageSize: String(pageSize) });
+      if (pageToken) query.set("pageToken", pageToken);
 
-      let response;
-      let data;
-      if (albumId) {
-        response = await fetch(`${GOOGLE_PHOTOS_API}/mediaItems:search`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ albumId, pageSize, ...(pageToken ? { pageToken } : {}) }),
-        });
-        data = await parseJson(response);
-      } else {
-        const query = new URLSearchParams({ pageSize: String(pageSize) });
-        if (pageToken) query.set("pageToken", pageToken);
-        response = await fetch(`${GOOGLE_PHOTOS_API}/mediaItems?${query.toString()}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        data = await parseJson(response);
-      }
-
+      const response = await fetch(`${GOOGLE_PICKER_API}/mediaItems?${query.toString()}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await parseJson(response);
       if (!response.ok) {
-        return json({ error: `Google Photos media failed (${response.status}): ${stringifyError(data)}` }, 502);
+        return json({ error: `Picker media list failed (${response.status}): ${stringifyError(data)}` }, 502);
       }
 
-      const mediaItems = Array.isArray(data.mediaItems) ? data.mediaItems.map((m) => ({
-        id: String(m.id || ""),
-        filename: String(m.filename || "photo"),
-        mimeType: String(m.mimeType || ""),
-        baseUrl: String(m.baseUrl || ""),
-        productUrl: String(m.productUrl || ""),
-      })) : [];
+      const mediaItems = Array.isArray(data.mediaItems)
+        ? data.mediaItems.map((m) => {
+            const file = m.mediaFile || {};
+            const baseUrl = String(file.baseUrl || "");
+            const mimeType = String(file.mimeType || "");
+            const filename = String(file.filename || `google-photo-${String(m.id || "")}`);
+            return {
+              id: String(m.id || ""),
+              type: String(m.type || ""),
+              createTime: String(m.createTime || ""),
+              baseUrl,
+              mimeType,
+              filename,
+              previewUrl: baseUrl ? buildPreviewUrl(baseUrl, mimeType) : "",
+              downloadUrl: baseUrl ? buildDownloadUrl(baseUrl, mimeType) : "",
+            };
+          })
+        : [];
 
       return json({ ok: true, mediaItems, nextPageToken: String(data.nextPageToken || "") }, 200);
     }
 
     if (action === "import_media") {
-      const mediaItemId = String(payload.mediaItemId || "").trim();
-      if (!mediaItemId) return json({ error: "mediaItemId is required" }, 400);
-      const branch = process.env.GITHUB_BRANCH || "main";
-
-      const mediaResponse = await fetch(`${GOOGLE_PHOTOS_API}/mediaItems/${encodeURIComponent(mediaItemId)}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const media = await parseJson(mediaResponse);
-      if (!mediaResponse.ok) {
-        return json({ error: `Google Photos media item failed (${mediaResponse.status}): ${stringifyError(media)}` }, 502);
+      const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
+      if (missingImportEnv.length > 0) {
+        return json({
+          error: `Import is not configured. Missing: ${missingImportEnv.join(", ")}`,
+          missingImportEnv,
+        }, 500);
       }
 
-      const baseUrl = String(media.baseUrl || "").trim();
-      if (!baseUrl) return json({ error: "Google Photos item missing baseUrl" }, 502);
+      const baseUrl = String(payload.baseUrl || "").trim();
+      const mimeType = String(payload.mimeType || "").toLowerCase();
+      const filenameRaw = String(payload.filename || "photo");
+      const mediaItemId = String(payload.mediaItemId || filenameRaw || Date.now()).trim();
+      if (!baseUrl) return json({ error: "baseUrl is required for import_media" }, 400);
 
-      const binaryResponse = await fetch(`${baseUrl}=d`, {
+      const binaryResponse = await fetch(buildDownloadUrl(baseUrl, mimeType), {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!binaryResponse.ok) {
@@ -148,12 +159,12 @@ export const handler = async (event) => {
 
       const arr = await binaryResponse.arrayBuffer();
       const contentBase64 = Buffer.from(arr).toString("base64");
-      const mimeType = String(media.mimeType || "").toLowerCase();
-      const ext = extensionFromMimeType(mimeType, String(media.filename || "photo"));
-      const safeStem = sanitizeFilename(String(media.filename || `google-photo-${mediaItemId}`).replace(/\.[^.]+$/, ""));
-      const hash = shortHash(mediaItemId);
+      const ext = extensionFromMimeType(mimeType, filenameRaw);
+      const safeStem = sanitizeFilename(filenameRaw.replace(/\.[^.]+$/, ""));
+      const hash = shortHash(mediaItemId || filenameRaw);
       const fileName = `${safeStem}-${hash}.${ext}`;
       const imagePath = `public/uploads/images/${fileName}`;
+      const branch = process.env.GITHUB_BRANCH || "main";
 
       const write = await upsertRepoFile({
         path: imagePath,
@@ -163,18 +174,20 @@ export const handler = async (event) => {
       });
       if (!write.ok) return json({ error: write.error }, 502);
 
-      return json({
-        ok: true,
-        imported: {
-          id: mediaItemId,
-          filename: String(media.filename || fileName),
-          mimeType,
-          path: imagePath,
-          publicPath: `/${stripPublicPrefix(imagePath)}`,
-          productUrl: String(media.productUrl || ""),
+      return json(
+        {
+          ok: true,
+          imported: {
+            id: mediaItemId,
+            filename: filenameRaw || fileName,
+            mimeType,
+            path: imagePath,
+            publicPath: `/${stripPublicPrefix(imagePath)}`,
+          },
+          commit: write.data?.commitUrl || null,
         },
-        commit: write.data?.commitUrl || null,
-      }, 200);
+        200,
+      );
     }
 
     return json({ error: "Invalid action" }, 400);
@@ -228,6 +241,7 @@ async function getGoogleAccessToken() {
     client_secret: process.env.GOOGLE_PHOTOS_CLIENT_SECRET,
     refresh_token: process.env.GOOGLE_PHOTOS_REFRESH_TOKEN,
     grant_type: "refresh_token",
+    scope: process.env.GOOGLE_PHOTOS_SCOPE || "https://www.googleapis.com/auth/photospicker.mediaitems.readonly",
   });
 
   const response = await fetch(GOOGLE_TOKEN_URL, {
@@ -240,6 +254,31 @@ async function getGoogleAccessToken() {
     throw new Error(`Google token exchange failed (${response.status}): ${stringifyError(data)}`);
   }
   return String(data.access_token);
+}
+
+function toSessionResponse(data) {
+  return {
+    id: String(data?.id || ""),
+    pickerUri: String(data?.pickerUri || ""),
+    mediaItemsSet: Boolean(data?.mediaItemsSet),
+    expireTime: String(data?.expireTime || ""),
+    pollingConfig: {
+      pollInterval: String(data?.pollingConfig?.pollInterval || ""),
+      timeoutIn: String(data?.pollingConfig?.timeoutIn || ""),
+    },
+  };
+}
+
+function buildPreviewUrl(baseUrl, mimeType) {
+  if (!baseUrl) return "";
+  if (String(mimeType || "").startsWith("video/")) return `${baseUrl}=w512-h512`;
+  return `${baseUrl}=w700-h700`;
+}
+
+function buildDownloadUrl(baseUrl, mimeType) {
+  if (!baseUrl) return "";
+  if (String(mimeType || "").startsWith("video/")) return `${baseUrl}=dv`;
+  return `${baseUrl}=d`;
 }
 
 async function upsertRepoFile({ path, contentBase64, message, branch }) {
@@ -284,6 +323,9 @@ function extensionFromMimeType(mimeType, fallbackName) {
     "image/heic": "heic",
     "image/heif": "heif",
     "image/gif": "gif",
+    "video/mp4": "mp4",
+    "video/quicktime": "mov",
+    "video/webm": "webm",
   };
   if (byMime[mimeType]) return byMime[mimeType];
   const match = String(fallbackName || "").toLowerCase().match(/\.([a-z0-9]+)$/);
@@ -318,6 +360,10 @@ function clampNumber(value, min, max, fallback) {
   return Math.min(max, Math.max(min, Math.round(n)));
 }
 
+function getMissingEnvVars(names) {
+  return names.filter((key) => !process.env[key]);
+}
+
 async function parseJson(response) {
   try {
     return await response.json();
@@ -330,6 +376,7 @@ function stringifyError(value) {
   if (!value) return "Unknown error";
   if (typeof value === "string") return value;
   if (value.error?.message) return String(value.error.message);
+  if (value.error_description) return String(value.error_description);
   try {
     return JSON.stringify(value);
   } catch {
@@ -337,10 +384,6 @@ function stringifyError(value) {
   }
 }
 
-
-function getMissingEnvVars(names) {
-  return names.filter((key) => !process.env[key]);
-}
 function githubHeaders() {
   return {
     Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
@@ -349,4 +392,3 @@ function githubHeaders() {
     "User-Agent": "walking-with-ember-media-library",
   };
 }
-
