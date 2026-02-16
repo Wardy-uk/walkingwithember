@@ -17,7 +17,7 @@ const REQUIRED_IMPORT_ENV = ["GITHUB_TOKEN", "GITHUB_REPO"];
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_PICKER_API = "https://photospicker.googleapis.com/v1";
 
-export const handler = async (event) => {
+export const handler = async (event, context) => {
   try {
     if (event.httpMethod === "OPTIONS") {
       return { statusCode: 204, headers: CORS_HEADERS, body: "" };
@@ -30,7 +30,7 @@ export const handler = async (event) => {
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
     if (!token) return json({ error: "Missing admin auth token" }, 401);
 
-    const user = await validateIdentityToken(token, event);
+    const user = context?.clientContext?.user || (await validateIdentityToken(token, event));
     if (!user) return json({ error: "Unauthorized" }, 401);
 
     let payload;
@@ -392,3 +392,4 @@ function githubHeaders() {
     "User-Agent": "walking-with-ember-media-library",
   };
 }
+

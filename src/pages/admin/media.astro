@@ -165,7 +165,7 @@ export const prerender = true;
           identity.open("login");
           throw new Error("Please log in as admin first.");
         }
-        return user.jwt();
+        return user.jwt(true);
       }
 
       async function apiCall(token, payload) {
@@ -426,3 +426,4 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
