@@ -115,9 +115,12 @@ export const handler = async (event) => {
       const validationError = validatePublishDraftPayload(payload);
       if (validationError) return json({ error: validationError }, 400);
 
+      const normalizedPath = normalizeManagedContentPath(payload.contentPath);
+      if (!normalizedPath.ok) return json({ error: normalizedPath.error }, 400);
+
       const branch = process.env.GITHUB_BRANCH || "main";
       const publishResult = await publishDraftFile({
-        path: payload.contentPath,
+        path: normalizedPath.path,
         branch,
       });
       if (!publishResult.ok) return json({ error: publishResult.error }, 502);
@@ -126,11 +129,38 @@ export const handler = async (event) => {
         ok: true,
         branch,
         published: {
-          path: payload.contentPath,
-          slug: pathToSlug(payload.contentPath),
-          type: payload.contentPath.includes("/walks/") ? "walk" : "blog",
+          path: normalizedPath.path,
+          slug: pathToSlug(normalizedPath.path),
+          type: normalizedPath.type,
         },
         commit: publishResult.data?.commitUrl || null,
+      });
+    }
+
+    if (action === "manage_post") {
+      const validationError = validateManagePostPayload(payload);
+      if (validationError) return json({ error: validationError }, 400);
+
+      const normalizedPath = normalizeManagedContentPath(payload.contentPath);
+      if (!normalizedPath.ok) return json({ error: normalizedPath.error }, 400);
+
+      const branch = process.env.GITHUB_BRANCH || "main";
+      const operation = String(payload.operation || "").toLowerCase();
+      const result = operation === "delete"
+        ? await deleteContentFile({ path: normalizedPath.path, branch })
+        : await archiveContentFile({ path: normalizedPath.path, branch });
+      if (!result.ok) return json({ error: result.error }, 502);
+
+      return json({
+        ok: true,
+        branch,
+        operation,
+        managed: {
+          path: normalizedPath.path,
+          slug: pathToSlug(normalizedPath.path),
+          type: normalizedPath.type,
+        },
+        commit: result.data?.commitUrl || null,
       });
     }
     if (action !== "generate_post") return json({ error: "Invalid action" }, 400);
@@ -281,11 +311,37 @@ function validateUploadAssetPayload(payload) {
 
 function validatePublishDraftPayload(payload) {
   if (!payload || typeof payload !== "object") return "Payload missing";
-  const contentPath = String(payload.contentPath || "");
-  if (!contentPath) return "contentPath is required";
-  const allowed = contentPath.startsWith("src/content/walks/") || contentPath.startsWith("src/content/blog/");
-  if (!allowed || !contentPath.endsWith(".md")) return "contentPath must be a walk/blog markdown file";
+  const normalized = normalizeManagedContentPath(payload.contentPath);
+  if (!normalized.ok) return normalized.error;
   return null;
+}
+
+function validateManagePostPayload(payload) {
+  if (!payload || typeof payload !== "object") return "Payload missing";
+  const operation = String(payload.operation || "").toLowerCase();
+  if (!["archive", "delete"].includes(operation)) return "operation must be archive or delete";
+  const normalized = normalizeManagedContentPath(payload.contentPath);
+  if (!normalized.ok) return normalized.error;
+  return null;
+}
+
+function normalizeManagedContentPath(contentPath) {
+  const raw = String(contentPath || "").trim();
+  if (!raw) return { ok: false, error: "contentPath is required" };
+  const normalized = raw.replace(/\\/g, "/");
+  if (normalized.startsWith("/") || normalized.includes("..")) {
+    return { ok: false, error: "contentPath must be a walk/blog markdown file" };
+  }
+  const match = normalized.match(/^src\/content\/(walks|blog)\/([a-z0-9][a-z0-9-]{0,120})\.md$/i);
+  if (!match) return { ok: false, error: "contentPath must be a walk/blog markdown file" };
+  const collection = match[1].toLowerCase();
+  const slug = match[2].toLowerCase();
+  return {
+    ok: true,
+    path: `src/content/${collection}/${slug}.md`,
+    type: collection === "walks" ? "walk" : "blog",
+    slug,
+  };
 }
 
 function validateGeneratePayload(payload) {
@@ -762,6 +818,84 @@ async function publishDraftFile({ path, branch }) {
   }
 }
 
+
+async function archiveContentFile({ path, branch }) {
+  const repo = process.env.GITHUB_REPO;
+  const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}`;
+
+  try {
+    const getResponse = await fetch(url + `?ref=${encodeURIComponent(branch)}`, {
+      method: "GET",
+      headers: githubHeaders(),
+    });
+    if (!getResponse.ok) {
+      const text = await getResponse.text();
+      return { ok: false, error: `GitHub read failed (${getResponse.status}): ${text}` };
+    }
+
+    const current = await getResponse.json();
+    const currentText = Buffer.from(String(current.content || "").replace(/\n/g, ""), "base64").toString("utf8");
+    const updatedText = setDraftFlag(currentText, true);
+    const contentBase64 = Buffer.from(updatedText, "utf8").toString("base64");
+
+    const putResponse = await fetch(url, {
+      method: "PUT",
+      headers: githubHeaders(),
+      body: JSON.stringify({
+        message: `chore(admin): archive content ${path}`,
+        content: contentBase64,
+        sha: current.sha,
+        branch,
+      }),
+    });
+    if (!putResponse.ok) {
+      const text = await putResponse.text();
+      return { ok: false, error: `GitHub archive failed (${putResponse.status}): ${text}` };
+    }
+
+    const data = await putResponse.json();
+    return { ok: true, data: { path, sha: data.content?.sha, commitUrl: data.commit?.html_url } };
+  } catch (error) {
+    return { ok: false, error: `GitHub archive request failed: ${String(error?.message || error)}` };
+  }
+}
+
+async function deleteContentFile({ path, branch }) {
+  const repo = process.env.GITHUB_REPO;
+  const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}`;
+
+  try {
+    const getResponse = await fetch(url + `?ref=${encodeURIComponent(branch)}`, {
+      method: "GET",
+      headers: githubHeaders(),
+    });
+    if (!getResponse.ok) {
+      const text = await getResponse.text();
+      return { ok: false, error: `GitHub read failed (${getResponse.status}): ${text}` };
+    }
+
+    const current = await getResponse.json();
+
+    const deleteResponse = await fetch(url, {
+      method: "DELETE",
+      headers: githubHeaders(),
+      body: JSON.stringify({
+        message: `chore(admin): delete content ${path}`,
+        sha: current.sha,
+        branch,
+      }),
+    });
+    if (!deleteResponse.ok) {
+      const text = await deleteResponse.text();
+      return { ok: false, error: `GitHub delete failed (${deleteResponse.status}): ${text}` };
+    }
+
+    const data = await deleteResponse.json();
+    return { ok: true, data: { path, sha: current.sha, commitUrl: data.commit?.html_url } };
+  } catch (error) {
+    return { ok: false, error: `GitHub delete request failed: ${String(error?.message || error)}` };
+  }
+}
 async function upsertRepoFile({ path, contentBase64, message, branch }) {
   const repo = process.env.GITHUB_REPO;
   const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}`;

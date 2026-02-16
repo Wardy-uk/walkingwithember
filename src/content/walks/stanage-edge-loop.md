@@ -1,7 +1,7 @@
 ---
 title: "Stanage Edge Loop"
 summary: "A classic Peak District ridge walk with broad views, gritstone edges, and straightforward navigation."
-heroImage: "/images/walk-peak-edge.svg"
+heroImage: "/uploads/images/2b27a2d2-6c68-4bf6-80de-cae10e6cdc3c-013c928a24.jpg"
 publishDate: 2026-02-01
 difficulty: "Moderate"
 distance: 8.2
@@ -33,5 +33,6 @@ Start from Upper Burbage Bridge and follow bridleways toward Higger Tor. The loo
 - Stone and compacted earth trails
 - Exposed in poor weather
 - Can be boggy after heavy rain
+
 
 

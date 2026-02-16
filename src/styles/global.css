@@ -362,6 +362,43 @@ h1 {
   box-shadow: 0 16px 24px rgba(55, 30, 16, 0.17);
 }
 
+.entry-card {
+  position: relative;
+}
+
+.entry-admin-controls {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.4rem;
+  z-index: 3;
+}
+
+.entry-admin-delete,
+.entry-admin-archive {
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid #d8b99f;
+}
+
+.entry-admin-delete {
+  background: #b53030;
+  color: #fff;
+  border-color: #8f2424;
+  width: 1.9rem;
+  height: 1.9rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.entry-admin-archive {
+  background: #fff5e8;
+  color: #6f3f20;
+}
+
 .entry-card-body {
   padding: 0.9rem;
 }
@@ -917,3 +954,7 @@ button:hover,
   background: #fff1f1;
   color: #7a2323;
 }
+
+
+.hidden { display: none !important; }
+

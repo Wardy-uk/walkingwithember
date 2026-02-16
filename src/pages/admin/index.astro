@@ -1,6 +1,10 @@
 ---
 import "../../styles/global.css";
+import { getAllBlogs, getAllWalks } from "../../lib/content";
 export const prerender = true;
+
+const walks = await getAllWalks();
+const posts = await getAllBlogs();
 ---
 
 <!doctype html>
@@ -20,6 +24,8 @@ export const prerender = true;
       .admin-wrap {
         width: min(var(--max), calc(100% - 2rem));
         margin: 0 auto;
+        display: grid;
+        gap: 0.8rem;
       }
       .admin-bar {
         display: flex;
@@ -55,11 +61,30 @@ export const prerender = true;
         line-height: 1;
         margin-left: 0.2rem;
       }
+      .admin-tile-grid {
+        display: grid;
+        gap: 0.9rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .admin-controls-note {
+        margin: 0;
+        color: #6f5641;
+      }
       @media (max-width: 1100px) {
         .admin-actions {
           overflow-x: auto;
           max-width: 100%;
           padding-bottom: 0.2rem;
+        }
+      }
+      @media (max-width: 900px) {
+        .admin-tile-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 640px) {
+        .admin-tile-grid {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -78,12 +103,66 @@ export const prerender = true;
           <span id="identity-status">Loading login widget...</span>
         </div>
       </section>
+
+      <section class="card">
+        <h2>Walk Tiles</h2>
+        <p class="admin-controls-note">Log in with GitHub to archive or delete items.</p>
+        <div class="admin-tile-grid">
+          {walks.map((walk) => (
+            <article
+              class:list={["entry-card", "admin-manage-card"]}
+              data-content-path={`src/content/walks/${walk.slug}.md`}
+              data-entry-type="walk"
+              data-entry-title={walk.data.title}
+            >
+              <div class="entry-admin-controls admin-card-control hidden">
+                <button type="button" class="entry-admin-delete" data-admin-action="delete" aria-label={`Delete ${walk.data.title}`}>×</button>
+                <button type="button" class="entry-admin-archive" data-admin-action="archive">Archive</button>
+              </div>
+              <a href={walk.data.draft ? `/preview/walks/${walk.slug}/` : `/walks/${walk.slug}/`} target="_blank" rel="noreferrer">
+                <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
+              </a>
+              <div class="entry-card-body">
+                <h3>{walk.data.title}</h3>
+                <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}{walk.data.draft ? " · Draft" : ""}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Blog Tiles</h2>
+        <div class="admin-tile-grid">
+          {posts.map((post) => (
+            <article
+              class:list={["entry-card", "admin-manage-card"]}
+              data-content-path={`src/content/blog/${post.slug}.md`}
+              data-entry-type="blog"
+              data-entry-title={post.data.title}
+            >
+              <div class="entry-admin-controls admin-card-control hidden">
+                <button type="button" class="entry-admin-delete" data-admin-action="delete" aria-label={`Delete ${post.data.title}`}>×</button>
+                <button type="button" class="entry-admin-archive" data-admin-action="archive">Archive</button>
+              </div>
+              <a href={post.data.draft ? `/preview/blog/${post.slug}/` : `/blog/${post.slug}/`} target="_blank" rel="noreferrer">
+                <img src={post.data.coverImage} alt={post.data.title} loading="lazy" />
+              </a>
+              <div class="entry-card-body">
+                <h3>{post.data.title}</h3>
+                <p class="muted">{post.data.author} · {post.data.publishDate.toLocaleDateString("en-GB")}{post.data.draft ? " · Draft" : ""}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </main>
 
     <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
     <script is:inline>
       const statusEl = document.getElementById("identity-status");
+      const adminControls = Array.from(document.querySelectorAll(".admin-card-control"));
 
       function setStatus(message, color) {
         if (!statusEl) return;
@@ -91,14 +170,90 @@ export const prerender = true;
         statusEl.style.color = color || "#7c6654";
       }
 
+      function identitySnapshot(user) {
+        const appMeta = user?.app_metadata || {};
+        const identities = Array.isArray(appMeta.identities) ? appMeta.identities : [];
+        const providers = identities.map((x) => String(x?.provider || "").trim()).filter(Boolean);
+        const providerSet = Array.from(new Set([String(appMeta.provider || "").trim(), ...providers].filter(Boolean)));
+        return {
+          provider: providerSet.join(", "),
+        };
+      }
+
+      function isGithubIdentity(user) {
+        const d = identitySnapshot(user);
+        return String(d.provider || "").toLowerCase().split(",").map((x) => x.trim()).includes("github");
+      }
+
+      function updateAdminControlVisibility(user) {
+        const isAdmin = Boolean(user && isGithubIdentity(user));
+        adminControls.forEach((el) => el.classList.toggle("hidden", !isAdmin));
+        document.body.classList.toggle("is-admin", isAdmin);
+      }
+
+      async function requireAdminToken() {
+        const identity = window.netlifyIdentity;
+        if (!identity) throw new Error("Netlify Identity is unavailable.");
+        identity.init();
+        const user = identity.currentUser();
+        if (!user) {
+          identity.open("login");
+          throw new Error("Please log in as admin first.");
+        }
+        if (!isGithubIdentity(user)) {
+          throw new Error("Use GitHub login for admin access.");
+        }
+        return user.jwt();
+      }
+
+      async function manageCard(card, operation) {
+        const contentPath = card?.dataset?.contentPath || "";
+        const entryTitle = card?.dataset?.entryTitle || "this item";
+        if (!contentPath) throw new Error("Missing content path for this item.");
+
+        const prompt = operation === "delete"
+          ? `Delete "${entryTitle}" permanently? This cannot be undone.`
+          : `Archive "${entryTitle}" and move it to draft?`;
+        if (!window.confirm(prompt)) return;
+
+        const token = await requireAdminToken();
+        const response = await fetch("/.netlify/functions/ai-create-post", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            action: "manage_post",
+            operation,
+            contentPath,
+          }),
+        });
+
+        const raw = await response.text();
+        let data = {};
+        try { data = raw ? JSON.parse(raw) : {}; } catch {}
+
+        if (!response.ok) {
+          const detail = data.error || raw || response.statusText || "Unknown error";
+          throw new Error(`Request failed (${response.status}): ${String(detail).trim()}`);
+        }
+
+        window.alert(operation === "delete" ? "Item deleted." : "Item archived.");
+        window.location.reload();
+      }
+
       function bindIdentity(identity) {
         identity.init();
+        const currentUser = identity.currentUser?.() || null;
+        updateAdminControlVisibility(currentUser);
         setStatus("Identity ready (use GitHub login)", "#5b7f3f");
 
         document.getElementById("identity-login")?.addEventListener("click", () => identity.open("login"));
         document.getElementById("identity-logout")?.addEventListener("click", async () => {
           await identity.logout();
           setStatus("Logged out", "#7c6654");
+          updateAdminControlVisibility(null);
         });
 
         const hash = window.location.hash || "";
@@ -108,12 +263,16 @@ export const prerender = true;
         }
 
         identity.on("init", (user) => {
+          updateAdminControlVisibility(user || null);
           if (!user) {
             identity.on("login", () => {
               document.location.href = "/admin/";
             });
           }
         });
+
+        identity.on("login", (user) => updateAdminControlVisibility(user || null));
+        identity.on("logout", () => updateAdminControlVisibility(null));
       }
 
       function waitForIdentity(triesLeft) {
@@ -128,6 +287,22 @@ export const prerender = true;
         }
         setTimeout(() => waitForIdentity(triesLeft - 1), 250);
       }
+
+      document.addEventListener("click", async (event) => {
+        const btn = event.target.closest("[data-admin-action]");
+        if (!btn) return;
+        const card = btn.closest(".admin-manage-card");
+        if (!card) return;
+        const operation = btn.dataset.adminAction;
+        if (!operation) return;
+        btn.disabled = true;
+        try {
+          await manageCard(card, operation);
+        } catch (error) {
+          window.alert(String(error?.message || error));
+          btn.disabled = false;
+        }
+      });
 
       waitForIdentity(40);
     </script>

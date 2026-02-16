@@ -8,8 +8,8 @@ export async function getSiteSettings() {
     baseUrl: "https://example.com",
     social: {},
     homepage: {
-      mastheadImage: "/images/uk-ridge-dawn.svg",
-      galleryImages: ["/images/lakeside-fell-trail.svg"],
+      mastheadImage: "/uploads/images/5da590c5-0884-4c1c-8fc1-012850f889fa-61fec1bcfa.jpg",
+      galleryImages: ["/uploads/images/5da590c5-0884-4c1c-8fc1-012850f889fa-80ba7d9489.jpg"],
     }
   };
 }
@@ -43,4 +43,5 @@ export async function getRegions() {
   const walks = await getPublishedWalks();
   return Array.from(new Set(walks.map((walk) => walk.data.region))).sort((a, b) => a.localeCompare(b));
 }
+
 

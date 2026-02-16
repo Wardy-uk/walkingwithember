@@ -21,7 +21,17 @@ const posts = await getAllBlogs();
     </section>
     <section class="card-grid">
       {posts.map((post) => (
-        <article class:list={["entry-card", post.data.draft && "admin-draft-only", post.data.draft && "hidden"]}>
+        <article
+          class:list={["entry-card", "blog-card", post.data.draft && "admin-draft-only", post.data.draft && "hidden"]}
+          data-draft={post.data.draft ? "yes" : "no"}
+          data-content-path={`src/content/blog/${post.slug}.md`}
+          data-entry-type="blog"
+          data-entry-title={post.data.title}
+        >
+          <div class="entry-admin-controls admin-card-control hidden">
+            <button type="button" class="entry-admin-delete" data-admin-action="delete" aria-label={`Delete ${post.data.title}`}>×</button>
+            <button type="button" class="entry-admin-archive" data-admin-action="archive">Archive</button>
+          </div>
           <a href={post.data.draft ? `/preview/blog/${post.slug}/` : `/blog/${post.slug}/`} target={post.data.draft ? "_blank" : undefined} rel={post.data.draft ? "noreferrer" : undefined}>
             <img src={post.data.coverImage} alt={post.data.title} loading="lazy" />
           </a>
@@ -37,24 +47,108 @@ const posts = await getAllBlogs();
 
   <script is:inline>
     const draftBlocks = Array.from(document.querySelectorAll(".admin-draft-only"));
+    const adminControls = Array.from(document.querySelectorAll(".admin-card-control"));
 
-    function revealAdminDrafts() {
-      draftBlocks.forEach((el) => el.classList.remove("hidden"));
+    function identitySnapshot(user) {
+      const appMeta = user?.app_metadata || {};
+      const identities = Array.isArray(appMeta.identities) ? appMeta.identities : [];
+      const providers = identities.map((x) => String(x?.provider || "").trim()).filter(Boolean);
+      const providerSet = Array.from(new Set([String(appMeta.provider || "").trim(), ...providers].filter(Boolean)));
+      return { provider: providerSet.join(", ") };
     }
 
-    const syncDraftsFromIdentity = (user) => {
-      if (user) {
-        revealAdminDrafts();
-      } else {
-        draftBlocks.forEach((el) => el.classList.add("hidden"));
+    function isGithubIdentity(user) {
+      const d = identitySnapshot(user);
+      return String(d.provider || "").toLowerCase().split(",").map((x) => x.trim()).includes("github");
+    }
+
+    function syncDraftsFromIdentity(user) {
+      const isAdmin = Boolean(user && isGithubIdentity(user));
+      draftBlocks.forEach((el) => el.classList.toggle("hidden", !isAdmin));
+      adminControls.forEach((el) => el.classList.toggle("hidden", !isAdmin));
+      document.body.classList.toggle("is-admin", isAdmin);
+    }
+
+    async function getIdentityClient(triesLeft = 30) {
+      const identity = window.netlifyIdentity;
+      if (identity) return identity;
+      if (triesLeft <= 0) throw new Error("Netlify Identity is unavailable.");
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      return getIdentityClient(triesLeft - 1);
+    }
+
+    async function requireAdminToken() {
+      const identity = await getIdentityClient();
+      identity.init();
+      const user = identity.currentUser();
+      if (!user) {
+        identity.open("login");
+        throw new Error("Please log in as admin first.");
       }
-    };
+      if (!isGithubIdentity(user)) {
+        throw new Error("Use GitHub login for admin access.");
+      }
+      return user.jwt();
+    }
+
+    async function manageCard(card, operation) {
+      const contentPath = card?.dataset?.contentPath || "";
+      const entryTitle = card?.dataset?.entryTitle || "this blog post";
+      if (!contentPath) throw new Error("Missing content path for this item.");
+
+      const prompt = operation === "delete"
+        ? `Delete "${entryTitle}" permanently? This cannot be undone.`
+        : `Archive "${entryTitle}" and move it to draft?`;
+      if (!window.confirm(prompt)) return;
+
+      const token = await requireAdminToken();
+      const response = await fetch("/.netlify/functions/ai-create-post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: "manage_post",
+          operation,
+          contentPath,
+        }),
+      });
+
+      const raw = await response.text();
+      let data = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch {}
+      if (!response.ok) {
+        const detail = data.error || raw || response.statusText || "Unknown error";
+        throw new Error(`Request failed (${response.status}): ${String(detail).trim()}`);
+      }
+
+      window.alert(operation === "delete" ? "Blog post deleted." : "Blog post archived.");
+      window.location.reload();
+    }
 
     syncDraftsFromIdentity(window.__wwIdentityUser || null);
     window.addEventListener("ww-identity-change", (event) => {
       syncDraftsFromIdentity(event.detail?.user || null);
     });
+
+    document.addEventListener("click", async (event) => {
+      const btn = event.target.closest("[data-admin-action]");
+      if (!btn) return;
+      const card = btn.closest(".blog-card");
+      if (!card) return;
+      const operation = btn.dataset.adminAction;
+      if (!operation) return;
+      btn.disabled = true;
+      try {
+        await manageCard(card, operation);
+      } catch (error) {
+        window.alert(String(error?.message || error));
+        btn.disabled = false;
+      }
+    });
   </script>
 </BaseLayout>
+
 
 

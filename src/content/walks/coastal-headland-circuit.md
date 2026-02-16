@@ -1,7 +1,7 @@
 ---
 title: "Coastal Headland Circuit"
 summary: "A sea-view route on open coastal paths with short climbs and exposed cliff-top sections."
-heroImage: "/images/walk-river-loop.svg"
+heroImage: "/uploads/images/48e7f19f-7631-48c9-98e6-96917f61b6b4-a9cc5231a3.jpg"
 publishDate: 2026-01-12
 difficulty: "Moderate"
 distance: 6.8
@@ -33,5 +33,6 @@ Leave the harbour, follow clifftop rights of way northbound, then return inland 
 - Wind-exposed sections
 - Uneven clifftop path in places
 - Keep distance from unstable cliff edges
+
 
 
