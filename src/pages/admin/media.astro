@@ -18,6 +18,7 @@ export const prerender = true;
       .wrap { width:min(1100px,calc(100% - 2rem)); margin:1rem auto 2rem; display:grid; gap:.8rem; }
       .bar { display:flex; justify-content:space-between; align-items:center; gap:.5rem; flex-wrap:wrap; }
       .bar-actions,.controls { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+      .field { border:1px solid #d9b995; border-radius:10px; padding:.48rem .62rem; background:#fff9f0; color:#5d4431; }
       .card { background:linear-gradient(180deg,var(--card) 0%,#f6ebdc 100%); border:1px solid var(--line); border-radius:16px; padding:.9rem; }
       h1,h2 { margin:0 0 .5rem; font-family:"Fraunces",Georgia,serif; }
       p { margin:0 0 .6rem; color:var(--muted); }
@@ -61,6 +62,12 @@ export const prerender = true;
           <button id="openPickerBtn" type="button" class="ghost" disabled>Open Picker</button>
           <button id="bulkImportBtn" type="button" disabled>Load + Import Selected</button>
           <button id="bulkLinkBtn" type="button" class="ghost" disabled>Load + Use Google Links</button>
+          <select id="importFolderMode" class="field">
+            <option value="none" selected>No Folder</option>
+            <option value="auto">GPS + Date Folder</option>
+            <option value="manual">Manual Folder</option>
+          </select>
+          <input id="manualFolderInput" class="field" type="text" placeholder="manual folder (e.g. peak-district/2026-02)" style="display:none;min-width:240px;" />
         </div>
         <p id="sessionInfo" class="tiny">No active picker session.</p>
       </section>
@@ -90,6 +97,8 @@ export const prerender = true;
       const openPickerBtn = document.getElementById("openPickerBtn");
       const bulkImportBtn = document.getElementById("bulkImportBtn");
       const bulkLinkBtn = document.getElementById("bulkLinkBtn");
+      const importFolderMode = document.getElementById("importFolderMode");
+      const manualFolderInput = document.getElementById("manualFolderInput");
       const importProgressModal = document.getElementById("importProgressModal");
       const importProgressText = document.getElementById("importProgressText");
       const importProgressBar = document.getElementById("importProgressBar");
@@ -140,6 +149,12 @@ export const prerender = true;
       function hideImportProgress() {
         importProgressModal.classList.remove("show");
         importProgressModal.setAttribute("aria-hidden", "true");
+      }
+
+      function syncFolderControls() {
+        const mode = String(importFolderMode?.value || "none");
+        if (!manualFolderInput) return;
+        manualFolderInput.style.display = mode === "manual" ? "inline-block" : "none";
       }
 
       function setSession(data) {
@@ -356,8 +371,27 @@ export const prerender = true;
         }
 
         if (importedPaths.length > 0) {
+          const mode = String(importFolderMode?.value || "none");
+          if (mode === "auto") {
+            setStatus("Assigning imported images to GPS/date folders...");
+            await apiCall(token, { action: "auto_group", items: importedPaths });
+          } else if (mode === "manual") {
+            const folder = String(manualFolderInput?.value || "").trim();
+            if (!folder) {
+              setStatus("Import succeeded, but manual folder is blank. Set a folder name and retry grouping in Media Library.", true);
+            } else {
+              setStatus(`Assigning imported images to folder: ${folder}`);
+              await apiCall(token, { action: "set_groups", items: importedPaths, folder });
+            }
+          }
+
           await navigator.clipboard.writeText(importedPaths.join("\n"));
-          setStatus(`Imported ${importedPaths.length} item(s). Local paths copied to clipboard.`);
+          const label = mode === "auto"
+            ? " Imported items auto-grouped by GPS/date."
+            : mode === "manual"
+            ? " Imported items assigned to manual folder."
+            : "";
+          setStatus(`Imported ${importedPaths.length} item(s). Local paths copied to clipboard.${label}`);
         } else {
           setStatus("Import completed, but no local paths were returned.");
         }
@@ -401,6 +435,8 @@ export const prerender = true;
           setStatus(String(error?.message || error), true);
         }
       });
+
+      importFolderMode?.addEventListener("change", syncFolderControls);
 
       bulkLinkBtn?.addEventListener("click", async () => {
         bulkLinkBtn.disabled = true;
@@ -447,6 +483,7 @@ export const prerender = true;
       }
 
       appendLog("Google Photos media page ready.");
+      syncFolderControls();
       refreshButtons();
 
       (async () => {
@@ -461,4 +498,3 @@ export const prerender = true;
     </script>
   </body>
 </html>
-
