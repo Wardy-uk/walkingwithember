@@ -35,6 +35,11 @@ export const prerender = true;
       .tile-row { display:flex; justify-content:space-between; gap:.5rem; align-items:center; }
       .tile-actions { display:flex; gap:.4rem; flex-wrap:wrap; }
       .copy-btn { border:1px solid #d9b995; border-radius:999px; padding:.45rem .8rem; background:#fff5e8; color:#6f3f20; cursor:pointer; font-weight:700; }
+      .delete-progress-modal { position: fixed; inset: 0; display: none; place-items: center; background: rgba(34, 18, 8, 0.45); z-index: 50; padding: 1rem; }
+      .delete-progress-modal.show { display: grid; }
+      .delete-progress-card { width: min(520px, 100%); background: #fff8ee; border: 1px solid var(--line); border-radius: 14px; padding: .9rem; display: grid; gap: .6rem; }
+      .delete-progress-wrap { width: 100%; height: 12px; border-radius: 999px; border: 1px solid #d8bea0; background: #f4e8d8; overflow: hidden; }
+      .delete-progress-bar { height: 100%; width: 0%; background: linear-gradient(135deg,var(--accent),var(--accent-2)); transition: width .2s ease; }
       @media (max-width:980px){ .grid{grid-template-columns:repeat(3,minmax(0,1fr));} }
       @media (max-width:760px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
       @media (max-width:520px){ .grid{grid-template-columns:1fr;} }
@@ -70,17 +75,47 @@ export const prerender = true;
       <section class="grid" id="grid"></section>
     </main>
 
+    <div id="deleteProgressModal" class="delete-progress-modal" aria-hidden="true">
+      <div class="delete-progress-card">
+        <h1 style="margin:0; font-size:1.05rem;">Deleting Images</h1>
+        <div id="deleteProgressText" class="tiny">Preparing delete...</div>
+        <div class="delete-progress-wrap"><div id="deleteProgressBar" class="delete-progress-bar"></div></div>
+      </div>
+    </div>
+
     <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
     <script>
       const statusEl = document.getElementById("status");
       const gridEl = document.getElementById("grid");
       const folderInput = document.getElementById("folderInput");
+      const deleteProgressModal = document.getElementById("deleteProgressModal");
+      const deleteProgressText = document.getElementById("deleteProgressText");
+      const deleteProgressBar = document.getElementById("deleteProgressBar");
       const selected = new Set();
       let media = [];
 
       function setStatus(message, isError = false) {
         statusEl.textContent = message;
         statusEl.classList.toggle("error", Boolean(isError));
+      }
+
+      function setDeleteProgress(complete, total, label) {
+        const safeTotal = Math.max(1, Number(total || 0));
+        const safeComplete = Math.min(safeTotal, Math.max(0, Number(complete || 0)));
+        const percent = Math.round((safeComplete / safeTotal) * 100);
+        if (deleteProgressText) deleteProgressText.textContent = `${label || "Deleting..."} (${safeComplete}/${safeTotal})`;
+        if (deleteProgressBar) deleteProgressBar.style.width = `${percent}%`;
+      }
+
+      function showDeleteProgress(total) {
+        setDeleteProgress(0, total, "Starting delete");
+        deleteProgressModal?.classList.add("show");
+        deleteProgressModal?.setAttribute("aria-hidden", "false");
+      }
+
+      function hideDeleteProgress() {
+        deleteProgressModal?.classList.remove("show");
+        deleteProgressModal?.setAttribute("aria-hidden", "true");
       }
 
       async function getIdentityClient(triesLeft = 30) {
@@ -261,12 +296,20 @@ export const prerender = true;
         if (!yes) return;
 
         let deleted = 0;
-        for (const publicPath of items) {
-          setStatus(`Deleting ${publicPath}...`);
-          await apiCall({ action: "delete_site_media", publicPath });
-          selected.delete(publicPath);
-          media = media.filter((row) => row.publicPath !== publicPath);
-          deleted += 1;
+        showDeleteProgress(items.length);
+        try {
+          for (let i = 0; i < items.length; i += 1) {
+            const publicPath = items[i];
+            setDeleteProgress(i, items.length, `Deleting ${publicPath}`);
+            setStatus(`Deleting ${publicPath}...`);
+            await apiCall({ action: "delete_site_media", publicPath });
+            selected.delete(publicPath);
+            media = media.filter((row) => row.publicPath !== publicPath);
+            deleted += 1;
+            setDeleteProgress(i + 1, items.length, `Deleted ${publicPath}`);
+          }
+        } finally {
+          hideDeleteProgress();
         }
 
         render();
