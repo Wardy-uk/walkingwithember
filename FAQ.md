@@ -42,6 +42,9 @@ Set these in Netlify and/or local `.env`:
 - Production site URL is set in `astro.config.mjs`.
 - Keep this aligned with live domain for sitemap/canonical correctness.
 
+## Domain registrar
+- Domain registration for this site is managed via `one.com`.
+
 ## How do I resume Codex in this repo?
 From this folder, run:
 - `codex resume`
@@ -59,3 +62,8 @@ If `flybyCore` changes there, sync into this repo:
 4. Decide whether identity details should remain in admin activity log in `src/pages/admin/ai-walk.astro`.
 5. Keep `src/components/FlybyPanel.astro` and `src/lib/flybyCore.ts` in sync with standalone flyby behavior.
 6. Add tests for flyby preset selection and map playback behavior.
+
+## What should not be committed?
+- `.env`
+- backup env files (for example `.env.bak`)
+- any file containing real API keys/tokens
