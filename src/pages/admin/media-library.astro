@@ -61,6 +61,7 @@ export const prerender = true;
         <button id="refreshBtn" type="button" class="ghost">Refresh</button>
         <button id="selectAllBtn" type="button" class="ghost">Select All</button>
         <button id="clearBtn" type="button" class="ghost">Clear</button>
+        <button id="deleteSelectedBtn" type="button" class="ghost">Delete Selected</button>
         <input id="folderInput" type="text" placeholder="folder name (e.g. peak-district/2026-02)" />
         <button id="assignBtn" type="button">Assign Folder</button>
         <button id="autoBtn" type="button" class="ghost">Auto Sort (GPS + Date)</button>
@@ -248,6 +249,28 @@ export const prerender = true;
         const data = await apiCall({ action: "auto_group", items });
         await loadLibrary();
         setStatus(`Auto-sort complete. Updated ${Number(data.updated || 0)} image(s).`);
+      }
+
+      async function deleteSelected() {
+        const items = getSelectedPaths();
+        if (items.length === 0) {
+          setStatus("Select one or more images first.", true);
+          return;
+        }
+        const yes = window.confirm(`Delete ${items.length} selected image(s) from the site image library?`);
+        if (!yes) return;
+
+        let deleted = 0;
+        for (const publicPath of items) {
+          setStatus(`Deleting ${publicPath}...`);
+          await apiCall({ action: "delete_site_media", publicPath });
+          selected.delete(publicPath);
+          media = media.filter((row) => row.publicPath !== publicPath);
+          deleted += 1;
+        }
+
+        render();
+        setStatus(`Deleted ${deleted} selected image(s).`);
       }
 
       document.getElementById("refreshBtn")?.addEventListener("click", async () => {
