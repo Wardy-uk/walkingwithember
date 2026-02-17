@@ -148,25 +148,45 @@ export const handler = async (event, context) => {
 
       const groups = await getRepoJsonMap(MEDIA_GROUPS_PATH, branch);
       const meta = await getRepoJsonMap(MEDIA_META_PATH, branch);
-      const next = { ...groups.data };
+      const nextGroups = { ...groups.data };
+      const nextMeta = { ...meta.data };
       let updated = 0;
+      let enriched = 0;
+      const geocodeCache = new Map();
 
       for (const publicPath of items) {
-        const autoFolder = deriveAutoFolder(meta.data[publicPath] || {});
+        const prevMeta = meta.data[publicPath] || {};
+        const nextMetaRecord = { ...prevMeta };
+        const autoFolder = await deriveAutoFolder(nextMetaRecord, geocodeCache);
         if (!autoFolder) continue;
-        next[publicPath] = autoFolder;
+        nextGroups[publicPath] = autoFolder;
         updated += 1;
+
+        if (nextMetaRecord.areaName && nextMetaRecord.areaName !== prevMeta.areaName) {
+          nextMeta[publicPath] = { ...prevMeta, areaName: nextMetaRecord.areaName };
+          enriched += 1;
+        }
       }
 
-      const saved = await upsertRepoJsonFile({
+      const savedGroups = await upsertRepoJsonFile({
         path: MEDIA_GROUPS_PATH,
-        data: next,
-        message: `feat(media): auto-group ${updated} image(s) by gps/date`,
+        data: nextGroups,
+        message: `feat(media): auto-group ${updated} image(s) by area/date`,
         branch,
       });
-      if (!saved.ok) return json({ error: saved.error }, 502);
+      if (!savedGroups.ok) return json({ error: savedGroups.error }, 502);
 
-      return json({ ok: true, updated, commit: saved.data?.commitUrl || null }, 200);
+      if (enriched > 0) {
+        const savedMeta = await upsertRepoJsonFile({
+          path: MEDIA_META_PATH,
+          data: nextMeta,
+          message: `chore(media): enrich area metadata for ${enriched} image(s)`,
+          branch,
+        });
+        if (!savedMeta.ok) return json({ error: savedMeta.error }, 502);
+      }
+
+      return json({ ok: true, updated, enriched, commit: savedGroups.data?.commitUrl || null }, 200);
     }
 
     const missingGoogleEnv = getMissingEnvVars(REQUIRED_GOOGLE_ENV);
@@ -657,17 +677,91 @@ async function upsertMediaMeta(publicPath, record, branch) {
   return upsertRepoJsonFile({ path: MEDIA_META_PATH, data: next, message: `chore(media): update metadata ${publicPath}`, branch });
 }
 
-function deriveAutoFolder(meta) {
+async function deriveAutoFolder(meta, geocodeCache = new Map()) {
   const ym = yearMonthFromIso(meta?.createTime);
   const lat = toFinite(meta?.latitude);
   const lon = toFinite(meta?.longitude);
-  const geo = Number.isFinite(lat) && Number.isFinite(lon) ? `gps-${roundCoord(lat)}_${roundCoord(lon)}` : "no-gps";
   const datePart = ym || "undated";
-  return `auto/${geo}/${datePart}`;
+
+  let area = cleanPlaceName(meta?.areaName);
+  const hasUsableGeo = Number.isFinite(lat) && Number.isFinite(lon) && !(Math.abs(lat) < 1e-7 && Math.abs(lon) < 1e-7);
+
+  if (!area && hasUsableGeo) {
+    area = await reverseGeocodeAreaName(lat, lon, geocodeCache);
+    if (area) meta.areaName = area;
+  }
+
+  const areaPart = normalizeFolderPart(area) || "unsorted";
+  return `auto/${areaPart}/${datePart}`;
 }
 
-function roundCoord(value) {
-  return Number(value).toFixed(2).replace(/\./g, "p").replace(/-/g, "m");
+async function reverseGeocodeAreaName(lat, lon, geocodeCache = new Map()) {
+  const key = `${Number(lat).toFixed(5)},${Number(lon).toFixed(5)}`;
+  if (geocodeCache.has(key)) return geocodeCache.get(key) || "";
+
+  let area = "";
+  try {
+    const query = new URLSearchParams({
+      format: "jsonv2",
+      lat: String(lat),
+      lon: String(lon),
+      zoom: "16",
+      addressdetails: "1",
+    });
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${query.toString()}`, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "walking-with-ember-media-library",
+      },
+    });
+
+    if (response.ok) {
+      const data = await parseJson(response);
+      const address = data?.address || {};
+      const candidates = [
+        data?.name,
+        address?.attraction,
+        address?.tourism,
+        address?.leisure,
+        address?.hamlet,
+        address?.suburb,
+        address?.village,
+        address?.town,
+        address?.city,
+        address?.county,
+      ];
+
+      for (const candidate of candidates) {
+        const cleaned = cleanPlaceName(candidate);
+        if (cleaned) {
+          area = cleaned;
+          break;
+        }
+      }
+
+      if (!area) {
+        const firstDisplay = String(data?.display_name || "").split(",")[0];
+        area = cleanPlaceName(firstDisplay);
+      }
+    }
+  } catch {
+    area = "";
+  }
+
+  geocodeCache.set(key, area || "");
+  return area || "";
+}
+
+function cleanPlaceName(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return "";
+  return text.replace(/[^a-zA-Z0-9\s'&()-]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeFolderPart(raw) {
+  const value = cleanPlaceName(raw).toLowerCase();
+  if (!value) return "";
+  return sanitizeFilename(value.replace(/\s+/g, "-")).replace(/^-+|-+$/g, "");
 }
 
 function yearMonthFromIso(raw) {
@@ -797,3 +891,5 @@ function githubHeaders() {
     "User-Agent": "walking-with-ember-media-library",
   };
 }
+
+
