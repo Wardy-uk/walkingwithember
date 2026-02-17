@@ -79,6 +79,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
             data-map-api-key={mapApiKey}
             data-gpx-url={gpxUrl}
           ></div>
+          <div id="route-debug-log" style="margin-top:0.65rem;max-height:140px;overflow:auto;white-space:pre-wrap;padding:0.55rem 0.65rem;border:1px solid #dcc6ac;border-radius:10px;background:#fff6e9;color:#5d4431;font-size:0.78rem;">Route debug ready.</div>
         </section>
         {hasGpx && (
           <FlybyPanel
@@ -152,6 +153,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
     import L from "leaflet";
 
     const mapContainer = document.getElementById("map");
+    const routeDebugEl = document.getElementById("route-debug-log");
 
     const lat = Number(mapContainer?.dataset.lat || "0");
     const lng = Number(mapContainer?.dataset.lng || "0");
@@ -163,6 +165,10 @@ const estimatedHours = walk.data.difficulty === "Hard"
       const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
       const line = `[${ts}] ${message}`;
       console.log(line);
+      if (routeDebugEl) {
+        const previous = (routeDebugEl.textContent || "").trim();
+        routeDebugEl.textContent = `${line}\n${previous}`.split("\n").slice(0, 28).join("\n");
+      }
     }
 
     function showMapMessage(message) {
@@ -259,5 +265,4 @@ const estimatedHours = walk.data.difficulty === "Hard"
     }
   </script>
 </BaseLayout>
-
 

@@ -68,6 +68,12 @@ const {
       <button class="button" type="button" data-flyby-zoom-in>Zoom +</button>
     </div>
   </div>
+  <div
+    data-flyby-debug
+    style="margin-top:0.65rem;max-height:150px;overflow:auto;white-space:pre-wrap;padding:0.55rem 0.65rem;border:1px solid #dcc6ac;border-radius:10px;background:#fff6e9;color:#5d4431;font-size:0.78rem;"
+  >
+    Flyby debug ready.
+  </div>
 </section>
 
 <script type="module">
@@ -163,6 +169,7 @@ const {
     const autoPlay = root.dataset.autoPlay === "yes";
 
     const mapEl = root.querySelector("[data-flyby-map]");
+    const debugEl = root.querySelector("[data-flyby-debug]");
     const playBtn = root.querySelector("[data-flyby-play]");
     const scrub = root.querySelector("[data-flyby-scrub]");
     const speedSel = root.querySelector("[data-flyby-speed]");
@@ -173,6 +180,7 @@ const {
     const zoomReadout = root.querySelector("[data-flyby-zoom-readout]");
     if (
       !mapEl ||
+      !debugEl ||
       !playBtn ||
       !scrub ||
       !speedSel ||
@@ -184,6 +192,15 @@ const {
     ) {
       continue;
     }
+
+    const logFlyby = (message) => {
+      const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
+      const line = `[${ts}] ${message}`;
+      console.log(`[flyby] ${line}`);
+      const previous = (debugEl.textContent || "").trim();
+      const next = `${line}\n${previous}`.split("\n").slice(0, 28).join("\n");
+      debugEl.textContent = next;
+    };
 
     const routeSourceId = `flyby-route-${flybyCounter}`;
     const routeCasingId = `flyby-route-casing-${flybyCounter}`;
@@ -219,6 +236,7 @@ const {
       maxPitch: 85,
     });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+    logFlyby(`Init gpxUrl=${gpxUrl} osApiKey=${osApiKey ? "yes" : "no"} autoPlay=${autoPlay ? "yes" : "no"}`);
 
     const ensureRouteLayers = () => {
       if (!map.isStyleLoaded()) return;
@@ -457,17 +475,20 @@ const {
     });
 
     map.on("load", () => {
+      logFlyby("Map loaded.");
       ensureRouteLayers();
       setRouteCoords([]);
     });
 
     map.on("styledata", () => {
+      logFlyby(`Style updated (${mapTypeId}).`);
       ensureRouteLayers();
       drawRoute(true);
     });
 
     fetch(gpxUrl)
       .then((res) => {
+        logFlyby(`GPX fetch status=${res.status}`);
         if (!res.ok) throw new Error(`GPX fetch failed (${res.status})`);
         return res.text();
       })
@@ -476,6 +497,7 @@ const {
         if (rawPoints.length < 2) return;
         const sampled = buildPlaybackPoints(rawPoints, 1800);
         playbackPoints = smoothPlaybackPoints(sampled, 2);
+        logFlyby(`Playback points=${playbackPoints.length}`);
         const start = playbackPoints[0];
         const bounds = new maplibregl.LngLatBounds([start.lon, start.lat], [start.lon, start.lat]);
         for (let i = 1; i < playbackPoints.length; i += 1) {
@@ -497,5 +519,4 @@ const {
       });
   }
 </script>
-
 
