@@ -34,5 +34,14 @@
     "createTime": "2026-02-08T14:05:42.565Z",
     "latitude": 0,
     "longitude": 0
+  },
+  "/uploads/images/IMG_5289-d8f989ba2e.heif": {
+    "source": "google_photos",
+    "mediaItemId": "AMvciWSYu93eGHCL43L0UNURN6nE8BLt_CeozevkT7AcL0oNX8NI9rYmynsoWwCXMByka1dhX-tllYElT_HBUw7e3Zv0l0pX9w",
+    "filename": "IMG_5289.HEIC",
+    "mimeType": "image/heif",
+    "createTime": "2026-02-08T11:30:16.441Z",
+    "latitude": 0,
+    "longitude": 0
   }
 }
