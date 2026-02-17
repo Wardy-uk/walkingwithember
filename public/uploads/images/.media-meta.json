@@ -106,5 +106,14 @@
     "createTime": "2026-02-01T11:49:24.161Z",
     "latitude": 0,
     "longitude": 0
+  },
+  "/uploads/images/IMG_5232-738057a409.mp4": {
+    "source": "google_photos",
+    "mediaItemId": "AMvciWTHaD1JCJpP4JW-IpfO4IcqeSWdcwER8Tp1207nZQ9yX3k7tlLi2ErUsgtyzKAE_ZbPu0WlKDN4k8OZC5Eq8NGMsPIRKQ",
+    "filename": "IMG_5232.MOV",
+    "mimeType": "video/mp4",
+    "createTime": "2026-02-01T13:20:43Z",
+    "latitude": 0,
+    "longitude": 0
   }
 }
