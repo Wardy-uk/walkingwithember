@@ -28,10 +28,10 @@ export const prerender = true;
       .status { color:#5a3a22; font-weight:700; }
       .status.error { color:#8a3f1d; }
       .tiny { font-size:.78rem; color:#7c6654; word-break: break-word; }
-      .grid { display:grid; gap:.8rem; grid-template-columns:repeat(4,minmax(0,1fr)); }
-      .tile { border:1px solid #d8bea0; border-radius:14px; overflow:hidden; background:#fffdf8; display:grid; }
-      .tile img { width:100%; aspect-ratio:1/1; object-fit:cover; background:#f4e8d8; }
-      .tile-body { padding:.65rem; display:grid; gap:.45rem; }
+      .grid { display:grid; gap:.9rem; grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .tile { border:1px solid #d8bea0; border-radius:14px; overflow:hidden; background:#fffdf8; display:grid; justify-items:center; }
+      .tile img { width:min(100%, 320px); aspect-ratio:4/3; object-fit:cover; background:#f4e8d8; cursor:pointer; }
+      .tile-body { width:100%; padding:.65rem; display:grid; gap:.45rem; }
       .tile-row { display:flex; justify-content:space-between; gap:.5rem; align-items:center; }
       .tile-actions { display:flex; gap:.4rem; flex-wrap:wrap; }
       .copy-btn { border:1px solid #d9b995; border-radius:999px; padding:.45rem .8rem; background:#fff5e8; color:#6f3f20; cursor:pointer; font-weight:700; }
@@ -40,9 +40,14 @@ export const prerender = true;
       .delete-progress-card { width: min(520px, 100%); background: #fff8ee; border: 1px solid var(--line); border-radius: 14px; padding: .9rem; display: grid; gap: .6rem; }
       .delete-progress-wrap { width: 100%; height: 12px; border-radius: 999px; border: 1px solid #d8bea0; background: #f4e8d8; overflow: hidden; }
       .delete-progress-bar { height: 100%; width: 0%; background: linear-gradient(135deg,var(--accent),var(--accent-2)); transition: width .2s ease; }
-      @media (max-width:980px){ .grid{grid-template-columns:repeat(3,minmax(0,1fr));} }
-      @media (max-width:760px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
-      @media (max-width:520px){ .grid{grid-template-columns:1fr;} }
+      .viewer-modal { position: fixed; inset: 0; display: none; place-items: center; background: rgba(20, 10, 4, 0.85); z-index: 70; padding: 1rem; }
+      .viewer-modal.show { display: grid; }
+      .viewer-card { width:min(1100px, 100%); max-height:95vh; overflow:auto; background:#fff8ee; border:1px solid var(--line); border-radius:14px; padding:.8rem; display:grid; gap:.7rem; }
+      .viewer-top { display:flex; justify-content:space-between; align-items:center; gap:.5rem; }
+      .viewer-media { width:100%; max-height:72vh; object-fit:contain; background:#f4e8d8; border-radius:10px; }
+      .viewer-meta { display:grid; gap:.25rem; }
+      @media (max-width:980px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+      @media (max-width:620px){ .grid{grid-template-columns:1fr;} }
     </style>
   </head>
   <body>
@@ -59,12 +64,18 @@ export const prerender = true;
 
       <section class="card">
         <h1>Site Image Library</h1>
-        <p>Select images, then manually assign to a folder or auto-sort by GPS/date metadata.</p>
+        <p>Select a folder first to view images. Unassigned images are shown in <strong>Unsorted</strong>.</p>
+      </section>
+
+      <section class="card controls">
+        <label for="folderFilter" class="tiny">Folder:</label>
+        <select id="folderFilter"></select>
+        <span id="folderSummary" class="tiny">No folder selected.</span>
       </section>
 
       <section class="card controls">
         <button id="refreshBtn" type="button" class="ghost">Refresh</button>
-        <button id="selectAllBtn" type="button" class="ghost">Select All</button>
+        <button id="selectAllBtn" type="button" class="ghost">Select All (Visible)</button>
         <button id="clearBtn" type="button" class="ghost">Clear</button>
         <button id="deleteSelectedBtn" type="button" class="ghost">Delete Selected</button>
         <input id="folderInput" type="text" placeholder="folder name (e.g. peak-district/2026-02)" />
@@ -83,16 +94,49 @@ export const prerender = true;
       </div>
     </div>
 
+    <div id="viewerModal" class="viewer-modal" aria-hidden="true">
+      <div class="viewer-card">
+        <div class="viewer-top">
+          <strong id="viewerTitle">Image Viewer</strong>
+          <button id="viewerCloseBtn" type="button" class="ghost">Close</button>
+        </div>
+        <img id="viewerImage" class="viewer-media" alt="Full size media" />
+        <div id="viewerMeta" class="viewer-meta tiny"></div>
+      </div>
+    </div>
+
     <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
     <script>
       const statusEl = document.getElementById("status");
       const gridEl = document.getElementById("grid");
       const folderInput = document.getElementById("folderInput");
+      const folderFilter = document.getElementById("folderFilter");
+      const folderSummary = document.getElementById("folderSummary");
       const deleteProgressModal = document.getElementById("deleteProgressModal");
       const deleteProgressText = document.getElementById("deleteProgressText");
       const deleteProgressBar = document.getElementById("deleteProgressBar");
+      const viewerModal = document.getElementById("viewerModal");
+      const viewerImage = document.getElementById("viewerImage");
+      const viewerMeta = document.getElementById("viewerMeta");
+      const viewerTitle = document.getElementById("viewerTitle");
       const selected = new Set();
       let media = [];
+      let currentFolder = "Unsorted";
+
+      function normalizeFolder(value) {
+        const v = String(value || "").trim();
+        return v ? v : "Unsorted";
+      }
+
+      function getFolderOptions() {
+        const set = new Set(["Unsorted"]);
+        for (const item of media) set.add(normalizeFolder(item.folder));
+        return [...set].sort((a, b) => a.localeCompare(b));
+      }
+
+      function getVisibleMedia() {
+        return media.filter((item) => normalizeFolder(item.folder) === currentFolder);
+      }
 
       function setStatus(message, isError = false) {
         statusEl.textContent = message;
@@ -116,6 +160,28 @@ export const prerender = true;
       function hideDeleteProgress() {
         deleteProgressModal?.classList.remove("show");
         deleteProgressModal?.setAttribute("aria-hidden", "true");
+      }
+
+      function openViewer(item) {
+        if (!item) return;
+        viewerImage.src = item.publicPath;
+        viewerImage.alt = item.filename || item.publicPath || "Image";
+        viewerTitle.textContent = item.filename || "Image Viewer";
+        const m = item.meta || {};
+        const lines = [
+          `Path: ${item.publicPath}`,
+          `Folder: ${normalizeFolder(item.folder)}`,
+          `Date: ${m.createTime || "unknown"}`,
+          `GPS: ${m.latitude ?? "?"}, ${m.longitude ?? "?"}`,
+        ];
+        viewerMeta.innerHTML = lines.map((line) => `<div>${line}</div>`).join("");
+        viewerModal.classList.add("show");
+        viewerModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeViewer() {
+        viewerModal.classList.remove("show");
+        viewerModal.setAttribute("aria-hidden", "true");
       }
 
       async function getIdentityClient(triesLeft = 30) {
@@ -158,14 +224,24 @@ export const prerender = true;
         return [...selected].filter(Boolean);
       }
 
+      function renderFolderFilter() {
+        const folders = getFolderOptions();
+        if (!folders.includes(currentFolder)) currentFolder = "Unsorted";
+        folderFilter.innerHTML = folders.map((f) => `<option value="${f}">${f}</option>`).join("");
+        folderFilter.value = currentFolder;
+      }
+
       function render() {
         gridEl.innerHTML = "";
-        if (!media.length) {
-          gridEl.innerHTML = '<article class="card"><p>No images found in /uploads/images.</p></article>';
+        const visible = getVisibleMedia();
+        folderSummary.textContent = `Showing ${visible.length} image(s) in ${currentFolder}.`;
+
+        if (!visible.length) {
+          gridEl.innerHTML = '<article class="card"><p>No images found in this folder.</p></article>';
           return;
         }
 
-        for (const item of media) {
+        for (const item of visible) {
           const tile = document.createElement("article");
           tile.className = "tile";
           tile.dataset.path = item.publicPath;
@@ -174,6 +250,7 @@ export const prerender = true;
           img.src = item.publicPath;
           img.alt = item.filename || item.publicPath;
           img.loading = "lazy";
+          img.addEventListener("click", () => openViewer(item));
 
           const body = document.createElement("div");
           body.className = "tile-body";
@@ -191,7 +268,7 @@ export const prerender = true;
 
           const folder = document.createElement("span");
           folder.className = "tiny";
-          folder.textContent = item.folder ? `Folder: ${item.folder}` : "Folder: (none)";
+          folder.textContent = `Folder: ${normalizeFolder(item.folder)}`;
           topRow.append(check, folder);
 
           const name = document.createElement("div");
@@ -235,6 +312,7 @@ export const prerender = true;
               await apiCall({ action: "delete_site_media", publicPath: item.publicPath });
               selected.delete(item.publicPath);
               media = media.filter((row) => row.publicPath !== item.publicPath);
+              renderFolderFilter();
               render();
               setStatus(`Deleted: ${item.publicPath}`);
             } catch (error) {
@@ -254,6 +332,7 @@ export const prerender = true;
         const data = await apiCall({ action: "list_site_media" });
         media = Array.isArray(data.media) ? data.media : [];
         selected.clear();
+        renderFolderFilter();
         render();
         setStatus(`Loaded ${media.length} image(s).`);
       }
@@ -312,25 +391,10 @@ export const prerender = true;
           hideDeleteProgress();
         }
 
+        renderFolderFilter();
         render();
         setStatus(`Deleted ${deleted} selected image(s).`);
       }
-
-      document.getElementById("refreshBtn")?.addEventListener("click", async () => {
-        try { await loadLibrary(); } catch (error) { setStatus(String(error?.message || error), true); }
-      });
-
-      document.getElementById("selectAllBtn")?.addEventListener("click", () => {
-        for (const item of media) selected.add(item.publicPath);
-        render();
-        setStatus(`${selected.size} selected.`);
-      });
-
-      document.getElementById("clearBtn")?.addEventListener("click", () => {
-        selected.clear();
-        render();
-        setStatus("Selection cleared.");
-      });
 
       const handleDeleteSelectedClick = async (event) => {
         if (event) event.preventDefault();
@@ -341,6 +405,27 @@ export const prerender = true;
           setStatus(String(error?.message || error), true);
         }
       };
+
+      document.getElementById("refreshBtn")?.addEventListener("click", async () => {
+        try { await loadLibrary(); } catch (error) { setStatus(String(error?.message || error), true); }
+      });
+
+      folderFilter?.addEventListener("change", () => {
+        currentFolder = normalizeFolder(folderFilter.value);
+        render();
+      });
+
+      document.getElementById("selectAllBtn")?.addEventListener("click", () => {
+        for (const item of getVisibleMedia()) selected.add(item.publicPath);
+        render();
+        setStatus(`${selected.size} selected.`);
+      });
+
+      document.getElementById("clearBtn")?.addEventListener("click", () => {
+        selected.clear();
+        render();
+        setStatus("Selection cleared.");
+      });
 
       document.getElementById("deleteSelectedBtn")?.addEventListener("click", handleDeleteSelectedClick);
 
@@ -373,11 +458,17 @@ export const prerender = true;
           await identity.logout();
           media = [];
           selected.clear();
+          renderFolderFilter();
           render();
           setStatus("Logged out.");
         } catch (error) {
           setStatus(String(error?.message || error), true);
         }
+      });
+
+      document.getElementById("viewerCloseBtn")?.addEventListener("click", closeViewer);
+      viewerModal?.addEventListener("click", (event) => {
+        if (event.target === viewerModal) closeViewer();
       });
 
       (async () => {
@@ -397,6 +488,3 @@ export const prerender = true;
     </script>
   </body>
 </html>
-
-
-
