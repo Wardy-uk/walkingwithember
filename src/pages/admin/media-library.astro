@@ -289,8 +289,22 @@ export const prerender = true;
         setStatus("Selection cleared.");
       });
 
-      document.getElementById("deleteSelectedBtn")?.addEventListener("click", async () => {
-        try { await deleteSelected(); } catch (error) { setStatus(String(error?.message || error), true); }
+      const handleDeleteSelectedClick = async (event) => {
+        if (event) event.preventDefault();
+        setStatus(`Delete Selected clicked (${selected.size} selected).`);
+        try {
+          await deleteSelected();
+        } catch (error) {
+          setStatus(String(error?.message || error), true);
+        }
+      };
+
+      document.getElementById("deleteSelectedBtn")?.addEventListener("click", handleDeleteSelectedClick);
+
+      document.addEventListener("click", async (event) => {
+        const btn = event.target?.closest?.("#deleteSelectedBtn");
+        if (!btn) return;
+        await handleDeleteSelectedClick(event);
       });
 
       document.getElementById("assignBtn")?.addEventListener("click", async () => {
@@ -340,5 +354,6 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
 
 
