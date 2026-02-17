@@ -289,6 +289,10 @@ export const prerender = true;
         setStatus("Selection cleared.");
       });
 
+      document.getElementById("deleteSelectedBtn")?.addEventListener("click", async () => {
+        try { await deleteSelected(); } catch (error) { setStatus(String(error?.message || error), true); }
+      });
+
       document.getElementById("assignBtn")?.addEventListener("click", async () => {
         try { await assignFolder(); } catch (error) { setStatus(String(error?.message || error), true); }
       });
@@ -336,4 +340,5 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
 
