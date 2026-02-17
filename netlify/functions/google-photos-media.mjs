@@ -16,6 +16,10 @@ const REQUIRED_IMPORT_ENV = ["GITHUB_TOKEN", "GITHUB_REPO"];
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_PICKER_API = "https://photospicker.googleapis.com/v1";
+const MEDIA_ROOT = "public/uploads/images";
+const MEDIA_GROUPS_PATH = `${MEDIA_ROOT}/.media-groups.json`;
+const MEDIA_META_PATH = `${MEDIA_ROOT}/.media-meta.json`;
+const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "heic", "heif", "avif", "mp4", "mov", "webm"]);
 
 export const handler = async (event, context) => {
   try {
@@ -42,24 +46,138 @@ export const handler = async (event, context) => {
     }
 
     const action = String(payload?.action || "").toLowerCase();
+
     if (action === "setup") {
       const missingGoogleEnv = getMissingEnvVars(REQUIRED_GOOGLE_ENV);
       const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
-      return json({
-        ok: true,
-        configured: missingGoogleEnv.length === 0,
-        importConfigured: missingImportEnv.length === 0,
-        missingGoogleEnv,
-        missingImportEnv,
-      }, 200);
+      return json(
+        {
+          ok: true,
+          configured: missingGoogleEnv.length === 0,
+          importConfigured: missingImportEnv.length === 0,
+          missingGoogleEnv,
+          missingImportEnv,
+        },
+        200,
+      );
+    }
+
+    if (action === "list_site_media") {
+      const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
+      if (missingImportEnv.length > 0) {
+        return json({ error: `Media library is not configured. Missing: ${missingImportEnv.join(", ")}`, missingImportEnv }, 500);
+      }
+      const branch = process.env.GITHUB_BRANCH || "main";
+      const [groups, meta, files] = await Promise.all([
+        getRepoJsonMap(MEDIA_GROUPS_PATH, branch),
+        getRepoJsonMap(MEDIA_META_PATH, branch),
+        listRepoMediaFiles(branch),
+      ]);
+      if (!files.ok) return json({ error: files.error }, 502);
+      return json(
+        {
+          ok: true,
+          media: files.items.map((item) => ({
+            ...item,
+            folder: String(groups.data[item.publicPath] || ""),
+            meta: meta.data[item.publicPath] || null,
+          })),
+          folders: uniqueNonEmpty(Object.values(groups.data || {})),
+        },
+        200,
+      );
+    }
+
+    if (action === "delete_site_media") {
+      const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
+      if (missingImportEnv.length > 0) {
+        return json({ error: `Delete is not configured. Missing: ${missingImportEnv.join(", ")}`, missingImportEnv }, 500);
+      }
+      const branch = process.env.GITHUB_BRANCH || "main";
+      const publicPath = String(payload.publicPath || "").trim();
+      if (!publicPath) return json({ error: "publicPath is required" }, 400);
+
+      const repoPath = toRepoMediaPath(publicPath);
+      if (!repoPath) return json({ error: "Invalid publicPath" }, 400);
+
+      const deleted = await deleteRepoFile({
+        path: repoPath,
+        message: `chore(media): delete ${publicPath}`,
+        branch,
+      });
+      if (!deleted.ok) return json({ error: deleted.error }, 502);
+
+      await removePathFromMaps(publicPath, branch);
+      return json({ ok: true, deleted: { publicPath, path: repoPath }, commit: deleted.data?.commitUrl || null }, 200);
+    }
+
+    if (action === "set_groups") {
+      const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
+      if (missingImportEnv.length > 0) {
+        return json({ error: `Grouping is not configured. Missing: ${missingImportEnv.join(", ")}`, missingImportEnv }, 500);
+      }
+      const branch = process.env.GITHUB_BRANCH || "main";
+      const folder = normalizeFolderName(payload.folder);
+      const items = Array.isArray(payload.items) ? payload.items.map((v) => String(v || "").trim()).filter(Boolean) : [];
+      if (!folder) return json({ error: "folder is required" }, 400);
+      if (items.length === 0) return json({ error: "items is required" }, 400);
+
+      const groups = await getRepoJsonMap(MEDIA_GROUPS_PATH, branch);
+      const next = { ...groups.data };
+      for (const item of items) next[item] = folder;
+
+      const saved = await upsertRepoJsonFile({
+        path: MEDIA_GROUPS_PATH,
+        data: next,
+        message: `feat(media): assign ${items.length} image(s) to folder ${folder}`,
+        branch,
+      });
+      if (!saved.ok) return json({ error: saved.error }, 502);
+
+      return json({ ok: true, folder, count: items.length, commit: saved.data?.commitUrl || null }, 200);
+    }
+
+    if (action === "auto_group") {
+      const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
+      if (missingImportEnv.length > 0) {
+        return json({ error: `Auto-group is not configured. Missing: ${missingImportEnv.join(", ")}`, missingImportEnv }, 500);
+      }
+      const branch = process.env.GITHUB_BRANCH || "main";
+      const items = Array.isArray(payload.items) ? payload.items.map((v) => String(v || "").trim()).filter(Boolean) : [];
+      if (items.length === 0) return json({ error: "items is required" }, 400);
+
+      const groups = await getRepoJsonMap(MEDIA_GROUPS_PATH, branch);
+      const meta = await getRepoJsonMap(MEDIA_META_PATH, branch);
+      const next = { ...groups.data };
+      let updated = 0;
+
+      for (const publicPath of items) {
+        const autoFolder = deriveAutoFolder(meta.data[publicPath] || {});
+        if (!autoFolder) continue;
+        next[publicPath] = autoFolder;
+        updated += 1;
+      }
+
+      const saved = await upsertRepoJsonFile({
+        path: MEDIA_GROUPS_PATH,
+        data: next,
+        message: `feat(media): auto-group ${updated} image(s) by gps/date`,
+        branch,
+      });
+      if (!saved.ok) return json({ error: saved.error }, 502);
+
+      return json({ ok: true, updated, commit: saved.data?.commitUrl || null }, 200);
     }
 
     const missingGoogleEnv = getMissingEnvVars(REQUIRED_GOOGLE_ENV);
     if (missingGoogleEnv.length > 0) {
-      return json({
-        error: `Google Photos Picker integration is not configured. Missing: ${missingGoogleEnv.join(", ")}`,
-        missingEnv: missingGoogleEnv,
-      }, 500);
+      return json(
+        {
+          error: `Google Photos Picker integration is not configured. Missing: ${missingGoogleEnv.join(", ")}`,
+          missingEnv: missingGoogleEnv,
+        },
+        500,
+      );
     }
 
     const accessToken = await getGoogleAccessToken();
@@ -118,6 +236,7 @@ export const handler = async (event, context) => {
             const baseUrl = String(file.baseUrl || "");
             const mimeType = String(file.mimeType || "");
             const filename = String(file.filename || `google-photo-${String(m.id || "")}`);
+            const geo = extractGeo(file);
             return {
               id: String(m.id || ""),
               type: String(m.type || ""),
@@ -125,6 +244,8 @@ export const handler = async (event, context) => {
               baseUrl,
               mimeType,
               filename,
+              latitude: geo.latitude,
+              longitude: geo.longitude,
               previewUrl: baseUrl ? buildPreviewUrl(baseUrl, mimeType) : "",
               downloadUrl: baseUrl ? buildDownloadUrl(baseUrl, mimeType) : "",
             };
@@ -137,10 +258,13 @@ export const handler = async (event, context) => {
     if (action === "preview_import") {
       const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
       if (missingImportEnv.length > 0) {
-        return json({
-          error: `Import is not configured. Missing: ${missingImportEnv.join(", ")}`,
-          missingImportEnv,
-        }, 500);
+        return json(
+          {
+            error: `Import is not configured. Missing: ${missingImportEnv.join(", ")}`,
+            missingImportEnv,
+          },
+          500,
+        );
       }
 
       const mimeType = String(payload.mimeType || "").toLowerCase();
@@ -151,20 +275,26 @@ export const handler = async (event, context) => {
       const existing = await getRepoFileMeta(target.imagePath, branch);
       if (!existing.ok) return json({ error: existing.error }, 502);
 
-      return json({
-        ok: true,
-        exists: existing.exists,
-        importTarget: target,
-      }, 200);
+      return json(
+        {
+          ok: true,
+          exists: existing.exists,
+          importTarget: target,
+        },
+        200,
+      );
     }
 
     if (action === "import_media") {
       const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
       if (missingImportEnv.length > 0) {
-        return json({
-          error: `Import is not configured. Missing: ${missingImportEnv.join(", ")}`,
-          missingImportEnv,
-        }, 500);
+        return json(
+          {
+            error: `Import is not configured. Missing: ${missingImportEnv.join(", ")}`,
+            missingImportEnv,
+          },
+          500,
+        );
       }
 
       const baseUrl = String(payload.baseUrl || "").trim();
@@ -196,6 +326,16 @@ export const handler = async (event, context) => {
         branch,
       });
       if (!write.ok) return json({ error: write.error }, 502);
+
+      await upsertMediaMeta(target.publicPath, {
+        source: "google_photos",
+        mediaItemId,
+        filename: filenameRaw,
+        mimeType,
+        createTime: String(payload.createTime || ""),
+        latitude: toFinite(payload.latitude),
+        longitude: toFinite(payload.longitude),
+      }, branch);
 
       return json(
         {
@@ -275,9 +415,10 @@ async function getGoogleAccessToken() {
   const data = await parseJson(response);
   if (!response.ok || !data.access_token) {
     const detail = stringifyError(data);
-    const hint = response.status === 400
-      ? " Regenerate GOOGLE_PHOTOS_REFRESH_TOKEN using the same client ID/secret with scope https://www.googleapis.com/auth/photospicker.mediaitems.readonly."
-      : "";
+    const hint =
+      response.status === 400
+        ? " Regenerate GOOGLE_PHOTOS_REFRESH_TOKEN using the same client ID/secret with scope https://www.googleapis.com/auth/photospicker.mediaitems.readonly."
+        : "";
     throw new Error(`Google token exchange failed (${response.status}): ${detail}${hint}`);
   }
   return String(data.access_token);
@@ -313,7 +454,7 @@ function buildImportTarget({ mimeType, filenameRaw, mediaItemId }) {
   const safeStem = sanitizeFilename(String(filenameRaw || "photo").replace(/\.[^.]+$/, ""));
   const hash = shortHash(mediaItemId || filenameRaw || Date.now());
   const fileName = `${safeStem}-${hash}.${ext}`;
-  const imagePath = `public/uploads/images/${fileName}`;
+  const imagePath = `${MEDIA_ROOT}/${fileName}`;
   return {
     fileName,
     imagePath,
@@ -338,6 +479,23 @@ async function getRepoFileMeta(path, branch) {
   }
 }
 
+async function getRepoFile(path, branch) {
+  const repo = process.env.GITHUB_REPO;
+  const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}?ref=${encodeURIComponent(branch)}`;
+  try {
+    const response = await fetch(url, { method: "GET", headers: githubHeaders() });
+    if (response.status === 404) return { ok: true, exists: false, text: "", sha: "" };
+    if (!response.ok) {
+      const text = await response.text();
+      return { ok: false, error: `GitHub file read failed (${response.status}): ${text}` };
+    }
+    const data = await response.json();
+    const content = Buffer.from(String(data.content || "").replace(/\n/g, ""), "base64").toString("utf8");
+    return { ok: true, exists: true, text: content, sha: String(data.sha || "") };
+  } catch (error) {
+    return { ok: false, error: `GitHub file read request failed: ${String(error?.message || error)}` };
+  }
+}
 
 async function upsertRepoFile({ path, contentBase64, message, branch }) {
   const repo = process.env.GITHUB_REPO;
@@ -380,6 +538,181 @@ async function upsertRepoFile({ path, contentBase64, message, branch }) {
   } catch (error) {
     return { ok: false, error: `GitHub request failed: ${String(error?.message || error)}` };
   }
+}
+
+async function deleteRepoFile({ path, message, branch }) {
+  const repo = process.env.GITHUB_REPO;
+  const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}`;
+  try {
+    const existing = await getRepoFileMeta(path, branch);
+    if (!existing.ok) return existing;
+    if (!existing.exists || !existing.sha) return { ok: false, error: `File not found: ${path}` };
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: githubHeaders(),
+      body: JSON.stringify({ message, sha: existing.sha, branch }),
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      return { ok: false, error: `GitHub delete failed (${response.status}): ${text}` };
+    }
+    const data = await response.json();
+    return { ok: true, data: { commitUrl: data.commit?.html_url || "" } };
+  } catch (error) {
+    return { ok: false, error: `GitHub delete request failed: ${String(error?.message || error)}` };
+  }
+}
+
+async function listRepoMediaFiles(branch) {
+  const repo = process.env.GITHUB_REPO;
+  try {
+    const head = await fetch(`https://api.github.com/repos/${repo}/git/ref/heads/${encodeURIComponent(branch)}`, {
+      headers: githubHeaders(),
+    });
+    if (!head.ok) {
+      const text = await head.text();
+      return { ok: false, error: `GitHub ref lookup failed (${head.status}): ${text}` };
+    }
+    const headData = await head.json();
+    const treeSha = String(headData?.object?.sha || "");
+    if (!treeSha) return { ok: false, error: "GitHub branch head SHA missing" };
+
+    const treeRes = await fetch(`https://api.github.com/repos/${repo}/git/trees/${treeSha}?recursive=1`, {
+      headers: githubHeaders(),
+    });
+    if (!treeRes.ok) {
+      const text = await treeRes.text();
+      return { ok: false, error: `GitHub tree read failed (${treeRes.status}): ${text}` };
+    }
+
+    const treeData = await treeRes.json();
+    const rows = Array.isArray(treeData.tree)
+      ? treeData.tree.filter((node) => {
+          if (node.type !== "blob") return false;
+          const p = String(node.path || "");
+          if (!p.startsWith(`${MEDIA_ROOT}/`)) return false;
+          if (p === MEDIA_GROUPS_PATH || p === MEDIA_META_PATH) return false;
+          const ext = (p.split(".").pop() || "").toLowerCase();
+          return IMAGE_EXTENSIONS.has(ext);
+        })
+      : [];
+
+    const items = rows
+      .map((node) => {
+        const path = String(node.path || "");
+        const publicPath = `/${stripPublicPrefix(path)}`;
+        return {
+          path,
+          publicPath,
+          filename: path.split("/").pop() || path,
+          sha: String(node.sha || ""),
+          size: Number(node.size || 0),
+        };
+      })
+      .sort((a, b) => a.filename.localeCompare(b.filename));
+
+    return { ok: true, items };
+  } catch (error) {
+    return { ok: false, error: `GitHub tree request failed: ${String(error?.message || error)}` };
+  }
+}
+
+async function getRepoJsonMap(path, branch) {
+  const file = await getRepoFile(path, branch);
+  if (!file.ok) return { ok: false, error: file.error, data: {} };
+  if (!file.exists || !file.text) return { ok: true, data: {}, sha: "" };
+  try {
+    const parsed = JSON.parse(file.text);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return { ok: true, data: {}, sha: file.sha || "" };
+    return { ok: true, data: parsed, sha: file.sha || "" };
+  } catch {
+    return { ok: true, data: {}, sha: file.sha || "" };
+  }
+}
+
+async function upsertRepoJsonFile({ path, data, message, branch }) {
+  const contentBase64 = Buffer.from(JSON.stringify(data, null, 2) + "\n", "utf8").toString("base64");
+  return upsertRepoFile({ path, contentBase64, message, branch });
+}
+
+async function removePathFromMaps(publicPath, branch) {
+  const [groups, meta] = await Promise.all([getRepoJsonMap(MEDIA_GROUPS_PATH, branch), getRepoJsonMap(MEDIA_META_PATH, branch)]);
+  if (groups.ok && groups.data && Object.prototype.hasOwnProperty.call(groups.data, publicPath)) {
+    const next = { ...groups.data };
+    delete next[publicPath];
+    await upsertRepoJsonFile({ path: MEDIA_GROUPS_PATH, data: next, message: `chore(media): remove deleted file from groups`, branch });
+  }
+  if (meta.ok && meta.data && Object.prototype.hasOwnProperty.call(meta.data, publicPath)) {
+    const next = { ...meta.data };
+    delete next[publicPath];
+    await upsertRepoJsonFile({ path: MEDIA_META_PATH, data: next, message: `chore(media): remove deleted file metadata`, branch });
+  }
+}
+
+async function upsertMediaMeta(publicPath, record, branch) {
+  const map = await getRepoJsonMap(MEDIA_META_PATH, branch);
+  if (!map.ok) return map;
+  const next = { ...map.data, [publicPath]: record };
+  return upsertRepoJsonFile({ path: MEDIA_META_PATH, data: next, message: `chore(media): update metadata ${publicPath}`, branch });
+}
+
+function deriveAutoFolder(meta) {
+  const ym = yearMonthFromIso(meta?.createTime);
+  const lat = toFinite(meta?.latitude);
+  const lon = toFinite(meta?.longitude);
+  const geo = Number.isFinite(lat) && Number.isFinite(lon) ? `gps-${roundCoord(lat)}_${roundCoord(lon)}` : "no-gps";
+  const datePart = ym || "undated";
+  return `auto/${geo}/${datePart}`;
+}
+
+function roundCoord(value) {
+  return Number(value).toFixed(2).replace(/\./g, "p").replace(/-/g, "m");
+}
+
+function yearMonthFromIso(raw) {
+  const s = String(raw || "").trim();
+  if (!s) return "";
+  const d = new Date(s);
+  if (!Number.isFinite(d.getTime())) return "";
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+function normalizeFolderName(raw) {
+  const value = String(raw || "").trim().toLowerCase();
+  if (!value) return "";
+  return value
+    .split("/")
+    .map((part) => sanitizeFilename(part))
+    .filter(Boolean)
+    .join("/")
+    .slice(0, 120);
+}
+
+function toRepoMediaPath(publicPath) {
+  const p = String(publicPath || "").trim();
+  if (!p.startsWith("/uploads/images/")) return "";
+  const cleaned = p.replace(/\.{2,}/g, "");
+  return `public${cleaned}`;
+}
+
+function uniqueNonEmpty(items) {
+  return [...new Set((items || []).map((v) => String(v || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+}
+
+function extractGeo(mediaFile) {
+  const loc = mediaFile?.location || mediaFile?.geoData || mediaFile?.geo || {};
+  return {
+    latitude: toFinite(loc.latitude),
+    longitude: toFinite(loc.longitude),
+  };
+}
+
+function toFinite(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
 function extensionFromMimeType(mimeType, fallbackName) {
@@ -464,8 +797,3 @@ function githubHeaders() {
     "User-Agent": "walking-with-ember-media-library",
   };
 }
-
-
-
-
-

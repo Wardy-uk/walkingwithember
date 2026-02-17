@@ -1,50 +1,5 @@
 ---
-import { readdir, stat } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 export const prerender = true;
-
-const projectRoot = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = path.resolve(projectRoot, "../../../public/uploads/images");
-
-const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif", ".avif"]);
-
-async function walkFiles(dir) {
-  const entries = await readdir(dir, { withFileTypes: true });
-  const files = [];
-  for (const entry of entries) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...(await walkFiles(full)));
-      continue;
-    }
-    files.push(full);
-  }
-  return files;
-}
-
-let images = [];
-try {
-  const files = await walkFiles(uploadsDir);
-  const candidates = files.filter((file) => IMAGE_EXTENSIONS.has(path.extname(file).toLowerCase()));
-
-  const rows = await Promise.all(
-    candidates.map(async (file) => {
-      const info = await stat(file);
-      const rel = path.relative(path.resolve(projectRoot, "../../../public"), file).split(path.sep).join("/");
-      return {
-        src: `/${rel}`,
-        name: path.basename(file),
-        updatedMs: info.mtimeMs,
-      };
-    }),
-  );
-
-  images = rows.sort((a, b) => b.updatedMs - a.updatedMs);
-} catch {
-  images = [];
-}
 ---
 
 <!doctype html>
@@ -57,57 +12,32 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
     <title>Site Image Library | Admin</title>
     <style>
-      :root {
-        --bg: #efe3cf;
-        --card: #fff8ee;
-        --text: #2b1d14;
-        --muted: #7c6654;
-        --line: #dcc6ac;
-        --accent: #be6d37;
-        --accent-2: #8a4f27;
-      }
+      :root { --bg:#efe3cf; --card:#fff8ee; --text:#2b1d14; --muted:#7c6654; --line:#dcc6ac; --accent:#be6d37; --accent-2:#8a4f27; }
       * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: "Manrope", "Segoe UI", Arial, sans-serif;
-        color: var(--text);
-        background: linear-gradient(130deg, #f3e7d4 0%, #ecd9be 45%, #e3c9a9 100%);
-      }
-      .wrap { width: min(1200px, calc(100% - 2rem)); margin: 1rem auto 2rem; display: grid; gap: 0.8rem; }
-      .card { background: linear-gradient(180deg, var(--card) 0%, #f6ebdc 100%); border: 1px solid var(--line); border-radius: 16px; padding: 0.9rem; }
-      .bar { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-      .bar-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-      .button {
-        border: 0;
-        border-radius: 999px;
-        padding: 0.55rem 0.95rem;
-        background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        color: #fff6ed;
-        text-decoration: none;
-        cursor: pointer;
-        font-weight: 700;
-      }
-      .ghost { background: #fff5e8; border: 1px solid #d9b995; color: #6f3f20; }
-      h1 { margin: 0 0 0.4rem; font-family: "Fraunces", Georgia, serif; }
-      p { margin: 0; color: var(--muted); }
-      .grid { display: grid; gap: 0.8rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .tile { border: 1px solid #d8bea0; border-radius: 14px; overflow: hidden; background: #fffdf8; display: grid; }
-      .tile img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: #f4e8d8; }
-      .tile-body { padding: 0.65rem; display: grid; gap: 0.45rem; }
-      .tiny { font-size: 0.78rem; color: #7c6654; word-break: break-all; }
-      .copy-btn {
-        border: 1px solid #d9b995;
-        border-radius: 999px;
-        padding: 0.45rem 0.8rem;
-        background: #fff5e8;
-        color: #6f3f20;
-        cursor: pointer;
-        font-weight: 700;
-      }
-      .status { color: #5a3a22; font-weight: 700; }
-      @media (max-width: 980px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-      @media (max-width: 760px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-      @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+      body { margin:0; font-family:"Manrope","Segoe UI",Arial,sans-serif; color:var(--text); background:linear-gradient(130deg,#f3e7d4 0%,#ecd9be 45%,#e3c9a9 100%); }
+      .wrap { width:min(1200px,calc(100% - 2rem)); margin:1rem auto 2rem; display:grid; gap:.8rem; }
+      .card { background:linear-gradient(180deg,var(--card) 0%,#f6ebdc 100%); border:1px solid var(--line); border-radius:16px; padding:.9rem; }
+      .bar { display:flex; justify-content:space-between; align-items:center; gap:.5rem; flex-wrap:wrap; }
+      .bar-actions,.controls { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+      .button,button { border:0; border-radius:999px; padding:.55rem .95rem; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff6ed; text-decoration:none; cursor:pointer; font-weight:700; }
+      button:disabled { opacity:.5; cursor:not-allowed; }
+      .ghost { background:#fff5e8; border:1px solid #d9b995; color:#6f3f20; }
+      h1 { margin:0 0 .4rem; font-family:"Fraunces",Georgia,serif; }
+      p { margin:0; color:var(--muted); }
+      input,select { border:1px solid #d9b995; border-radius:10px; padding:.5rem .65rem; background:#fff9f0; color:#5d4431; }
+      .status { color:#5a3a22; font-weight:700; }
+      .status.error { color:#8a3f1d; }
+      .tiny { font-size:.78rem; color:#7c6654; word-break: break-word; }
+      .grid { display:grid; gap:.8rem; grid-template-columns:repeat(4,minmax(0,1fr)); }
+      .tile { border:1px solid #d8bea0; border-radius:14px; overflow:hidden; background:#fffdf8; display:grid; }
+      .tile img { width:100%; aspect-ratio:1/1; object-fit:cover; background:#f4e8d8; }
+      .tile-body { padding:.65rem; display:grid; gap:.45rem; }
+      .tile-row { display:flex; justify-content:space-between; gap:.5rem; align-items:center; }
+      .tile-actions { display:flex; gap:.4rem; flex-wrap:wrap; }
+      .copy-btn { border:1px solid #d9b995; border-radius:999px; padding:.45rem .8rem; background:#fff5e8; color:#6f3f20; cursor:pointer; font-weight:700; }
+      @media (max-width:980px){ .grid{grid-template-columns:repeat(3,minmax(0,1fr));} }
+      @media (max-width:760px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+      @media (max-width:520px){ .grid{grid-template-columns:1fr;} }
     </style>
   </head>
   <body>
@@ -116,48 +46,270 @@ try {
         <div class="bar-actions">
           <a class="button ghost" href="/admin/">Back to Admin</a>
           <a class="button ghost" href="/admin/media/">Google Picker</a>
+          <button id="loginBtn" type="button" class="ghost">Log in</button>
+          <button id="logoutBtn" type="button" class="ghost">Log out</button>
         </div>
-        <span id="status" class="status">Image library ready.</span>
+        <span id="status" class="status">Loading image library...</span>
       </section>
 
       <section class="card">
         <h1>Site Image Library</h1>
-        <p>Showing images currently in <code>/uploads/images</code>. Click Copy Path to reuse anywhere in the site.</p>
+        <p>Select images, then manually assign to a folder or auto-sort by GPS/date metadata.</p>
       </section>
 
-      <section class="grid">
-        {images.length === 0 ? (
-          <article class="card"><p>No images found in <code>/uploads/images</code>.</p></article>
-        ) : (
-          images.map((image) => (
-            <article class="tile" data-src={image.src}>
-              <img src={image.src} alt={image.name} loading="lazy" />
-              <div class="tile-body">
-                <div class="tiny">{image.name}</div>
-                <div class="tiny">{image.src}</div>
-                <button class="copy-btn" type="button">Copy Path</button>
-              </div>
-            </article>
-          ))
-        )}
+      <section class="card controls">
+        <button id="refreshBtn" type="button" class="ghost">Refresh</button>
+        <button id="selectAllBtn" type="button" class="ghost">Select All</button>
+        <button id="clearBtn" type="button" class="ghost">Clear</button>
+        <input id="folderInput" type="text" placeholder="folder name (e.g. peak-district/2026-02)" />
+        <button id="assignBtn" type="button">Assign Folder</button>
+        <button id="autoBtn" type="button" class="ghost">Auto Sort (GPS + Date)</button>
       </section>
+
+      <section class="grid" id="grid"></section>
     </main>
 
+    <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
     <script>
       const statusEl = document.getElementById("status");
-      document.addEventListener("click", async (event) => {
-        const btn = event.target.closest(".copy-btn");
-        if (!btn) return;
-        const tile = btn.closest(".tile");
-        const src = tile?.dataset?.src || "";
-        if (!src) return;
+      const gridEl = document.getElementById("grid");
+      const folderInput = document.getElementById("folderInput");
+      const selected = new Set();
+      let media = [];
+
+      function setStatus(message, isError = false) {
+        statusEl.textContent = message;
+        statusEl.classList.toggle("error", Boolean(isError));
+      }
+
+      async function getIdentityClient(triesLeft = 30) {
+        const identity = window.netlifyIdentity;
+        if (identity) return identity;
+        if (triesLeft <= 0) throw new Error("Netlify Identity is unavailable.");
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        return getIdentityClient(triesLeft - 1);
+      }
+
+      async function requireAdminToken() {
+        const identity = await getIdentityClient();
+        identity.init();
+        const user = identity.currentUser();
+        if (!user) {
+          identity.open("login");
+          throw new Error("Please log in as admin first.");
+        }
+        return user.jwt(true);
+      }
+
+      async function apiCall(payload) {
+        const token = await requireAdminToken();
+        const response = await fetch("/.netlify/functions/google-photos-media", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload),
+        });
+        const raw = await response.text();
+        let data = {};
+        try { data = raw ? JSON.parse(raw) : {}; } catch {}
+        if (!response.ok) {
+          const detail = data.error || raw || response.statusText || "Unknown error";
+          throw new Error(`Request failed (${response.status}): ${String(detail).trim()}`);
+        }
+        return data;
+      }
+
+      function getSelectedPaths() {
+        return [...selected].filter(Boolean);
+      }
+
+      function render() {
+        gridEl.innerHTML = "";
+        if (!media.length) {
+          gridEl.innerHTML = '<article class="card"><p>No images found in /uploads/images.</p></article>';
+          return;
+        }
+
+        for (const item of media) {
+          const tile = document.createElement("article");
+          tile.className = "tile";
+          tile.dataset.path = item.publicPath;
+
+          const img = document.createElement("img");
+          img.src = item.publicPath;
+          img.alt = item.filename || item.publicPath;
+          img.loading = "lazy";
+
+          const body = document.createElement("div");
+          body.className = "tile-body";
+
+          const topRow = document.createElement("div");
+          topRow.className = "tile-row";
+          const check = document.createElement("input");
+          check.type = "checkbox";
+          check.checked = selected.has(item.publicPath);
+          check.addEventListener("change", () => {
+            if (check.checked) selected.add(item.publicPath);
+            else selected.delete(item.publicPath);
+            setStatus(`${selected.size} selected.`);
+          });
+
+          const folder = document.createElement("span");
+          folder.className = "tiny";
+          folder.textContent = item.folder ? `Folder: ${item.folder}` : "Folder: (none)";
+          topRow.append(check, folder);
+
+          const name = document.createElement("div");
+          name.className = "tiny";
+          name.textContent = item.filename || "(unnamed)";
+
+          const path = document.createElement("div");
+          path.className = "tiny";
+          path.textContent = item.publicPath;
+
+          const meta = document.createElement("div");
+          meta.className = "tiny";
+          const m = item.meta || {};
+          meta.textContent = `Date: ${m.createTime || "unknown"} | GPS: ${m.latitude ?? "?"}, ${m.longitude ?? "?"}`;
+
+          const actions = document.createElement("div");
+          actions.className = "tile-actions";
+
+          const copyBtn = document.createElement("button");
+          copyBtn.type = "button";
+          copyBtn.className = "copy-btn";
+          copyBtn.textContent = "Copy Path";
+          copyBtn.addEventListener("click", async () => {
+            try {
+              await navigator.clipboard.writeText(item.publicPath);
+              setStatus(`Copied: ${item.publicPath}`);
+            } catch {
+              setStatus("Copy failed. Please copy manually.", true);
+            }
+          });
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "ghost";
+          deleteBtn.textContent = "Delete";
+          deleteBtn.addEventListener("click", async () => {
+            const yes = window.confirm(`Delete ${item.publicPath} from the site image library?`);
+            if (!yes) return;
+            try {
+              setStatus(`Deleting ${item.publicPath}...`);
+              await apiCall({ action: "delete_site_media", publicPath: item.publicPath });
+              selected.delete(item.publicPath);
+              media = media.filter((row) => row.publicPath !== item.publicPath);
+              render();
+              setStatus(`Deleted: ${item.publicPath}`);
+            } catch (error) {
+              setStatus(String(error?.message || error), true);
+            }
+          });
+
+          actions.append(copyBtn, deleteBtn);
+          body.append(topRow, name, path, meta, actions);
+          tile.append(img, body);
+          gridEl.appendChild(tile);
+        }
+      }
+
+      async function loadLibrary() {
+        setStatus("Loading image library...");
+        const data = await apiCall({ action: "list_site_media" });
+        media = Array.isArray(data.media) ? data.media : [];
+        selected.clear();
+        render();
+        setStatus(`Loaded ${media.length} image(s).`);
+      }
+
+      async function assignFolder() {
+        const items = getSelectedPaths();
+        const folder = String(folderInput.value || "").trim();
+        if (!folder) {
+          setStatus("Enter a folder name first.", true);
+          return;
+        }
+        if (items.length === 0) {
+          setStatus("Select one or more images first.", true);
+          return;
+        }
+        setStatus(`Assigning ${items.length} image(s) to ${folder}...`);
+        await apiCall({ action: "set_groups", items, folder });
+        await loadLibrary();
+      }
+
+      async function autoSort() {
+        const items = getSelectedPaths();
+        if (items.length === 0) {
+          setStatus("Select one or more images first.", true);
+          return;
+        }
+        setStatus(`Auto-sorting ${items.length} image(s) by GPS/date...`);
+        const data = await apiCall({ action: "auto_group", items });
+        await loadLibrary();
+        setStatus(`Auto-sort complete. Updated ${Number(data.updated || 0)} image(s).`);
+      }
+
+      document.getElementById("refreshBtn")?.addEventListener("click", async () => {
+        try { await loadLibrary(); } catch (error) { setStatus(String(error?.message || error), true); }
+      });
+
+      document.getElementById("selectAllBtn")?.addEventListener("click", () => {
+        for (const item of media) selected.add(item.publicPath);
+        render();
+        setStatus(`${selected.size} selected.`);
+      });
+
+      document.getElementById("clearBtn")?.addEventListener("click", () => {
+        selected.clear();
+        render();
+        setStatus("Selection cleared.");
+      });
+
+      document.getElementById("assignBtn")?.addEventListener("click", async () => {
+        try { await assignFolder(); } catch (error) { setStatus(String(error?.message || error), true); }
+      });
+
+      document.getElementById("autoBtn")?.addEventListener("click", async () => {
+        try { await autoSort(); } catch (error) { setStatus(String(error?.message || error), true); }
+      });
+
+      document.getElementById("loginBtn")?.addEventListener("click", async () => {
         try {
-          await navigator.clipboard.writeText(src);
-          statusEl.textContent = `Copied: ${src}`;
-        } catch {
-          statusEl.textContent = "Copy failed. Please copy manually.";
+          const identity = await getIdentityClient();
+          identity.open("login");
+        } catch (error) {
+          setStatus(String(error?.message || error), true);
         }
       });
+
+      document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+        try {
+          const identity = await getIdentityClient();
+          await identity.logout();
+          media = [];
+          selected.clear();
+          render();
+          setStatus("Logged out.");
+        } catch (error) {
+          setStatus(String(error?.message || error), true);
+        }
+      });
+
+      (async () => {
+        try {
+          const identity = await getIdentityClient();
+          identity.init();
+          const user = identity.currentUser();
+          if (!user) {
+            setStatus("Please log in as admin first.", true);
+            return;
+          }
+          await loadLibrary();
+        } catch (error) {
+          setStatus(String(error?.message || error), true);
+        }
+      })();
     </script>
   </body>
 </html>
