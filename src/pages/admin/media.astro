@@ -242,15 +242,51 @@ export const prerender = true;
           const actions = document.createElement("div");
           actions.className = "tile-actions";
 
+          const linkBtn = document.createElement("button");
+          linkBtn.type = "button";
+          linkBtn.className = "ghost";
+          linkBtn.textContent = "Use Google Link";
+          linkBtn.addEventListener("click", async () => {
+            const link = item.downloadUrl || item.baseUrl || "";
+            if (!link) {
+              setStatus("No Google link available for this item.", true);
+              return;
+            }
+            try {
+              await navigator.clipboard.writeText(link);
+              setStatus(`Google link copied: ${link}`);
+            } catch {
+              setStatus("Could not copy Google link. Copy it manually from the tile.", true);
+            }
+          });
+
           const importBtn = document.createElement("button");
           importBtn.type = "button";
           importBtn.textContent = "Import to Site";
           importBtn.disabled = !importConfigured;
           importBtn.addEventListener("click", async () => {
             importBtn.disabled = true;
+            linkBtn.disabled = true;
             try {
-              setStatus(`Importing ${item.filename || item.id}...`);
               const token = await requireAdminToken();
+              const preview = await apiCall(token, {
+                action: "preview_import",
+                mediaItemId: item.id,
+                mimeType: item.mimeType,
+                filename: item.filename,
+              });
+
+              const targetPath = preview?.importTarget?.publicPath || "";
+              const exists = Boolean(preview?.exists);
+              if (exists) {
+                const confirmed = window.confirm(`"${item.filename || item.id}" already exists as ${targetPath}. Import again and overwrite it?`);
+                if (!confirmed) {
+                  setStatus(`Skipped existing image: ${targetPath}`);
+                  return;
+                }
+              }
+
+              setStatus(`Importing ${item.filename || item.id}...`);
               const result = await apiCall(token, {
                 action: "import_media",
                 mediaItemId: item.id,
@@ -258,10 +294,13 @@ export const prerender = true;
                 mimeType: item.mimeType,
                 filename: item.filename,
               });
-              const localPath = result?.imported?.publicPath || "";
+              const localPath = result?.imported?.publicPath || targetPath;
               if (localPath) {
                 await navigator.clipboard.writeText(localPath);
-                setStatus(`Imported. Local path copied: ${localPath}`);
+                const msg = result?.imported?.alreadyExisted
+                  ? `Imported (overwrote existing). Local path copied: ${localPath}`
+                  : `Imported. Local path copied: ${localPath}`;
+                setStatus(msg);
               } else {
                 setStatus("Imported media into site storage.");
               }
@@ -269,10 +308,11 @@ export const prerender = true;
               setStatus(String(error?.message || error), true);
             } finally {
               importBtn.disabled = !importConfigured;
+              linkBtn.disabled = false;
             }
           });
 
-          actions.append(importBtn);
+          actions.append(linkBtn, importBtn);
           body.append(name, meta, actions);
           tile.append(media, body);
           mediaGrid.appendChild(tile);

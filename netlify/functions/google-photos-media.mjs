@@ -134,6 +134,30 @@ export const handler = async (event, context) => {
       return json({ ok: true, mediaItems, nextPageToken: String(data.nextPageToken || "") }, 200);
     }
 
+    if (action === "preview_import") {
+      const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
+      if (missingImportEnv.length > 0) {
+        return json({
+          error: `Import is not configured. Missing: ${missingImportEnv.join(", ")}`,
+          missingImportEnv,
+        }, 500);
+      }
+
+      const mimeType = String(payload.mimeType || "").toLowerCase();
+      const filenameRaw = String(payload.filename || "photo");
+      const mediaItemId = String(payload.mediaItemId || filenameRaw || Date.now()).trim();
+      const branch = process.env.GITHUB_BRANCH || "main";
+      const target = buildImportTarget({ mimeType, filenameRaw, mediaItemId });
+      const existing = await getRepoFileMeta(target.imagePath, branch);
+      if (!existing.ok) return json({ error: existing.error }, 502);
+
+      return json({
+        ok: true,
+        exists: existing.exists,
+        importTarget: target,
+      }, 200);
+    }
+
     if (action === "import_media") {
       const missingImportEnv = getMissingEnvVars(REQUIRED_IMPORT_ENV);
       if (missingImportEnv.length > 0) {
@@ -149,6 +173,11 @@ export const handler = async (event, context) => {
       const mediaItemId = String(payload.mediaItemId || filenameRaw || Date.now()).trim();
       if (!baseUrl) return json({ error: "baseUrl is required for import_media" }, 400);
 
+      const branch = process.env.GITHUB_BRANCH || "main";
+      const target = buildImportTarget({ mimeType, filenameRaw, mediaItemId });
+      const existing = await getRepoFileMeta(target.imagePath, branch);
+      if (!existing.ok) return json({ error: existing.error }, 502);
+
       const binaryResponse = await fetch(buildDownloadUrl(baseUrl, mimeType), {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -159,17 +188,11 @@ export const handler = async (event, context) => {
 
       const arr = await binaryResponse.arrayBuffer();
       const contentBase64 = Buffer.from(arr).toString("base64");
-      const ext = extensionFromMimeType(mimeType, filenameRaw);
-      const safeStem = sanitizeFilename(filenameRaw.replace(/\.[^.]+$/, ""));
-      const hash = shortHash(mediaItemId || filenameRaw);
-      const fileName = `${safeStem}-${hash}.${ext}`;
-      const imagePath = `public/uploads/images/${fileName}`;
-      const branch = process.env.GITHUB_BRANCH || "main";
 
       const write = await upsertRepoFile({
-        path: imagePath,
+        path: target.imagePath,
         contentBase64,
-        message: `feat(media): import google photo ${fileName}`,
+        message: `feat(media): import google photo ${target.fileName}`,
         branch,
       });
       if (!write.ok) return json({ error: write.error }, 502);
@@ -179,10 +202,11 @@ export const handler = async (event, context) => {
           ok: true,
           imported: {
             id: mediaItemId,
-            filename: filenameRaw || fileName,
+            filename: filenameRaw || target.fileName,
             mimeType,
-            path: imagePath,
-            publicPath: `/${stripPublicPrefix(imagePath)}`,
+            path: target.imagePath,
+            publicPath: target.publicPath,
+            alreadyExisted: existing.exists,
           },
           commit: write.data?.commitUrl || null,
         },
@@ -283,6 +307,37 @@ function buildDownloadUrl(baseUrl, mimeType) {
   if (String(mimeType || "").startsWith("video/")) return `${baseUrl}=dv`;
   return `${baseUrl}=d`;
 }
+
+function buildImportTarget({ mimeType, filenameRaw, mediaItemId }) {
+  const ext = extensionFromMimeType(mimeType, filenameRaw);
+  const safeStem = sanitizeFilename(String(filenameRaw || "photo").replace(/\.[^.]+$/, ""));
+  const hash = shortHash(mediaItemId || filenameRaw || Date.now());
+  const fileName = `${safeStem}-${hash}.${ext}`;
+  const imagePath = `public/uploads/images/${fileName}`;
+  return {
+    fileName,
+    imagePath,
+    publicPath: `/${stripPublicPrefix(imagePath)}`,
+  };
+}
+
+async function getRepoFileMeta(path, branch) {
+  const repo = process.env.GITHUB_REPO;
+  const url = `https://api.github.com/repos/${repo}/contents/${encodeURIComponentPath(path)}?ref=${encodeURIComponent(branch)}`;
+  try {
+    const response = await fetch(url, { method: "GET", headers: githubHeaders() });
+    if (response.status === 404) return { ok: true, exists: false };
+    if (!response.ok) {
+      const text = await response.text();
+      return { ok: false, error: `GitHub file check failed (${response.status}): ${text}` };
+    }
+    const data = await response.json();
+    return { ok: true, exists: true, sha: data.sha || "", size: Number(data.size || 0) };
+  } catch (error) {
+    return { ok: false, error: `GitHub file check request failed: ${String(error?.message || error)}` };
+  }
+}
+
 
 async function upsertRepoFile({ path, contentBase64, message, branch }) {
   const repo = process.env.GITHUB_REPO;
@@ -409,6 +464,7 @@ function githubHeaders() {
     "User-Agent": "walking-with-ember-media-library",
   };
 }
+
 
 
 
