@@ -33,6 +33,11 @@ export const prerender = true;
       .tile-media img { width:100%; height:100%; object-fit:cover; }
       .tile-body { padding:.65rem; display:grid; gap:.45rem; }
       .log { border:1px solid var(--line); border-radius:10px; background:#fff6e9; padding:.6rem; max-height:220px; overflow:auto; white-space:pre-wrap; font-size:.82rem; color:#5d4431; }
+      .progress-modal { position: fixed; inset: 0; display: none; place-items: center; background: rgba(34, 18, 8, 0.45); z-index: 50; padding: 1rem; }
+      .progress-modal.show { display: grid; }
+      .progress-card { width: min(520px, 100%); background: #fff8ee; border: 1px solid var(--line); border-radius: 14px; padding: .9rem; display: grid; gap: .6rem; }
+      .progress-bar-wrap { width: 100%; height: 12px; border-radius: 999px; border: 1px solid #d8bea0; background: #f4e8d8; overflow: hidden; }
+      .progress-bar { height: 100%; width: 0%; background: linear-gradient(135deg,var(--accent),var(--accent-2)); transition: width .2s ease; }
       @media (max-width:980px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
       @media (max-width:520px){ .grid{grid-template-columns:1fr;} }
     </style>
@@ -67,6 +72,13 @@ export const prerender = true;
 
       <section class="grid" id="mediaGrid"></section>
     </main>
+    <div id="importProgressModal" class="progress-modal" aria-hidden="true">
+      <div class="progress-card">
+        <h2>Importing Images</h2>
+        <div id="importProgressText" class="tiny">Preparing import...</div>
+        <div class="progress-bar-wrap"><div id="importProgressBar" class="progress-bar"></div></div>
+      </div>
+    </div>
 
     <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
     <script>
@@ -78,6 +90,9 @@ export const prerender = true;
       const openPickerBtn = document.getElementById("openPickerBtn");
       const bulkImportBtn = document.getElementById("bulkImportBtn");
       const bulkLinkBtn = document.getElementById("bulkLinkBtn");
+      const importProgressModal = document.getElementById("importProgressModal");
+      const importProgressText = document.getElementById("importProgressText");
+      const importProgressBar = document.getElementById("importProgressBar");
 
       let sessionId = "";
       let pickerUri = "";
@@ -106,6 +121,25 @@ export const prerender = true;
         openPickerBtn.disabled = !integrationConfigured || !hasSession || !pickerUri;
         bulkLinkBtn.disabled = !integrationConfigured || !hasSession;
         bulkImportBtn.disabled = !integrationConfigured || !importConfigured || !hasSession;
+      }
+
+      function setImportProgress(complete, total, label) {
+        const safeTotal = Math.max(1, Number(total || 0));
+        const safeComplete = Math.min(safeTotal, Math.max(0, Number(complete || 0)));
+        const percent = Math.round((safeComplete / safeTotal) * 100);
+        importProgressText.textContent = `${label || "Importing..."} (${safeComplete}/${safeTotal})`;
+        importProgressBar.style.width = `${percent}%`;
+      }
+
+      function showImportProgress(total) {
+        setImportProgress(0, total, "Starting import");
+        importProgressModal.classList.add("show");
+        importProgressModal.setAttribute("aria-hidden", "false");
+      }
+
+      function hideImportProgress() {
+        importProgressModal.classList.remove("show");
+        importProgressModal.setAttribute("aria-hidden", "true");
       }
 
       function setSession(data) {
@@ -295,21 +329,30 @@ export const prerender = true;
         }
 
         const importedPaths = [];
-        for (const row of previews) {
-          const item = row.item;
-          setStatus(`Importing ${item.filename || item.id}...`);
-          const result = await apiCall(token, {
-            action: "import_media",
-            mediaItemId: item.id,
-            baseUrl: item.baseUrl,
-            mimeType: item.mimeType,
-            filename: item.filename,
-            createTime: item.createTime,
-            latitude: item.latitude,
-            longitude: item.longitude,
-          });
-          const localPath = result?.imported?.publicPath || row.preview?.importTarget?.publicPath || "";
-          if (localPath) importedPaths.push(localPath);
+        showImportProgress(previews.length);
+        try {
+          for (let i = 0; i < previews.length; i += 1) {
+            const row = previews[i];
+            const item = row.item;
+            const label = item.filename || item.id || "image";
+            setImportProgress(i, previews.length, `Importing ${label}`);
+            setStatus(`Importing ${label}...`);
+            const result = await apiCall(token, {
+              action: "import_media",
+              mediaItemId: item.id,
+              baseUrl: item.baseUrl,
+              mimeType: item.mimeType,
+              filename: item.filename,
+              createTime: item.createTime,
+              latitude: item.latitude,
+              longitude: item.longitude,
+            });
+            const localPath = result?.imported?.publicPath || row.preview?.importTarget?.publicPath || "";
+            if (localPath) importedPaths.push(localPath);
+            setImportProgress(i + 1, previews.length, `Imported ${label}`);
+          }
+        } finally {
+          hideImportProgress();
         }
 
         if (importedPaths.length > 0) {
@@ -418,3 +461,4 @@ export const prerender = true;
     </script>
   </body>
 </html>
+
