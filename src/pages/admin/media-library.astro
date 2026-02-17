@@ -1,0 +1,163 @@
+---
+import { readdir, stat } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+export const prerender = true;
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDir = path.resolve(projectRoot, "../../../public/uploads/images");
+
+const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif", ".avif"]);
+
+async function walkFiles(dir) {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...(await walkFiles(full)));
+      continue;
+    }
+    files.push(full);
+  }
+  return files;
+}
+
+let images = [];
+try {
+  const files = await walkFiles(uploadsDir);
+  const candidates = files.filter((file) => IMAGE_EXTENSIONS.has(path.extname(file).toLowerCase()));
+
+  const rows = await Promise.all(
+    candidates.map(async (file) => {
+      const info = await stat(file);
+      const rel = path.relative(path.resolve(projectRoot, "../../../public"), file).split(path.sep).join("/");
+      return {
+        src: `/${rel}`,
+        name: path.basename(file),
+        updatedMs: info.mtimeMs,
+      };
+    }),
+  );
+
+  images = rows.sort((a, b) => b.updatedMs - a.updatedMs);
+} catch {
+  images = [];
+}
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
+    <title>Site Image Library | Admin</title>
+    <style>
+      :root {
+        --bg: #efe3cf;
+        --card: #fff8ee;
+        --text: #2b1d14;
+        --muted: #7c6654;
+        --line: #dcc6ac;
+        --accent: #be6d37;
+        --accent-2: #8a4f27;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background: linear-gradient(130deg, #f3e7d4 0%, #ecd9be 45%, #e3c9a9 100%);
+      }
+      .wrap { width: min(1200px, calc(100% - 2rem)); margin: 1rem auto 2rem; display: grid; gap: 0.8rem; }
+      .card { background: linear-gradient(180deg, var(--card) 0%, #f6ebdc 100%); border: 1px solid var(--line); border-radius: 16px; padding: 0.9rem; }
+      .bar { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+      .bar-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+      .button {
+        border: 0;
+        border-radius: 999px;
+        padding: 0.55rem 0.95rem;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #fff6ed;
+        text-decoration: none;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .ghost { background: #fff5e8; border: 1px solid #d9b995; color: #6f3f20; }
+      h1 { margin: 0 0 0.4rem; font-family: "Fraunces", Georgia, serif; }
+      p { margin: 0; color: var(--muted); }
+      .grid { display: grid; gap: 0.8rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .tile { border: 1px solid #d8bea0; border-radius: 14px; overflow: hidden; background: #fffdf8; display: grid; }
+      .tile img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; background: #f4e8d8; }
+      .tile-body { padding: 0.65rem; display: grid; gap: 0.45rem; }
+      .tiny { font-size: 0.78rem; color: #7c6654; word-break: break-all; }
+      .copy-btn {
+        border: 1px solid #d9b995;
+        border-radius: 999px;
+        padding: 0.45rem 0.8rem;
+        background: #fff5e8;
+        color: #6f3f20;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .status { color: #5a3a22; font-weight: 700; }
+      @media (max-width: 980px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      @media (max-width: 760px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card bar">
+        <div class="bar-actions">
+          <a class="button ghost" href="/admin/">Back to Admin</a>
+          <a class="button ghost" href="/admin/media/">Google Picker</a>
+        </div>
+        <span id="status" class="status">Image library ready.</span>
+      </section>
+
+      <section class="card">
+        <h1>Site Image Library</h1>
+        <p>Showing images currently in <code>/uploads/images</code>. Click Copy Path to reuse anywhere in the site.</p>
+      </section>
+
+      <section class="grid">
+        {images.length === 0 ? (
+          <article class="card"><p>No images found in <code>/uploads/images</code>.</p></article>
+        ) : (
+          images.map((image) => (
+            <article class="tile" data-src={image.src}>
+              <img src={image.src} alt={image.name} loading="lazy" />
+              <div class="tile-body">
+                <div class="tiny">{image.name}</div>
+                <div class="tiny">{image.src}</div>
+                <button class="copy-btn" type="button">Copy Path</button>
+              </div>
+            </article>
+          ))
+        )}
+      </section>
+    </main>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      document.addEventListener("click", async (event) => {
+        const btn = event.target.closest(".copy-btn");
+        if (!btn) return;
+        const tile = btn.closest(".tile");
+        const src = tile?.dataset?.src || "";
+        if (!src) return;
+        try {
+          await navigator.clipboard.writeText(src);
+          statusEl.textContent = `Copied: ${src}`;
+        } catch {
+          statusEl.textContent = "Copy failed. Please copy manually.";
+        }
+      });
+    </script>
+  </body>
+</html>
