@@ -11,7 +11,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
   <title>Site Settings · Walking with Ember</title>
-  <style>
+  <style is:global>
     :root { --bg:#F5F0E8; --surface:#FDFAF6; --text:#1C1510; --muted:#8A7A6A; --line:rgba(28,21,16,0.13); --brand:#C65D1E; --brand-deep:#9A4515; --ok:#3f7a3f; --err:#8a2020; }
     * { box-sizing:border-box; margin:0; padding:0; }
     body { font-family:"Manrope","Segoe UI",Arial,sans-serif; font-size:.95rem; color:var(--text); background:var(--bg); min-height:100vh; }
@@ -243,9 +243,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
   });
 
   // ── Load settings ──
-  loadBtn.addEventListener('click', async () => {
-    const pw = passwordInput.value;
-    if (!pw) { showMsg(loadStatus, 'Enter password first.', 'err'); return; }
+  async function doLoad(pw) {
     loadBtn.disabled = true;
     loadBtn.innerHTML = '<span class="spin"></span> Loading…';
     showMsg(loadStatus, 'Fetching from GitHub…', 'info');
@@ -255,6 +253,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       const settings = JSON.parse(data.content);
       fileSha = data.sha;
+      sessionStorage.setItem('wwe_admin_pw', pw);
       $('siteName').value  = settings.siteName || '';
       $('tagline').value   = settings.tagline  || '';
       $('instagram').value = settings.social?.instagram || '';
@@ -266,12 +265,23 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
       hideMsg(loadStatus);
       loadPhotos(); // pre-load picker in background
     } catch (err) {
+      sessionStorage.removeItem('wwe_admin_pw');
       showMsg(loadStatus, 'Error: ' + err.message, 'err');
     } finally {
       loadBtn.disabled = false;
       loadBtn.textContent = 'Reload';
     }
+  }
+
+  loadBtn.addEventListener('click', async () => {
+    const pw = passwordInput.value;
+    if (!pw) { showMsg(loadStatus, 'Enter password first.', 'err'); return; }
+    await doLoad(pw);
   });
+
+  // ── Auto-load if password is cached ──
+  const cached = sessionStorage.getItem('wwe_admin_pw');
+  if (cached) { passwordInput.value = cached; doLoad(cached); }
 
   // ── Gallery list ──
   function renderGallery(images) {

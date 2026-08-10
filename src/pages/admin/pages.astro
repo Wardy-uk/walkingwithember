@@ -152,6 +152,10 @@ const PAGES = [
     seoCounter.classList.toggle('warn', len > 170);
   });
 
+  // ── Auto-fill password from sessionStorage ──
+  const cachedPw = sessionStorage.getItem('wwe_admin_pw');
+  if (cachedPw) passwordInput.value = cachedPw;
+
   // ── Page tab clicks ──
   document.getElementById('pageList').addEventListener('click', async (e) => {
     const tab = e.target.closest('.page-tab');
@@ -175,6 +179,7 @@ const PAGES = [
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
+      sessionStorage.setItem('wwe_admin_pw', pw);
       currentPath = path;
       currentSha  = data.sha;
 

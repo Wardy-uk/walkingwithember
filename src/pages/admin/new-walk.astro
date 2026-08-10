@@ -10,7 +10,7 @@ export const prerender = true;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
   <title>Walk Builder · Walking with Ember</title>
-  <style>
+  <style is:global>
     :root {
       --bg:      #efe3cf;
       --card:    #fff8ee;
@@ -492,6 +492,10 @@ export const prerender = true;
   const saveBtn      = el('saveBtn');
   const saveStatus   = el('saveStatus');
 
+  // ── Auto-fill password from sessionStorage ──
+  const _cachedPw = sessionStorage.getItem('wwe_admin_pw');
+  if (_cachedPw) adminPassword.value = _cachedPw;
+
   // ── Summary counter ───────────────────────────────────────
   walkSummary.addEventListener('input', () => {
     const len = walkSummary.value.length;
@@ -760,6 +764,7 @@ export const prerender = true;
 
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
+      sessionStorage.setItem('wwe_admin_pw', password);
       const slug = data.slug;
       const path = payload.draft ? `/preview/walks/${slug}/` : `/walks/${slug}/`;
       showMsg(saveStatus, `✓ Walk saved! Netlify is rebuilding — it'll be live in ~2 minutes.<br><br><a href="${path}" target="_blank" rel="noreferrer" style="color:var(--ok);font-weight:700;">Preview: ${path}</a>`, 'ok');
