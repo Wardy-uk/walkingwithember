@@ -39,30 +39,37 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
     /* Grid */
     .photo-grid {
       display:grid;
-      grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
-      gap:.5rem;
+      grid-template-columns:repeat(auto-fill, minmax(100px, 1fr));
+      gap:4px;
     }
     .photo-card {
-      border:1px solid var(--line);
-      border-radius:8px;
+      border-radius:4px;
       overflow:hidden;
-      background:var(--surface);
       cursor:pointer;
-      transition:transform .2s, box-shadow .2s;
       position:relative;
+      aspect-ratio:1;
+      background:var(--bg-soft,#EDE8DE);
     }
-    .photo-card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(28,21,16,0.12); }
-    .photo-card.copied { border-color:var(--brand); }
-    .photo-card img { width:100%; height:110px; object-fit:cover; display:block; }
-    .photo-meta { padding:.5rem .65rem; }
-    .photo-meta .loc { font-size:.74rem; font-weight:600; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .photo-meta .date { font-size:.7rem; color:var(--muted); opacity:.7; margin-top:.1rem; }
+    .photo-card img { width:100%; height:100%; object-fit:cover; display:block; transition:opacity .15s; }
+    .photo-card:hover img { opacity:.85; }
+    .photo-card-overlay {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column; justify-content:flex-end;
+      padding:.3rem .35rem;
+      background:linear-gradient(to top, rgba(28,21,16,.7) 0%, transparent 60%);
+      opacity:0; transition:opacity .15s;
+      pointer-events:none;
+    }
+    .photo-card:hover .photo-card-overlay { opacity:1; }
+    .photo-card-overlay .loc { font-size:.62rem; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .photo-card-overlay .date { font-size:.58rem; color:rgba(255,255,255,.7); }
+    .photo-card.copied { outline:2px solid var(--brand); outline-offset:-2px; }
     .copy-badge {
-      position:absolute; top:.4rem; right:.4rem;
+      position:absolute; top:.3rem; right:.3rem;
       background:var(--brand); color:#fff;
-      font-size:.68rem; font-weight:700; letter-spacing:.06em;
-      padding:.2rem .5rem; border-radius:999px;
-      opacity:0; pointer-events:none; transition:opacity .2s;
+      font-size:.62rem; font-weight:700;
+      padding:.15rem .4rem; border-radius:999px;
+      opacity:0; pointer-events:none; transition:opacity .15s;
     }
     .photo-card.copied .copy-badge { opacity:1; }
 
@@ -144,7 +151,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
 
   function cloudinaryThumb(url) {
     if (!url || !url.includes('cloudinary.com')) return url;
-    return url.replace('/upload/', '/upload/w_240,h_180,c_fill,q_60/');
+    return url.replace('/upload/', '/upload/w_200,h_200,c_fill,q_60/');
   }
 
   function formatDate(iso) {
@@ -173,7 +180,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
 
       card.innerHTML = `
         <img src="${cloudinaryThumb(photo.image_url)}" loading="lazy" alt="${loc}" />
-        <div class="photo-meta">
+        <div class="photo-card-overlay">
           ${loc ? `<div class="loc">${loc}</div>` : ''}
           ${date ? `<div class="date">${date}</div>` : ''}
         </div>
