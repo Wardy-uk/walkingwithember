@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getAllWalks, getPublishedWalks, getRegions, getSiteSettings } from "../lib/content";
+import { imgSrc } from "../lib/imgSrc";
 
 const settings = await getSiteSettings();
 const regions = await getRegions();
@@ -8,105 +9,196 @@ const publishedWalks = await getPublishedWalks();
 const draftWalks = (await getAllWalks()).filter((walk) => walk.data.draft).slice(0, 3);
 const walks = publishedWalks.slice(0, 3);
 const mastheadImage = settings.homepage?.mastheadImage || "/uploads/images/5da590c5-0884-4c1c-8fc1-012850f889fa-61fec1bcfa.jpg";
-const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 3);
+const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 2);
+
+function difficultyLabel(d: string | undefined) {
+  if (!d) return "";
+  const map: Record<string, string> = { easy: "Easy", moderate: "Moderate", hard: "Hard", challenging: "Challenging" };
+  return map[d.toLowerCase()] ?? d;
+}
 ---
 
 <BaseLayout
-  title={`${settings.siteName} | Home`}
-  description="UK hillwalking and mountain routes with dog-focused trail notes."
+  title={`${settings.siteName} | UK Hillwalking with a Dog`}
+  description="UK hillwalking and mountain routes, trail notes, and honest hill days out with Ember."
   regions={regions}
   siteName={settings.siteName}
   tagline={settings.tagline}
 >
+  <!-- ── Full-screen hero ── -->
   <section class="v2-hero">
-    <img src={mastheadImage} alt="Walking with Ember mountain hero" />
+    <img src={imgSrc(mastheadImage)} alt="Mountain landscape with Ember" />
+
+    <!-- Layered gradient -->
+    <div class="v2-hero-gradient"></div>
+
+    <!-- Mountain silhouettes -->
+    <svg class="v2-hero-mountains" viewBox="0 0 1440 260" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <!-- Back layer - lighter -->
+      <path d="M0,260 L0,180 L120,100 L240,140 L340,70 L460,120 L560,50 L680,110 L780,40 L900,100 L1020,60 L1140,120 L1220,80 L1340,130 L1440,100 L1440,260 Z"
+        fill="rgba(28,21,16,0.32)" />
+      <!-- Front layer - darker -->
+      <path d="M0,260 L0,220 L80,180 L180,200 L280,155 L400,185 L500,145 L620,175 L720,140 L840,165 L940,130 L1060,160 L1160,125 L1280,155 L1380,135 L1440,150 L1440,260 Z"
+        fill="rgba(28,21,16,0.72)" />
+    </svg>
+
+    <!-- Text overlay -->
     <div class="v2-hero-overlay">
-      <p>Walking with Ember</p>
-      <h1>UK hillwalking and mountain days with your trusty dog.</h1>
-      <a class="button" href="/walks/">Explore Routes</a>
+      <p class="v2-hero-kicker">UK hillwalking · dog-first trail notes</p>
+      <h1>Walking<br/>with Ember</h1>
+      <p class="v2-hero-sub">Mountains, moors, and honest days out.</p>
+      <div class="v2-hero-ctas">
+        <a class="button" href="/walks/">Explore routes</a>
+        <a class="button ghost" href="/about/">About us</a>
+      </div>
     </div>
   </section>
 
-  <section class="container v2-section">
-    <div class="v2-section-head">
-      <h2>Flagship Routes</h2>
-      <a href="/walks/">View all walks</a>
+  <!-- ── Nick + Ember strip ── -->
+  <section class="v2-ember-strip">
+    <div class="v2-ember-text">
+      <p class="v2-ember-eyebrow">The team</p>
+      <h2>Nick and Ember,<br/>out in all weathers.</h2>
+      <p>Honest route notes from a hillwalker and his dog. No sponsored shortcuts, no sugar-coating — just the real detail on what you'll find underfoot, overhead, and at the gate.</p>
     </div>
+    <div class="v2-ember-photo">
+      {galleryImages[0]
+        ? <img src={imgSrc(galleryImages[0])} alt="Nick and Ember" loading="lazy" />
+        : <span class="v2-ember-photo-fallback">🐕</span>
+      }
+    </div>
+  </section>
+
+  <!-- ── Routes section ── -->
+  <div class="container v2-section">
+    <div class="v2-section-head">
+      <h2>Recent routes</h2>
+      <a href="/walks/">All walks →</a>
+    </div>
+
     {walks.length > 0 ? (
       <div class="v2-route-grid">
-        {walks.map((walk) => (
-          <article class="v2-route-card">
-            <a href={`/walks/${walk.slug}/`}>
-              <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
-            </a>
-            <div>
-              <h3><a href={`/walks/${walk.slug}/`}>{walk.data.title}</a></h3>
-              <p>{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}</p>
+        <!-- Large feature card -->
+        <a class="v2-route-card large" href={`/walks/${walks[0].slug}/`} style="text-decoration:none;">
+          <div class="card-img">
+            <img src={imgSrc(walks[0].data.heroImage)} alt={walks[0].data.title} loading="lazy" />
+            <div class="card-img-overlay"></div>
+            <div class="card-img-meta">
+              <h3>{walks[0].data.title}</h3>
+              <div class="card-img-stats">
+                {walks[0].data.distance && <span>{walks[0].data.distance} mi</span>}
+                {walks[0].data.distance && walks[0].data.difficulty && <span class="dot">·</span>}
+                {walks[0].data.difficulty && <span>{difficultyLabel(walks[0].data.difficulty)}</span>}
+                {walks[0].data.location && <><span class="dot">·</span><span>{walks[0].data.location}</span></>}
+              </div>
             </div>
-          </article>
-        ))}
+          </div>
+          <div class="card-footer">
+            <span class="card-region">{walks[0].data.region || walks[0].data.location || "UK"}</span>
+            {walks[0].data.dogFriendly && <span class="card-dog-badge">Dog friendly</span>}
+          </div>
+        </a>
+
+        <!-- Two smaller cards -->
+        {walks.length > 1 && (
+          <div class="v2-route-cards-small">
+            {walks.slice(1, 3).map((walk) => (
+              <a class="v2-route-card small" href={`/walks/${walk.slug}/`} style="text-decoration:none;">
+                <div class="card-img">
+                  <img src={imgSrc(walk.data.heroImage)} alt={walk.data.title} loading="lazy" />
+                  <div class="card-img-overlay"></div>
+                  <div class="card-img-meta">
+                    <h3 class="small">{walk.data.title}</h3>
+                    <div class="card-img-stats">
+                      {walk.data.distance && <span>{walk.data.distance} mi</span>}
+                      {walk.data.difficulty && <><span class="dot">·</span><span>{difficultyLabel(walk.data.difficulty)}</span></>}
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <span class="card-region">{walk.data.region || walk.data.location || "UK"}</span>
+                  {walk.data.dogFriendly && <span class="card-dog-badge">Dog friendly</span>}
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     ) : (
       <article id="noPublishedRoutes" class="card">
-        <p>No published walks yet. Draft routes will appear here after you publish them.</p>
+        <p style="color:var(--muted)">No published walks yet — check back soon.</p>
       </article>
     )}
 
+    <!-- Admin: draft walks preview -->
     {draftWalks.length > 0 && (
-      <section class="admin-draft-only hidden">
-        <article class="card">
-          <p><strong>Admin preview:</strong> showing draft walks.</p>
-        </article>
+      <section class="admin-draft-only hidden" style="margin-top:1.5rem;">
+        <p class="card" style="margin-bottom:1rem;"><strong>Admin preview:</strong> draft routes below.</p>
         <div class="v2-route-grid">
           {draftWalks.map((walk) => (
-            <article class="v2-route-card" style="outline:2px dashed #be6d37; outline-offset:2px;">
-              <a href={`/preview/walks/${walk.slug}/`} target="_blank" rel="noreferrer">
-                <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
-              </a>
-              <div>
-                <h3><a href={`/preview/walks/${walk.slug}/`} target="_blank" rel="noreferrer">{walk.data.title}</a></h3>
-                <p>{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty} · Draft</p>
+            <a class="v2-route-card" href={`/preview/walks/${walk.slug}/`} target="_blank" rel="noreferrer"
+               style="text-decoration:none;outline:2px dashed var(--brand);outline-offset:3px;">
+              <div class="card-img" style="height:180px;">
+                <img src={imgSrc(walk.data.heroImage)} alt={walk.data.title} loading="lazy" />
+                <div class="card-img-overlay"></div>
+                <div class="card-img-meta">
+                  <h3 class="small">{walk.data.title} <em>(draft)</em></h3>
+                </div>
               </div>
-            </article>
+            </a>
           ))}
         </div>
       </section>
     )}
-  </section>
+  </div>
 
-  <section class="container v2-ethos">
-    <article>
-      <h2>Dog-First Trail Ethos</h2>
-      <p>
-        Every route is logged with practical mountain detail and real dog handling context:
-        livestock risk, lead-sensitive ground, weather exposure, parking access, and route backups.
-      </p>
-      <a class="button ghost-dark" href="/blog/">Read trail stories</a>
-    </article>
-    <div class="v2-image-stack">
-      {(galleryImages.length > 0 ? galleryImages : ["/uploads/images/5da590c5-0884-4c1c-8fc1-012850f889fa-80ba7d9489.jpg"]).map((image, idx) => (
-        <img src={image} alt={`Walking with Ember gallery ${idx + 1}`} loading="lazy" />
-      ))}
-    </div>
-  </section>
+  <!-- ── Ethos / trail notes strip ── -->
+  <div class="container">
+    <section class="v2-ethos">
+      <article>
+        <h2>Dog-first<br/>trail notes.</h2>
+        <p>
+          Every route comes with the real detail: livestock risk, lead-sensitive ground, weather exposure,
+          parking, and honest alternatives when conditions bite back.
+        </p>
+        <p>
+          Ember has final approval on all gradings.
+        </p>
+        <a class="button ghost-dark" href="/blog/">Read trail stories</a>
+      </article>
+      <div class="v2-image-stack">
+        {galleryImages.length >= 2 ? (
+          galleryImages.slice(0, 2).map((img, i) => (
+            <img src={imgSrc(img)} alt={`Trail photo ${i + 1}`} loading="lazy" />
+          ))
+        ) : galleryImages.length === 1 ? (
+          <>
+            <img src={imgSrc(galleryImages[0])} alt="Trail photo" loading="lazy" />
+            <div style="background:var(--bg-soft);border-radius:4px;display:flex;align-items:center;justify-content:center;height:200px;color:var(--muted);font-size:2rem;">⛰️</div>
+          </>
+        ) : (
+          <>
+            <div style="background:var(--bg-soft);border-radius:4px;height:200px;"></div>
+            <div style="background:var(--peat);opacity:0.15;border-radius:4px;height:200px;"></div>
+          </>
+        )}
+      </div>
+    </section>
+  </div>
 
   <script is:inline>
     const draftBlocks = Array.from(document.querySelectorAll(".admin-draft-only"));
     const noPublished = document.getElementById("noPublishedRoutes");
 
-    function revealAdminDrafts() {
-      draftBlocks.forEach((el) => el.classList.remove("hidden"));
-      if (noPublished) noPublished.classList.add("hidden");
-    }
-
-    const syncDraftsFromIdentity = (user) => {
+    function syncDraftsFromIdentity(user) {
       if (user) {
-        revealAdminDrafts();
+        draftBlocks.forEach((el) => el.classList.remove("hidden"));
+        if (noPublished) noPublished.classList.add("hidden");
       } else {
         draftBlocks.forEach((el) => el.classList.add("hidden"));
         if (noPublished) noPublished.classList.remove("hidden");
       }
-    };
+    }
 
     syncDraftsFromIdentity(window.__wwIdentityUser || null);
     window.addEventListener("ww-identity-change", (event) => {
@@ -114,8 +206,3 @@ const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).s
     });
   </script>
 </BaseLayout>
-
-
-
-
-

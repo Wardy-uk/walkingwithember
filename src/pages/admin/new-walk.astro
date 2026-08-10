@@ -1,0 +1,765 @@
+---
+export const prerender = true;
+---
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
+  <title>Walk Builder · Walking with Ember</title>
+  <style>
+    :root {
+      --bg:      #efe3cf;
+      --card:    #fff8ee;
+      --text:    #2b1d14;
+      --muted:   #7c6654;
+      --line:    #dcc6ac;
+      --accent:  #be6d37;
+      --accent2: #8a4f27;
+      --ok:      #3f7a3f;
+      --err:     #8a2020;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: linear-gradient(130deg, #f3e7d4 0%, #ecd9be 45%, #e3c9a9 100%);
+      min-height: 100vh;
+    }
+    .wrap {
+      width: min(1020px, calc(100% - 2rem));
+      margin: 1.2rem auto 3rem;
+      display: grid;
+      gap: 0.9rem;
+    }
+    /* ── Topbar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .topbar-left { display: flex; gap: 0.4rem; align-items: center; }
+    .page-title {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.3rem;
+      color: var(--accent2);
+    }
+    /* ── Cards ── */
+    .card {
+      background: linear-gradient(180deg, var(--card) 0%, #f6ebdc 100%);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1.1rem 1.2rem;
+    }
+    .card h2 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 1.1rem;
+      margin-bottom: 0.7rem;
+    }
+    .card h3 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 0.95rem;
+      color: var(--accent2);
+      margin: 0.9rem 0 0.5rem;
+    }
+    .card h3:first-child { margin-top: 0; }
+    /* ── Buttons ── */
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.58rem 1rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff6ed;
+      text-decoration: none;
+      cursor: pointer;
+      font: 700 0.88rem "Manrope", sans-serif;
+      letter-spacing: 0.01em;
+      transition: opacity .15s;
+      display: inline-block;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn.ghost {
+      background: #fff5e8;
+      border: 1px solid #d9b995;
+      color: #6f3f20;
+    }
+    .btn.big {
+      padding: 0.72rem 1.6rem;
+      font-size: 1rem;
+    }
+    /* ── Form elements ── */
+    .field { display: grid; gap: 0.3rem; }
+    label { font-weight: 700; font-size: 0.84rem; color: #5d4431; }
+    label .opt { font-weight: 400; color: var(--muted); }
+    input[type="text"],
+    input[type="url"],
+    input[type="number"],
+    input[type="password"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid #d7bda0;
+      border-radius: 10px;
+      padding: 0.56rem 0.7rem;
+      font: inherit;
+      font-size: 0.93rem;
+      color: var(--text);
+      background: #fffaf2;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    textarea { min-height: 90px; resize: vertical; line-height: 1.5; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.7rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.7rem; }
+    /* ── Date row ── */
+    .date-row {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-end;
+    }
+    .date-row input { max-width: 180px; }
+    /* ── Metrics ── */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.55rem;
+      margin-bottom: 0.7rem;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.6rem 0.7rem;
+      background: #fff6e9;
+    }
+    .metric .lbl {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.22rem;
+    }
+    .metric .val {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #5d371d;
+    }
+    /* ── Route status pill ── */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.38rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .pill.ok  { background: #d9f0d9; color: var(--ok); }
+    .pill.no  { background: #fde8e8; color: var(--err); }
+    .pill.neutral { background: #f0e8d9; color: #7a5a30; }
+    /* ── Photo grid ── */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.5rem;
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 0.3rem;
+    }
+    .photo-thumb {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color .15s, transform .1s;
+    }
+    .photo-thumb:hover { transform: scale(1.04); }
+    .photo-thumb.selected { border-color: var(--accent); }
+    .photo-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-thumb .tick {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .photo-thumb.selected .tick { display: flex; }
+    /* ── Hero preview ── */
+    .hero-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      display: none;
+      margin-bottom: 0.6rem;
+    }
+    .hero-preview.show { display: block; }
+    /* ── Char counter ── */
+    .char-counter {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: right;
+    }
+    .char-counter.warn { color: #c06020; }
+    /* ── Toggle ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+    .toggle-row label { font-weight: 400; cursor: pointer; margin: 0; }
+    input[type="checkbox"] {
+      width: 18px; height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+    /* ── Save row ── */
+    .save-row {
+      display: flex;
+      gap: 0.7rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .save-row .field { flex: 1; min-width: 160px; }
+    .save-row .btn.big { flex-shrink: 0; }
+    /* ── Status messages ── */
+    .status-msg {
+      padding: 0.7rem 0.9rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .status-msg.show { display: block; }
+    .status-msg.ok   { background: #d9f0d9; color: var(--ok); border: 1px solid #b3d9b3; }
+    .status-msg.err  { background: #fde8e8; color: var(--err); border: 1px solid #e8b3b3; }
+    .status-msg.info { background: #f0e8d9; color: #7a5a30; border: 1px solid var(--line); }
+    /* ── Loading spinner ── */
+    .spin { display: inline-block; width: 1em; height: 1em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── Hidden ── */
+    .hidden { display: none !important; }
+    /* ── Responsive ── */
+    @media (max-width: 800px) {
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .metrics { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a class="btn ghost" href="/admin/dashboard/">← Dashboard</a>
+      <a class="btn ghost" href="/" target="_blank" rel="noreferrer">View site</a>
+    </div>
+    <span class="page-title">Walk Builder</span>
+  </div>
+
+  <!-- ── Step 1: Date ── -->
+  <section class="card">
+    <h2>Walk Date</h2>
+    <div class="date-row">
+      <div class="field">
+        <label for="walkDate">Date of walk</label>
+        <input type="date" id="walkDate" />
+      </div>
+      <button class="btn" id="loadBtn" type="button">Load walk data</button>
+    </div>
+    <div class="status-msg" id="loadStatus"></div>
+  </section>
+
+  <!-- ── Auto-loaded: Activity + Route ── -->
+  <section class="card hidden" id="autoCard">
+    <h3>Activity</h3>
+    <div class="metrics" id="metricsGrid">
+      <div class="metric"><span class="lbl">Distance</span><span class="val" id="mDist">—</span></div>
+      <div class="metric"><span class="lbl">Elevation</span><span class="val" id="mElev">—</span></div>
+      <div class="metric"><span class="lbl">Time</span><span class="val" id="mTime">—</span></div>
+      <div class="metric"><span class="lbl">Avg HR</span><span class="val" id="mHr">—</span></div>
+      <div class="metric"><span class="lbl">Calories</span><span class="val" id="mCal">—</span></div>
+    </div>
+
+    <h3>GPS Route</h3>
+    <div id="routeStatus"></div>
+
+    <h3 style="margin-top:0.9rem;">Map Position</h3>
+    <div class="grid-3" style="margin-top:0.1rem;">
+      <div class="field">
+        <label for="routeLat">Centre Lat</label>
+        <input type="number" id="routeLat" step="0.000001" placeholder="53.3600" />
+      </div>
+      <div class="field">
+        <label for="routeLng">Centre Lng</label>
+        <input type="number" id="routeLng" step="0.000001" placeholder="-1.7100" />
+      </div>
+      <div class="field">
+        <label for="routeZoom">Zoom</label>
+        <input type="number" id="routeZoom" step="1" min="8" max="16" placeholder="12" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Hero Photo ── -->
+  <section class="card" id="photosCard">
+    <h2>Hero Photo</h2>
+    <img class="hero-preview" id="heroPreview" alt="Selected hero image" />
+    <div id="photoGrid" class="photo-grid hidden"></div>
+    <div id="photoStatus" class="status-msg info hidden">Loading photos…</div>
+    <div class="field" style="margin-top:0.7rem;">
+      <label for="heroImageUrl">Image URL <span class="opt">(paste or click photo above)</span></label>
+      <input type="url" id="heroImageUrl" placeholder="https://res.cloudinary.com/…" />
+    </div>
+  </section>
+
+  <!-- ── Walk Details ── -->
+  <section class="card">
+    <h2>Walk Details</h2>
+
+    <div class="grid-2" style="margin-bottom:0.7rem;">
+      <div class="field">
+        <label for="walkTitle">Title <span class="opt">(required)</span></label>
+        <input type="text" id="walkTitle" placeholder="Win Hill via Aston" />
+      </div>
+      <div class="field">
+        <label for="walkLocation">Location <span class="opt">(required)</span></label>
+        <input type="text" id="walkLocation" placeholder="Hope Valley, Derbyshire" />
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:0.7rem;">
+      <div class="field">
+        <label for="walkRegion">Region</label>
+        <select id="walkRegion">
+          <option value="Peak District">Peak District</option>
+          <option value="Lake District">Lake District</option>
+          <option value="Yorkshire Dales">Yorkshire Dales</option>
+          <option value="North York Moors">North York Moors</option>
+          <option value="Snowdonia">Snowdonia / Eryri</option>
+          <option value="Brecon Beacons">Brecon Beacons</option>
+          <option value="Dartmoor">Dartmoor</option>
+          <option value="Exmoor">Exmoor</option>
+          <option value="Pennines">Pennines</option>
+          <option value="Scottish Highlands">Scottish Highlands</option>
+          <option value="Cairngorms">Cairngorms</option>
+          <option value="South Downs">South Downs</option>
+          <option value="New Forest">New Forest</option>
+          <option value="Cotswolds">Cotswolds</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="walkDifficulty">Difficulty</label>
+        <select id="walkDifficulty">
+          <option value="Easy">Easy</option>
+          <option value="Moderate" selected>Moderate</option>
+          <option value="Hard">Hard</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:0.7rem;">
+      <div class="field">
+        <label for="walkDistance">Distance (miles)</label>
+        <input type="number" id="walkDistance" step="0.01" min="0" placeholder="8.40" />
+      </div>
+      <div class="field" style="justify-content:end;">
+        <label>&nbsp;</label>
+        <div class="toggle-row">
+          <input type="checkbox" id="dogFriendly" checked />
+          <label for="dogFriendly">Dog-friendly</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:0.7rem;">
+      <label for="walkSummary">Summary <span class="opt">(max 240 chars)</span></label>
+      <textarea id="walkSummary" rows="3" maxlength="240" placeholder="A short description shown on walk cards and in search results…"></textarea>
+      <div class="char-counter" id="summaryCounter">0 / 240</div>
+    </div>
+
+    <div class="field" style="margin-bottom:0.7rem;">
+      <label for="walkParking">Parking</label>
+      <textarea id="walkParking" rows="2" placeholder="Where to park, grid reference or postcode…"></textarea>
+    </div>
+
+    <div class="field" style="margin-bottom:0.7rem;">
+      <label for="walkNotes">Route Notes <span class="opt">(markdown supported)</span></label>
+      <textarea id="walkNotes" rows="8" placeholder="## The walk&#10;&#10;Describe the route, key landmarks, conditions…&#10;&#10;## Ember on route&#10;&#10;## Kit"></textarea>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:0.7rem;">
+      <div class="field">
+        <label for="walkTags">Tags <span class="opt">(comma-separated)</span></label>
+        <input type="text" id="walkTags" placeholder="Peak District, Moorland, Ridge walk" />
+      </div>
+      <div class="field">
+        <label for="osMapsLink">OS Maps Link <span class="opt">(optional)</span></label>
+        <input type="url" id="osMapsLink" placeholder="https://explore.osmaps.com/…" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Save ── -->
+  <section class="card">
+    <h2>Publish</h2>
+    <div class="save-row">
+      <div class="field">
+        <label for="adminPassword">Admin password</label>
+        <input type="password" id="adminPassword" placeholder="Enter password…" />
+      </div>
+      <div class="field" style="justify-content:end;">
+        <label>&nbsp;</label>
+        <div class="toggle-row">
+          <input type="checkbox" id="saveDraft" checked />
+          <label for="saveDraft">Save as draft</label>
+        </div>
+      </div>
+      <button class="btn big" id="saveBtn" type="button" disabled>Save Walk</button>
+    </div>
+    <div class="status-msg" id="saveStatus" style="margin-top:0.8rem;"></div>
+  </section>
+
+</div>
+
+<script is:inline>
+(function () {
+  // ── Env / config ──────────────────────────────────────────
+  const PHOTO_BASE = 'https://upload.nickward.co.uk';
+
+  // ── State ─────────────────────────────────────────────────
+  let selectedDate = '';
+  let activityData = null;
+  let routeData    = null;
+  let heroUrl      = '';
+
+  // ── DOM refs ──────────────────────────────────────────────
+  const el = (id) => document.getElementById(id);
+
+  const walkDateEl   = el('walkDate');
+  const loadBtn      = el('loadBtn');
+  const loadStatus   = el('loadStatus');
+  const autoCard     = el('autoCard');
+  const mDist        = el('mDist');
+  const mElev        = el('mElev');
+  const mTime        = el('mTime');
+  const mHr          = el('mHr');
+  const mCal         = el('mCal');
+  const routeStatusEl = el('routeStatus');
+  const routeLatEl   = el('routeLat');
+  const routeLngEl   = el('routeLng');
+  const routeZoomEl  = el('routeZoom');
+  const photoGridEl  = el('photoGrid');
+  const photoStatusEl = el('photoStatus');
+  const heroPreview  = el('heroPreview');
+  const heroImageUrl = el('heroImageUrl');
+  const walkTitle    = el('walkTitle');
+  const walkDistance = el('walkDistance');
+  const walkSummary  = el('walkSummary');
+  const summaryCounter = el('summaryCounter');
+  const walkTags     = el('walkTags');
+  const walkNotes    = el('walkNotes');
+  const adminPassword = el('adminPassword');
+  const saveDraft    = el('saveDraft');
+  const saveBtn      = el('saveBtn');
+  const saveStatus   = el('saveStatus');
+
+  // ── Summary counter ───────────────────────────────────────
+  walkSummary.addEventListener('input', () => {
+    const len = walkSummary.value.length;
+    summaryCounter.textContent = `${len} / 240`;
+    summaryCounter.classList.toggle('warn', len > 200);
+  });
+
+  // ── Hero image URL → preview ──────────────────────────────
+  heroImageUrl.addEventListener('input', () => {
+    heroUrl = heroImageUrl.value.trim();
+    updateHeroPreview();
+    document.querySelectorAll('.photo-thumb').forEach(t => t.classList.remove('selected'));
+    if (heroUrl) {
+      const match = document.querySelector(`.photo-thumb[data-url="${CSS.escape(heroUrl)}"]`);
+      if (match) match.classList.add('selected');
+    }
+    updateSaveBtn();
+  });
+
+  function updateHeroPreview() {
+    if (heroUrl) {
+      heroPreview.src = heroUrl;
+      heroPreview.classList.add('show');
+    } else {
+      heroPreview.classList.remove('show');
+    }
+  }
+
+  // ── Enable save when required fields present ──────────────
+  function updateSaveBtn() {
+    const ready = walkTitle.value.trim() && heroUrl && el('walkLocation').value.trim() && walkDistance.value;
+    saveBtn.disabled = !ready;
+  }
+
+  [walkTitle, heroImageUrl, el('walkLocation'), walkDistance].forEach(input => {
+    input.addEventListener('input', updateSaveBtn);
+  });
+
+  // ── Load walk data ────────────────────────────────────────
+  loadBtn.addEventListener('click', loadWalkData);
+  walkDateEl.addEventListener('change', () => {
+    if (walkDateEl.value) loadWalkData();
+  });
+
+  async function loadWalkData() {
+    const date = walkDateEl.value;
+    if (!date) { showMsg(loadStatus, 'Please pick a date first.', 'err'); return; }
+    selectedDate = date;
+
+    loadBtn.disabled = true;
+    loadBtn.innerHTML = '<span class="spin"></span> Loading…';
+    showMsg(loadStatus, 'Fetching activity data…', 'info');
+    autoCard.classList.add('hidden');
+
+    try {
+      await Promise.all([
+        fetchActivity(date),
+        fetchRoute(date),
+        fetchPhotos(date),
+      ]);
+      autoCard.classList.remove('hidden');
+      hideMsg(loadStatus);
+    } catch (err) {
+      showMsg(loadStatus, 'Error loading data: ' + err.message, 'err');
+    } finally {
+      loadBtn.disabled = false;
+      loadBtn.textContent = 'Reload';
+    }
+  }
+
+  // ── Activity from Intervals.icu (via /api/strava) ─────────
+  async function fetchActivity(date) {
+    try {
+      const res  = await fetch(`/api/strava?date=${date}`);
+      const data = await res.json();
+      activityData = data.activity || null;
+    } catch {
+      activityData = null;
+    }
+
+    if (activityData) {
+      mDist.textContent = activityData.distance_miles ? activityData.distance_miles + ' mi' : '—';
+      mElev.textContent = activityData.elevation_ft   ? activityData.elevation_ft + ' ft'   : '—';
+      mTime.textContent = activityData.moving_time_min ? formatMins(activityData.moving_time_min) : '—';
+      mHr.textContent   = activityData.avg_hr         ? activityData.avg_hr + ' bpm'         : '—';
+      mCal.textContent  = activityData.calories       ? activityData.calories + ' kcal'      : '—';
+
+      if (activityData.distance_miles && !walkDistance.value) {
+        walkDistance.value = activityData.distance_miles;
+      }
+      if (activityData.name && !walkTitle.value) {
+        walkTitle.value = activityData.name;
+      }
+
+      updateSaveBtn();
+    } else {
+      ['mDist','mElev','mTime','mHr','mCal'].forEach(id => { el(id).textContent = '—'; });
+    }
+  }
+
+  function formatMins(mins) {
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return h ? `${h}h ${m}m` : `${m}m`;
+  }
+
+  // ── Route JSON ────────────────────────────────────────────
+  async function fetchRoute(date) {
+    try {
+      const res = await fetch(`/routes/${date}.json`);
+      if (!res.ok) throw new Error('not found');
+      routeData = await res.json();
+    } catch {
+      routeData = null;
+    }
+
+    if (routeData) {
+      const { bounds, count } = routeData;
+      const centerLat = ((bounds.minLat + bounds.maxLat) / 2).toFixed(6);
+      const centerLng = ((bounds.minLon + bounds.maxLon) / 2).toFixed(6);
+      const span      = Math.max(bounds.maxLat - bounds.minLat, bounds.maxLon - bounds.minLon);
+      const zoom      = span < 0.02 ? 14 : span < 0.05 ? 13 : span < 0.1 ? 12 : span < 0.2 ? 11 : 10;
+
+      routeStatusEl.innerHTML = `<span class="pill ok">✓ GPS route found &mdash; ${count.toLocaleString()} points</span>`;
+      routeLatEl.value  = centerLat;
+      routeLngEl.value  = centerLng;
+      routeZoomEl.value = zoom;
+    } else {
+      routeStatusEl.innerHTML = `<span class="pill no">✗ No GPS data for ${date}</span> <span class="pill neutral" style="margin-left:0.4rem;">Enter map position manually</span>`;
+      routeLatEl.value  = '';
+      routeLngEl.value  = '';
+      routeZoomEl.value = '12';
+    }
+  }
+
+  // ── Photos ────────────────────────────────────────────────
+  async function fetchPhotos(date) {
+    showMsg(photoStatusEl, '<span class="spin"></span> Loading photos…', 'info');
+    photoGridEl.classList.add('hidden');
+    photoGridEl.innerHTML = '';
+
+    let photos = [];
+    try {
+      const res  = await fetch(`${PHOTO_BASE}/api/gallery/wwe?date=${date}`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = await res.json();
+      photos = normalizePhotos(data);
+    } catch (err) {
+      hideMsg(photoStatusEl);
+      const note = document.createElement('p');
+      note.style.color = 'var(--muted)';
+      note.style.fontSize = '0.85rem';
+      note.textContent = `No photos found for ${date} — paste an image URL below.`;
+      photoGridEl.parentNode.insertBefore(note, photoGridEl);
+      return;
+    }
+
+    hideMsg(photoStatusEl);
+
+    if (!photos.length) {
+      const note = document.createElement('p');
+      note.style.color = 'var(--muted)';
+      note.style.fontSize = '0.85rem';
+      note.textContent = `No photos found for ${date} — paste an image URL below.`;
+      photoGridEl.before(note);
+      return;
+    }
+
+    photos.forEach(({ thumb, full }) => {
+      const div = document.createElement('div');
+      div.className = 'photo-thumb';
+      div.dataset.url = full;
+      div.innerHTML = `<img src="${thumb}" loading="lazy" alt="" /><span class="tick">✓</span>`;
+      div.addEventListener('click', () => selectPhoto(full, div));
+      photoGridEl.appendChild(div);
+    });
+
+    photoGridEl.classList.remove('hidden');
+  }
+
+  function normalizePhotos(data) {
+    const arr = Array.isArray(data) ? data : (data.photos || data.images || data.results || []);
+    return arr.map(item => {
+      if (typeof item === 'string') return { thumb: item, full: item };
+      const full  = item.url || item.src || item.image || item.full || '';
+      const thumb = item.thumbnail || item.thumb || item.small || full;
+      return { thumb, full };
+    }).filter(p => p.full);
+  }
+
+  function selectPhoto(url, thumbEl) {
+    document.querySelectorAll('.photo-thumb').forEach(t => t.classList.remove('selected'));
+    thumbEl.classList.add('selected');
+    heroUrl = url;
+    heroImageUrl.value = url;
+    updateHeroPreview();
+    updateSaveBtn();
+  }
+
+  // ── Save walk ─────────────────────────────────────────────
+  saveBtn.addEventListener('click', saveWalk);
+
+  async function saveWalk() {
+    const password = adminPassword.value;
+    if (!password) { showMsg(saveStatus, 'Enter the admin password.', 'err'); return; }
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    const tagsArr = walkTags.value.split(',').map(s => s.trim()).filter(Boolean);
+
+    const payload = {
+      password,
+      title:        walkTitle.value.trim(),
+      summary:      walkSummary.value.trim(),
+      heroImage:    heroUrl,
+      publishDate:  today,
+      walkDate:     selectedDate || today,
+      difficulty:   el('walkDifficulty').value,
+      distance:     parseFloat(walkDistance.value) || 0,
+      location:     el('walkLocation').value.trim(),
+      region:       el('walkRegion').value,
+      dogFriendly:  el('dogFriendly').checked,
+      parking:      el('walkParking').value.trim(),
+      tags:         tagsArr,
+      osMapsLink:   el('osMapsLink').value.trim() || undefined,
+      routeMapLat:  parseFloat(routeLatEl.value) || 0,
+      routeMapLng:  parseFloat(routeLngEl.value) || 0,
+      routeMapZoom: parseInt(routeZoomEl.value) || 12,
+      draft:        saveDraft.checked,
+      notes:        walkNotes.value.trim(),
+    };
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spin"></span> Saving…';
+    showMsg(saveStatus, 'Committing to GitHub…', 'info');
+
+    try {
+      const res  = await fetch('/api/save-walk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+      const slug = data.slug;
+      const path = payload.draft ? `/preview/walks/${slug}/` : `/walks/${slug}/`;
+      showMsg(saveStatus, `✓ Walk saved! Netlify is rebuilding — it'll be live in ~2 minutes.<br><br><a href="${path}" target="_blank" rel="noreferrer" style="color:var(--ok);font-weight:700;">Preview: ${path}</a>`, 'ok');
+
+      // Reset for next walk
+      saveBtn.textContent = 'Save Walk';
+    } catch (err) {
+      showMsg(saveStatus, `Error: ${err.message}`, 'err');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Walk';
+    }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────
+  function showMsg(el, html, type) {
+    el.innerHTML = html;
+    el.className = `status-msg show ${type}`;
+  }
+  function hideMsg(el) {
+    el.className = 'status-msg';
+    el.innerHTML = '';
+  }
+})();
+</script>
+</body>
+</html>

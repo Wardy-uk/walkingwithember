@@ -5,8 +5,8 @@ backend:
 local_backend: true
 publish_mode: editorial_workflow
 
-media_folder: "public/images/uploads"
-public_folder: "/images/uploads"
+media_folder: "public/uploads/images"
+public_folder: "/uploads/images"
 
 collections:
   - name: "walks"
@@ -21,6 +21,7 @@ collections:
       - { label: "Summary", name: "summary", widget: "text", hint: "Short listing summary." }
       - { label: "Hero Image", name: "heroImage", widget: "image" }
       - { label: "Publish Date", name: "publishDate", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "Walk Date", name: "walkDate", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, required: false, hint: "Actual date of the walk — used to match photos. Defaults to Publish Date if not set." }
       - { label: "Distance (miles)", name: "distance", widget: "number", value_type: "float", min: 0.1, step: 0.1 }
       - { label: "Difficulty", name: "difficulty", widget: "select", options: ["Easy", "Moderate", "Hard"] }
       - { label: "Location", name: "location", widget: "string" }

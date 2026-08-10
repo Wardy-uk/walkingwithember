@@ -1,7 +1,6 @@
 ---
 interface Props {
-  gpxUrl: string;
-  osApiKey?: string;
+  routeUrl: string;
   autoPlay?: boolean;
   openTabHref?: string;
   showOpenTab?: boolean;
@@ -9,70 +8,62 @@ interface Props {
 }
 
 const {
-  gpxUrl,
-  osApiKey = "",
+  routeUrl,
   autoPlay = false,
   openTabHref = "",
   showOpenTab = true,
-  panelTitle = "3D Flyby",
+  panelTitle = "3D Route",
 } = Astro.props;
 ---
 
 <section
-  class="card flyby-panel"
+  class="flyby-panel"
   data-flyby-root
-  data-gpx-url={gpxUrl}
-  data-os-api-key={osApiKey}
+  data-route-url={routeUrl}
   data-auto-play={autoPlay ? "yes" : "no"}
 >
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.2.0/dist/maplibre-gl.css" />
+
   <div class="flyby-head">
     <h2>{panelTitle}</h2>
     {showOpenTab && openTabHref && (
-      <a class="button ghost-dark" href={openTabHref} target="_blank" rel="noreferrer">
-        Open In New Tab
+      <a class="flyby-tab-link" href={openTabHref} target="_blank" rel="noreferrer">
+        Full screen ↗
       </a>
     )}
   </div>
+
   <div class="flyby-map-wrap">
     <div class="flyby-map" data-flyby-map></div>
+    <div class="flyby-overlay" data-flyby-overlay>
+      <button class="flyby-play-btn" data-flyby-play aria-label="Play route">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+    </div>
   </div>
+
+  <div class="flyby-elev-wrap">
+    <canvas class="flyby-elev" data-flyby-elev height="64"></canvas>
+    <div class="flyby-elev-cursor" data-flyby-cursor></div>
+  </div>
+
   <div class="flyby-controls">
-    <button class="button" type="button" data-flyby-play>Play</button>
-    <input class="flyby-range" type="range" min="0" max="100" value="0" data-flyby-scrub />
-    <select class="flyby-select" data-flyby-speed>
-      <option value="0.5">0.5x</option>
-      <option value="1">1x</option>
-      <option value="2" selected>2x</option>
-      <option value="4">4x</option>
+    <button class="flyby-ctrl-btn" data-flyby-play2 aria-label="Play/Pause">
+      <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+    </button>
+    <input class="flyby-scrub" type="range" min="0" max="1000" value="0" data-flyby-scrub />
+    <select class="flyby-sel" data-flyby-speed aria-label="Speed">
+      <option value="0.5">½×</option>
+      <option value="1">1×</option>
+      <option value="2" selected>2×</option>
+      <option value="4">4×</option>
     </select>
-    <select class="flyby-select" data-flyby-preset>
+    <select class="flyby-sel" data-flyby-preset aria-label="Camera">
       <option value="cinematic">Cinematic</option>
       <option value="balanced">Balanced</option>
       <option value="chase">Chase</option>
     </select>
-    <select class="flyby-select" data-flyby-map-type disabled={!osApiKey}>
-      {osApiKey ? (
-        <>
-          <option value="Outdoor_3857">OS Outdoor</option>
-          <option value="Road_3857">OS Road</option>
-          <option value="Light_3857">OS Light</option>
-        </>
-      ) : (
-        <option value="osm">OS key required</option>
-      )}
-    </select>
-    <div class="flyby-zoom">
-      <button class="button" type="button" data-flyby-zoom-out>Zoom -</button>
-      <span data-flyby-zoom-readout>13.60</span>
-      <button class="button" type="button" data-flyby-zoom-in>Zoom +</button>
-    </div>
-  </div>
-  <div
-    data-flyby-debug
-    style="margin-top:0.65rem;max-height:150px;overflow:auto;white-space:pre-wrap;padding:0.55rem 0.65rem;border:1px solid #dcc6ac;border-radius:10px;background:#fff6e9;color:#5d4431;font-size:0.78rem;"
-  >
-    Flyby debug ready.
   </div>
 </section>
 
@@ -90,326 +81,292 @@ const {
     smoothPlaybackPoints,
   } from "../lib/flybyCore";
 
-  const terrainSourceId = "terrain-source";
-  const osLayerIds = new Set(["Outdoor_3857", "Road_3857", "Light_3857"]);
-  const cameraPresetIds = new Set(cameraPresets.map((preset) => preset.id));
-  const getCameraPreset = (id) => cameraPresets.find((preset) => preset.id === id) ?? cameraPresets[0];
+  const STRAVA_ORANGE = "#FC4C02";
+  const GHOST_COLOR   = "rgba(255,255,255,0.35)";
 
-  const parseGpxPoints = (xmlText) => {
-    const doc = new DOMParser().parseFromString(xmlText, "application/xml");
-    const trk = Array.from(doc.querySelectorAll("trkpt"));
-    const rte = Array.from(doc.querySelectorAll("rtept"));
-    const nodes = trk.length > 0 ? trk : rte;
-    const points = [];
-    let cumulative = 0;
-    for (let i = 0; i < nodes.length; i += 1) {
-      const node = nodes[i];
-      const lat = Number(node.getAttribute("lat"));
-      const lon = Number(node.getAttribute("lon"));
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-      const prev = points[points.length - 1];
-      if (prev) cumulative += haversineMeters(prev.lat, prev.lon, lat, lon);
-      points.push({ lat, lon, ele: null, time: null, distanceFromStartM: cumulative });
-    }
-    return points;
-  };
-
-  const buildStyle = (mapTypeId, osApiKey) => {
-    const useOs = osApiKey && osLayerIds.has(mapTypeId);
-    const tiles = useOs
-      ? [`https://api.os.uk/maps/raster/v1/zxy/${mapTypeId}/{z}/{x}/{y}.png?key=${encodeURIComponent(osApiKey)}`]
-      : ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"];
-    return {
-      version: 8,
-      sources: {
-        base: {
-          type: "raster",
-          tiles,
-          tileSize: 256,
-          maxzoom: 19,
-          attribution: useOs
-            ? "&copy; Crown copyright and database rights 2026 Ordnance Survey"
-            : "&copy; OpenStreetMap contributors",
-        },
-        [terrainSourceId]: {
-          type: "raster-dem",
-          tiles: ["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],
-          tileSize: 256,
-          encoding: "terrarium",
-          maxzoom: 13,
+  const buildStyle = () => ({
+    version: 8,
+    sources: {
+      satellite: {
+        type: "raster",
+        tiles: ["https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: "Esri, DigitalGlobe, GeoEye, Earthstar Geographics",
+      },
+      terrain: {
+        type: "raster-dem",
+        tiles: ["https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png"],
+        tileSize: 256,
+        encoding: "terrarium",
+        maxzoom: 13,
+      },
+    },
+    layers: [
+      { id: "satellite", type: "raster", source: "satellite" },
+      {
+        id: "hillshade",
+        type: "hillshade",
+        source: "terrain",
+        paint: {
+          "hillshade-shadow-color": "#1a2030",
+          "hillshade-highlight-color": "#aabbd0",
+          "hillshade-exaggeration": 0.45,
         },
       },
-      layers: [
-        { id: "base", type: "raster", source: "base" },
-        {
-          id: "terrain-hillshade",
-          type: "hillshade",
-          source: terrainSourceId,
-          paint: {
-            "hillshade-shadow-color": "#253347",
-            "hillshade-highlight-color": "#93a7c1",
-            "hillshade-exaggeration": 0.55,
-          },
-        },
-      ],
-      terrain: { source: terrainSourceId, exaggeration: 1.25 },
-    };
-  };
+    ],
+    terrain: { source: "terrain", exaggeration: 1.5 },
+  });
 
-  const roots = document.querySelectorAll("[data-flyby-root]");
+  const getCameraPreset = (id) => cameraPresets.find((p) => p.id === id) ?? cameraPresets[0];
+
+  // ── Elevation profile canvas ────────────────────────────────────────────────
+
+  function drawElevProfile(canvas, points, progress) {
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    const eles = points.map((p) => p.ele ?? 0);
+    const minE = Math.min(...eles);
+    const maxE = Math.max(...eles);
+    const span = Math.max(maxE - minE, 1);
+    const totalDist = points[points.length - 1].distanceFromStartM;
+    const px = (i) => (points[i].distanceFromStartM / totalDist) * w;
+    const py = (e) => h - ((e - minE) / span) * (h - 6) - 2;
+
+    // Ghost path (full profile, dim)
+    ctx.beginPath();
+    ctx.moveTo(px(0), py(eles[0]));
+    for (let i = 1; i < points.length; i++) ctx.lineTo(px(i), py(eles[i]));
+    ctx.lineTo(px(points.length - 1), h);
+    ctx.lineTo(px(0), h);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(px(0), py(eles[0]));
+    for (let i = 1; i < points.length; i++) ctx.lineTo(px(i), py(eles[i]));
+    ctx.strokeStyle = "rgba(255,255,255,0.25)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Active path (played portion, orange)
+    const cutoff = Math.floor(progress * (points.length - 1));
+    if (cutoff > 0) {
+      ctx.beginPath();
+      ctx.moveTo(px(0), py(eles[0]));
+      for (let i = 1; i <= cutoff; i++) ctx.lineTo(px(i), py(eles[i]));
+      ctx.lineTo(px(cutoff), h);
+      ctx.lineTo(px(0), h);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, "rgba(252,76,2,0.7)");
+      grad.addColorStop(1, "rgba(252,76,2,0.15)");
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(px(0), py(eles[0]));
+      for (let i = 1; i <= cutoff; i++) ctx.lineTo(px(i), py(eles[i]));
+      ctx.strokeStyle = STRAVA_ORANGE;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  // ── Main ────────────────────────────────────────────────────────────────────
+
   let flybyCounter = 0;
-  for (const root of roots) {
+  for (const root of document.querySelectorAll("[data-flyby-root]")) {
     if (root.dataset.flybyReady === "yes") continue;
     root.dataset.flybyReady = "yes";
-    flybyCounter += 1;
+    flybyCounter++;
 
-    const gpxUrl = root.dataset.gpxUrl || "";
-    if (!gpxUrl) continue;
-    const osApiKey = root.dataset.osApiKey || "";
-    const autoPlay = root.dataset.autoPlay === "yes";
+    const routeUrl = root.dataset.routeUrl || "";
+    if (!routeUrl) continue;
 
-    const mapEl = root.querySelector("[data-flyby-map]");
-    const debugEl = root.querySelector("[data-flyby-debug]");
-    const playBtn = root.querySelector("[data-flyby-play]");
-    const scrub = root.querySelector("[data-flyby-scrub]");
-    const speedSel = root.querySelector("[data-flyby-speed]");
-    const presetSel = root.querySelector("[data-flyby-preset]");
-    const mapTypeSel = root.querySelector("[data-flyby-map-type]");
-    const zoomOutBtn = root.querySelector("[data-flyby-zoom-out]");
-    const zoomInBtn = root.querySelector("[data-flyby-zoom-in]");
-    const zoomReadout = root.querySelector("[data-flyby-zoom-readout]");
-    if (
-      !mapEl ||
-      !debugEl ||
-      !playBtn ||
-      !scrub ||
-      !speedSel ||
-      !presetSel ||
-      !mapTypeSel ||
-      !zoomOutBtn ||
-      !zoomInBtn ||
-      !zoomReadout
-    ) {
-      continue;
-    }
+    const mapEl       = root.querySelector("[data-flyby-map]");
+    const overlayEl   = root.querySelector("[data-flyby-overlay]");
+    const playBtns    = root.querySelectorAll("[data-flyby-play],[data-flyby-play2]");
+    const scrub       = root.querySelector("[data-flyby-scrub]");
+    const speedSel    = root.querySelector("[data-flyby-speed]");
+    const presetSel   = root.querySelector("[data-flyby-preset]");
+    const elevCanvas  = root.querySelector("[data-flyby-elev]");
+    const elevCursor  = root.querySelector("[data-flyby-cursor]");
+    const autoPlay    = root.dataset.autoPlay === "yes";
 
-    const logFlyby = (message) => {
-      const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
-      const line = `[${ts}] ${message}`;
-      console.log(`[flyby] ${line}`);
-      const previous = (debugEl.textContent || "").trim();
-      const next = `${line}\n${previous}`.split("\n").slice(0, 28).join("\n");
-      debugEl.textContent = next;
-    };
+    const srcGhost  = `flyby-ghost-${flybyCounter}`;
+    const srcActive = `flyby-active-${flybyCounter}`;
+    const lyrGhostC = `flyby-ghost-casing-${flybyCounter}`;
+    const lyrGhost  = `flyby-ghost-line-${flybyCounter}`;
+    const lyrActC   = `flyby-active-casing-${flybyCounter}`;
+    const lyrAct    = `flyby-active-line-${flybyCounter}`;
 
-    const routeSourceId = `flyby-route-${flybyCounter}`;
-    const routeCasingId = `flyby-route-casing-${flybyCounter}`;
-    const routeLineId = `flyby-route-line-${flybyCounter}`;
-
-    let playbackState = "idle";
-    let hasPlayed = false;
-    let progress = 0;
-    let speed = Number(speedSel.value || "2");
-    let zoomOffset = 0;
-    let mapTypeId = osApiKey ? "Outdoor_3857" : "osm";
-    let presetId = "cinematic";
-    let rafId = null;
-    let lastTs = null;
-    let lastCameraTs = 0;
-    let lastRouteTs = 0;
-    let lastBearing = null;
-    let cameraState = null;
     let playbackPoints = [];
-
-    const emptyFeatureCollection = {
-      type: "FeatureCollection",
-      features: [],
-    };
+    let playState = "idle";
+    let progress  = 0;
+    let speed     = 2;
+    let presetId  = "cinematic";
+    let rafId     = null;
+    let lastTs    = null;
+    let lastBearing = null;
+    let camState    = null;
+    let lastCamTs   = 0;
+    let lastRouteTs = 0;
 
     const map = new maplibregl.Map({
       container: mapEl,
-      style: buildStyle(mapTypeId, osApiKey),
+      style: buildStyle(),
       center: [-2.6, 54.4],
       zoom: 5.5,
-      pitch: 68,
+      pitch: 70,
       bearing: -20,
       maxPitch: 85,
     });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
-    logFlyby(`Init gpxUrl=${gpxUrl} osApiKey=${osApiKey ? "yes" : "no"} autoPlay=${autoPlay ? "yes" : "no"}`);
 
-    const ensureRouteLayers = () => {
+    const emptyFC = { type: "FeatureCollection", features: [] };
+
+    const ensureLayers = () => {
       if (!map.isStyleLoaded()) return;
-      if (map.getLayer(routeLineId)) map.removeLayer(routeLineId);
-      if (map.getLayer(routeCasingId)) map.removeLayer(routeCasingId);
-      if (map.getSource(routeSourceId)) map.removeSource(routeSourceId);
+      for (const id of [lyrGhostC, lyrGhost, lyrActC, lyrAct]) {
+        if (map.getLayer(id)) map.removeLayer(id);
+      }
+      for (const id of [srcGhost, srcActive]) {
+        if (map.getSource(id)) map.removeSource(id);
+      }
+      map.addSource(srcGhost,  { type: "geojson", data: emptyFC });
+      map.addSource(srcActive, { type: "geojson", data: emptyFC });
 
-      map.addSource(routeSourceId, {
-        type: "geojson",
-        data: emptyFeatureCollection,
-      });
-      map.addLayer({
-        id: routeCasingId,
-        type: "line",
-        source: routeSourceId,
-        paint: {
-          "line-color": "#111111",
-          "line-width": 8,
-          "line-opacity": 0.92,
-        },
-        layout: {
-          "line-cap": "round",
-          "line-join": "round",
-        },
-      });
-      map.addLayer({
-        id: routeLineId,
-        type: "line",
-        source: routeSourceId,
-        paint: {
-          "line-color": "#ff4040",
-          "line-width": 4.5,
-          "line-opacity": 0.98,
-        },
-        layout: {
-          "line-cap": "round",
-          "line-join": "round",
-        },
-      });
+      map.addLayer({ id: lyrGhostC, type: "line", source: srcGhost,
+        paint: { "line-color": "#000", "line-width": 5, "line-opacity": 0.4 },
+        layout: { "line-cap": "round", "line-join": "round" } });
+      map.addLayer({ id: lyrGhost, type: "line", source: srcGhost,
+        paint: { "line-color": GHOST_COLOR, "line-width": 2.5, "line-opacity": 1 },
+        layout: { "line-cap": "round", "line-join": "round" } });
+
+      map.addLayer({ id: lyrActC, type: "line", source: srcActive,
+        paint: { "line-color": "#7a2000", "line-width": 9, "line-opacity": 0.7 },
+        layout: { "line-cap": "round", "line-join": "round" } });
+      map.addLayer({ id: lyrAct, type: "line", source: srcActive,
+        paint: { "line-color": STRAVA_ORANGE, "line-width": 5, "line-opacity": 1 },
+        layout: { "line-cap": "round", "line-join": "round" } });
     };
 
-    const setRouteCoords = (coords) => {
-      const source = map.getSource(routeSourceId);
-      if (!source || typeof source.setData !== "function") return;
-      if (!coords || coords.length < 2) {
-        source.setData(emptyFeatureCollection);
-        return;
-      }
-      source.setData({
+    const setGhost = (coords) => {
+      const src = map.getSource(srcGhost);
+      if (!src) return;
+      src.setData(coords.length < 2 ? emptyFC : {
         type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "LineString",
-              coordinates: coords,
-            },
-          },
-        ],
+        features: [{ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } }],
       });
     };
 
-    const drawRoute = (force = false, nowMs = performance.now()) => {
+    const setActive = (coords) => {
+      const src = map.getSource(srcActive);
+      if (!src) return;
+      src.setData(coords.length < 2 ? emptyFC : {
+        type: "FeatureCollection",
+        features: [{ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } }],
+      });
+    };
+
+    const drawActive = (nowMs = performance.now()) => {
       if (!playbackPoints.length) return;
-      if (!force && nowMs - lastRouteTs < 33) return;
+      if (nowMs - lastRouteTs < 33) return;
       lastRouteTs = nowMs;
-
-      if (!hasPlayed && progress <= 0.0001) {
-        setRouteCoords([]);
-        return;
-      }
-
-      const totalDistance = playbackPoints[playbackPoints.length - 1].distanceFromStartM;
-      const revealDistance = clamp(progress, 0, 1) * totalDistance;
-      const revealLonLat = [];
-      for (let i = 0; i < playbackPoints.length; i += 1) {
-        const point = playbackPoints[i];
-        if (point.distanceFromStartM <= revealDistance) {
-          revealLonLat.push([point.lon, point.lat]);
-          continue;
-        }
+      const total = playbackPoints[playbackPoints.length - 1].distanceFromStartM;
+      const reveal = clamp(progress, 0, 1) * total;
+      const coords = [];
+      for (let i = 0; i < playbackPoints.length; i++) {
+        const pt = playbackPoints[i];
+        if (pt.distanceFromStartM <= reveal) { coords.push([pt.lon, pt.lat]); continue; }
         if (i > 0) {
           const prev = playbackPoints[i - 1];
-          const span = Math.max(point.distanceFromStartM - prev.distanceFromStartM, 0.0001);
-          const t = clamp((revealDistance - prev.distanceFromStartM) / span, 0, 1);
-          revealLonLat.push([lerp(prev.lon, point.lon, t), lerp(prev.lat, point.lat, t)]);
+          const span = Math.max(pt.distanceFromStartM - prev.distanceFromStartM, 1e-4);
+          const t = clamp((reveal - prev.distanceFromStartM) / span, 0, 1);
+          coords.push([lerp(prev.lon, pt.lon, t), lerp(prev.lat, pt.lat, t)]);
         }
         break;
       }
-      setRouteCoords(revealLonLat);
+      setActive(coords);
     };
 
-    const updateCamera = (value, nowMs = performance.now(), force = false) => {
+    const updateCamera = (val, nowMs = performance.now(), force = false) => {
       if (!playbackPoints.length) return;
-      if (!force && nowMs - lastCameraTs < 16) return;
-      lastCameraTs = nowMs;
-
+      if (!force && nowMs - lastCamTs < 16) return;
+      lastCamTs = nowMs;
       const preset = getCameraPreset(presetId);
-      const totalDistance = playbackPoints[playbackPoints.length - 1].distanceFromStartM;
-      const targetDistance = clamp(value, 0, 1) * totalDistance;
-      const current = interpolatePointAtDistance(playbackPoints, targetDistance);
-      const lookahead = interpolatePointAtDistance(playbackPoints, targetDistance + preset.lookaheadMeters);
-      const behind = interpolatePointAtDistance(playbackPoints, targetDistance - preset.chaseMeters);
-
-      const lookDistance = haversineMeters(current.lat, current.lon, lookahead.lat, lookahead.lon);
-      const rawBearing =
-        lookDistance < 5 && lastBearing !== null
-          ? lastBearing
-          : bearingDeg(current.lat, current.lon, lookahead.lat, lookahead.lon);
-      const smoothedBearing = (() => {
+      const total = playbackPoints[playbackPoints.length - 1].distanceFromStartM;
+      const targetDist = clamp(val, 0, 1) * total;
+      const cur     = interpolatePointAtDistance(playbackPoints, targetDist);
+      const look    = interpolatePointAtDistance(playbackPoints, targetDist + preset.lookaheadMeters);
+      const behind  = interpolatePointAtDistance(playbackPoints, targetDist - preset.chaseMeters);
+      const lookDist = haversineMeters(cur.lat, cur.lon, look.lat, look.lon);
+      const rawBearing = lookDist < 5 && lastBearing !== null
+        ? lastBearing
+        : bearingDeg(cur.lat, cur.lon, look.lat, look.lon);
+      const smoothBearing = (() => {
         if (lastBearing === null) return rawBearing;
-        const desired =
-          (lastBearing + shortestAngleDiff(lastBearing, rawBearing) * preset.bearingSmoothing + 360) %
-          360;
-        const turnStep = clamp(shortestAngleDiff(lastBearing, desired), -2.5, 2.5);
-        return (lastBearing + turnStep + 360) % 360;
+        const desired = (lastBearing + shortestAngleDiff(lastBearing, rawBearing) * preset.bearingSmoothing + 360) % 360;
+        const step = clamp(shortestAngleDiff(lastBearing, desired), -2.5, 2.5);
+        return (lastBearing + step + 360) % 360;
       })();
-      lastBearing = smoothedBearing;
+      lastBearing = smoothBearing;
+      const zoom = clamp(preset.zoomBase, preset.zoomMin, preset.zoomMax);
+      const desLon = lerp(cur.lon, behind.lon, 0.74);
+      const desLat = lerp(cur.lat, behind.lat, 0.74);
+      const follow = playState === "playing" ? 0.14 : 0.28;
+      const cam = camState ? {
+        lon:     lerp(camState.lon, desLon, follow),
+        lat:     lerp(camState.lat, desLat, follow),
+        zoom:    lerp(camState.zoom, zoom, follow),
+        bearing: (camState.bearing + shortestAngleDiff(camState.bearing, smoothBearing) * follow + 360) % 360,
+        pitch:   lerp(camState.pitch, preset.pitch, follow),
+      } : { lon: desLon, lat: desLat, zoom, bearing: smoothBearing, pitch: preset.pitch };
+      camState = cam;
+      map.jumpTo({ center: [cam.lon, cam.lat], bearing: cam.bearing, pitch: cam.pitch, zoom: cam.zoom });
+      drawActive(nowMs);
+    };
 
-      const zoom = clamp(preset.zoomBase + zoomOffset, preset.zoomMin, preset.zoomMax);
-      zoomReadout.textContent = zoom.toFixed(2);
-      const desiredLon = lerp(current.lon, behind.lon, 0.74);
-      const desiredLat = lerp(current.lat, behind.lat, 0.74);
-      const follow = playbackState === "playing" ? 0.14 : 0.28;
+    const updateElev = () => {
+      if (!elevCanvas || !elevCursor || !playbackPoints.length) return;
+      drawElevProfile(elevCanvas, playbackPoints, progress);
+      const pct = progress * 100;
+      elevCursor.style.left = `${pct}%`;
+    };
 
-      const smoothedCamera = cameraState
-        ? {
-            lon: lerp(cameraState.lon, desiredLon, follow),
-            lat: lerp(cameraState.lat, desiredLat, follow),
-            zoom: lerp(cameraState.zoom, zoom, follow),
-            bearing:
-              (cameraState.bearing + shortestAngleDiff(cameraState.bearing, smoothedBearing) * follow + 360) %
-              360,
-            pitch: lerp(cameraState.pitch, preset.pitch, follow),
-          }
-        : { lon: desiredLon, lat: desiredLat, zoom, bearing: smoothedBearing, pitch: preset.pitch };
-      cameraState = smoothedCamera;
-
-      map.jumpTo({
-        center: [smoothedCamera.lon, smoothedCamera.lat],
-        bearing: smoothedCamera.bearing,
-        pitch: smoothedCamera.pitch,
-        zoom: smoothedCamera.zoom,
-      });
-      drawRoute(false, nowMs);
+    const setPlayIcons = (playing) => {
+      for (const btn of playBtns) {
+        const p = btn.querySelector(".icon-play");
+        const pa = btn.querySelector(".icon-pause");
+        if (p)  p.style.display  = playing ? "none" : "";
+        if (pa) pa.style.display = playing ? "" : "none";
+      }
     };
 
     const stopPlayback = () => {
       if (rafId !== null) cancelAnimationFrame(rafId);
-      rafId = null;
-      lastTs = null;
+      rafId = null; lastTs = null;
     };
 
-    const tick = (timestamp) => {
-      if (!playbackPoints.length) {
-        stopPlayback();
-        return;
-      }
-      if (lastTs === null) lastTs = timestamp;
-      const delta = timestamp - lastTs;
-      lastTs = timestamp;
-
-      const totalDistance = Math.max(playbackPoints[playbackPoints.length - 1].distanceFromStartM, 1);
-      const baseDurationMs = clamp(totalDistance * 6, 25000, 150000);
-      const increment = delta / (baseDurationMs / speed);
-      progress = clamp(progress + increment, 0, 1);
-      scrub.value = String(Math.round(progress * 100));
-      updateCamera(progress, timestamp);
-
+    const tick = (ts) => {
+      if (lastTs === null) lastTs = ts;
+      const delta = ts - lastTs;
+      lastTs = ts;
+      const total = Math.max(playbackPoints[playbackPoints.length - 1].distanceFromStartM, 1);
+      const baseDur = clamp(total * 6, 25000, 150000);
+      progress = clamp(progress + delta / (baseDur / speed), 0, 1);
+      scrub.value = String(Math.round(progress * 1000));
+      updateCamera(progress, ts);
+      updateElev();
       if (progress >= 1) {
-        playbackState = "paused";
-        playBtn.textContent = "Play";
+        playState = "paused";
+        setPlayIcons(false);
         stopPlayback();
         return;
       }
@@ -418,105 +375,248 @@ const {
 
     const startPlayback = () => {
       if (!playbackPoints.length) return;
-      if (progress >= 1) {
-        progress = 0;
-        scrub.value = "0";
-        lastBearing = null;
-        cameraState = null;
-      }
-      hasPlayed = true;
-      playbackState = "playing";
-      playBtn.textContent = "Pause";
+      if (progress >= 1) { progress = 0; scrub.value = "0"; lastBearing = null; camState = null; }
+      overlayEl?.remove();
+      playState = "playing";
+      setPlayIcons(true);
       if (rafId === null) rafId = requestAnimationFrame(tick);
     };
 
-    const setPaused = () => {
-      playbackState = "paused";
-      playBtn.textContent = "Play";
+    const pausePlayback = () => {
+      playState = "paused";
+      setPlayIcons(false);
       stopPlayback();
     };
 
-    playBtn.addEventListener("click", () => {
-      if (playbackState === "playing") setPaused();
-      else startPlayback();
-    });
+    for (const btn of playBtns) {
+      btn.addEventListener("click", () => {
+        if (playState === "playing") pausePlayback();
+        else startPlayback();
+      });
+    }
 
     scrub.addEventListener("input", () => {
-      progress = Number(scrub.value) / 100;
-      hasPlayed = hasPlayed || progress > 0;
+      progress = Number(scrub.value) / 1000;
       updateCamera(progress, performance.now(), true);
-      drawRoute(true);
+      drawActive();
+      updateElev();
     });
-
-    speedSel.addEventListener("change", () => {
-      speed = Number(speedSel.value) || 2;
-    });
-
+    speedSel.addEventListener("change", () => { speed = Number(speedSel.value) || 2; });
     presetSel.addEventListener("change", () => {
-      presetId = cameraPresetIds.has(presetSel.value) ? presetSel.value : "cinematic";
-      lastBearing = null;
-      cameraState = null;
+      presetId = presetSel.value;
+      lastBearing = null; camState = null;
       updateCamera(progress, performance.now(), true);
     });
 
-    mapTypeSel.addEventListener("change", () => {
-      mapTypeId = mapTypeSel.value;
-      map.setStyle(buildStyle(mapTypeId, osApiKey));
-    });
-
-    zoomInBtn.addEventListener("click", () => {
-      zoomOffset = clamp(zoomOffset + 0.2, -1.5, 1.5);
+    // ── Scrub by clicking elevation profile ─────────────────────────────────
+    elevCanvas?.addEventListener("click", (e) => {
+      const rect = elevCanvas.getBoundingClientRect();
+      progress = clamp((e.clientX - rect.left) / rect.width, 0, 1);
+      scrub.value = String(Math.round(progress * 1000));
       updateCamera(progress, performance.now(), true);
+      drawActive();
+      updateElev();
     });
 
-    zoomOutBtn.addEventListener("click", () => {
-      zoomOffset = clamp(zoomOffset - 0.2, -1.5, 1.5);
-      updateCamera(progress, performance.now(), true);
-    });
+    map.on("load", () => { ensureLayers(); });
+    map.on("styledata", () => { ensureLayers(); drawActive(performance.now()); });
 
-    map.on("load", () => {
-      logFlyby("Map loaded.");
-      ensureRouteLayers();
-      setRouteCoords([]);
-    });
+    // ── Load route JSON ──────────────────────────────────────────────────────
+    fetch(routeUrl)
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((data) => {
+        // data.coords = [[lon, lat, ele], ...]
+        let cum = 0;
+        const rawPoints = data.coords.map(([lon, lat, ele], i) => {
+          if (i > 0) {
+            const [plon, plat] = data.coords[i - 1];
+            cum += haversineMeters(plat, plon, lat, lon);
+          }
+          return { lat, lon, ele: ele ?? 0, distanceFromStartM: cum };
+        });
 
-    map.on("styledata", () => {
-      logFlyby(`Style updated (${mapTypeId}).`);
-      ensureRouteLayers();
-      drawRoute(true);
-    });
-
-    fetch(gpxUrl)
-      .then((res) => {
-        logFlyby(`GPX fetch status=${res.status}`);
-        if (!res.ok) throw new Error(`GPX fetch failed (${res.status})`);
-        return res.text();
-      })
-      .then((xml) => {
-        const rawPoints = parseGpxPoints(xml);
-        if (rawPoints.length < 2) return;
         const sampled = buildPlaybackPoints(rawPoints, 1800);
         playbackPoints = smoothPlaybackPoints(sampled, 2);
-        logFlyby(`Playback points=${playbackPoints.length}`);
-        const start = playbackPoints[0];
-        const bounds = new maplibregl.LngLatBounds([start.lon, start.lat], [start.lon, start.lat]);
-        for (let i = 1; i < playbackPoints.length; i += 1) {
-          bounds.extend([playbackPoints[i].lon, playbackPoints[i].lat]);
-        }
-        map.fitBounds(bounds, {
-          padding: 40,
-          maxZoom: 14,
-          duration: 0,
-          pitch: 68,
-          bearing: 0,
-        });
+
+        // Show full ghost route immediately
+        const allCoords = playbackPoints.map((p) => [p.lon, p.lat]);
+        const trySetGhost = () => {
+          if (map.getSource(srcGhost)) { setGhost(allCoords); return; }
+          map.once("idle", () => setGhost(allCoords));
+        };
+        trySetGhost();
+
+        // Fit map to route
+        const bounds = new maplibregl.LngLatBounds(
+          [playbackPoints[0].lon, playbackPoints[0].lat],
+          [playbackPoints[0].lon, playbackPoints[0].lat]
+        );
+        for (const p of playbackPoints) bounds.extend([p.lon, p.lat]);
+        map.fitBounds(bounds, { padding: 48, maxZoom: 14, duration: 800, pitch: 70, bearing: -20 });
+
         updateCamera(0, performance.now(), true);
-        setRouteCoords([]);
+        updateElev();
+        window.addEventListener("resize", updateElev);
+
         if (autoPlay) startPlayback();
       })
-      .catch(() => {
-        // Keep panel interactive even if GPX load fails.
-      });
+      .catch(() => {});
   }
 </script>
 
+<style>
+  .flyby-panel {
+    background: #0d1117;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .flyby-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1rem 0.7rem;
+    gap: 0.75rem;
+  }
+
+  .flyby-head h2 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e0d8d0;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .flyby-tab-link {
+    font-size: 0.78rem;
+    color: #FC4C02;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .flyby-tab-link:hover { text-decoration: underline; }
+
+  .flyby-map-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #0d1117;
+  }
+
+  .flyby-map {
+    position: absolute;
+    inset: 0;
+  }
+
+  .flyby-overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(0,0,0,0.38);
+    z-index: 10;
+    cursor: pointer;
+  }
+
+  .flyby-play-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(252,76,2,0.9);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+    box-shadow: 0 4px 20px rgba(252,76,2,0.5);
+  }
+  .flyby-play-btn:hover { transform: scale(1.08); background: #FC4C02; }
+  .flyby-play-btn svg { width: 32px; height: 32px; margin-left: 3px; }
+
+  .flyby-elev-wrap {
+    position: relative;
+    height: 64px;
+    background: #0d1117;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .flyby-elev {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: pointer;
+  }
+
+  .flyby-elev-cursor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #FC4C02;
+    transform: translateX(-50%);
+    pointer-events: none;
+    box-shadow: 0 0 6px rgba(252,76,2,0.8);
+  }
+
+  .flyby-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    background: #0d1117;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .flyby-ctrl-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(252,76,2,0.15);
+    color: #FC4C02;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .flyby-ctrl-btn:hover { background: rgba(252,76,2,0.3); }
+  .flyby-ctrl-btn svg { width: 18px; height: 18px; }
+
+  .flyby-scrub {
+    flex: 1;
+    min-width: 0;
+    accent-color: #FC4C02;
+    height: 4px;
+    cursor: pointer;
+  }
+
+  .flyby-sel {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    color: #c8bfb5;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.45rem;
+    cursor: pointer;
+  }
+  .flyby-sel:focus { outline: 1px solid #FC4C02; }
+
+  /* MapLibre overrides for dark panel */
+  .flyby-map .maplibregl-canvas { display: block; }
+  .flyby-map .maplibregl-ctrl-group {
+    background: rgba(13,17,23,0.85) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+  }
+  .flyby-map .maplibregl-ctrl button {
+    background-color: transparent !important;
+    color: #c8bfb5 !important;
+  }
+
+  @media (max-width: 500px) {
+    .flyby-sel:last-child { display: none; }
+  }
+</style>

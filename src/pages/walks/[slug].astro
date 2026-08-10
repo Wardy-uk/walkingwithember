@@ -1,8 +1,11 @@
 ---
 import "leaflet/dist/leaflet.css";
+import { existsSync } from "fs";
+import { join } from "path";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import FlybyPanel from "../../components/FlybyPanel.astro";
 import { getPublishedWalks, getRegions, getSiteSettings } from "../../lib/content";
+import { imgSrc } from "../../lib/imgSrc";
 
 export async function getStaticPaths() {
   const walks = await getPublishedWalks();
@@ -22,6 +25,10 @@ const encodedTitle = encodeURIComponent(walk.data.title);
 const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
 const gpxUrl = walk.data.gpxDownload ?? "";
 const hasGpx = Boolean(gpxUrl);
+const walkDateStr = (walk.data.walkDate ?? walk.data.publishDate).toISOString().slice(0, 10);
+const routeFilePath = join(process.cwd(), "public", "routes", `${walkDateStr}.json`);
+const hasRoute = existsSync(routeFilePath);
+const routeUrl = hasRoute ? `/routes/${walkDateStr}.json` : "";
 const estimatedHours = walk.data.difficulty === "Hard"
   ? Math.max(3, Math.round(walk.data.distance / 2))
   : walk.data.difficulty === "Moderate"
@@ -38,7 +45,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
 >
   <div class="container page-grid">
     <article class="card article">
-      <img src={walk.data.heroImage} alt={walk.data.title} />
+      <img src={imgSrc(walk.data.heroImage)} alt={walk.data.title} />
       <h1>{walk.data.title}</h1>
       <p class="article-meta">
         {walk.data.location} · {walk.data.region} · {walk.data.distance} mi · {walk.data.difficulty} ·
@@ -57,7 +64,13 @@ const estimatedHours = walk.data.difficulty === "Hard"
         <div><span>Dog Access</span><strong>{walk.data.dogFriendly ? "Dog-friendly" : "Lead only / restricted areas"}</strong></div>
       </section>
 
-      <section class:list={["map-compare", hasGpx && "two-panels"]}>
+      <section class="card strava-stats" id="strava-stats" data-date={walkDateStr}>
+        <div class="strava-inner">
+          <span class="strava-loading">Loading Strava data…</span>
+        </div>
+      </section>
+
+      <section class:list={["map-compare", hasRoute && "two-panels"]}>
         <section class="card map-card">
           <div class="flyby-head">
             <h2>Route Map</h2>
@@ -79,16 +92,15 @@ const estimatedHours = walk.data.difficulty === "Hard"
             data-map-api-key={mapApiKey}
             data-gpx-url={gpxUrl}
           ></div>
-          <div id="route-debug-log" style="margin-top:0.65rem;max-height:140px;overflow:auto;white-space:pre-wrap;padding:0.55rem 0.65rem;border:1px solid #dcc6ac;border-radius:10px;background:#fff6e9;color:#5d4431;font-size:0.78rem;">Route debug ready.</div>
+          <div id="route-debug-log" hidden style="margin-top:0.65rem;max-height:140px;overflow:auto;white-space:pre-wrap;padding:0.55rem 0.65rem;border:1px solid #dcc6ac;border-radius:10px;background:#fff6e9;color:#5d4431;font-size:0.78rem;"></div>
         </section>
-        {hasGpx && (
+        {hasRoute && (
           <FlybyPanel
-            gpxUrl={gpxUrl}
-            osApiKey={mapApiKey}
+            routeUrl={routeUrl}
             autoPlay={false}
             openTabHref={`/flyby/${walk.slug}/?autoplay=1`}
             showOpenTab={true}
-            panelTitle="3D Flyby"
+            panelTitle="3D Route"
           />
         )}
       </section>
@@ -116,6 +128,11 @@ const estimatedHours = walk.data.difficulty === "Hard"
       <section class="card">
         <h2>Route Notes</h2>
         <Content />
+      </section>
+
+      <section class="card wwe-photos" id="wwe-photos" data-date={walkDateStr}>
+        <h2>Photos from this walk</h2>
+        <div class="wwe-grid" id="wwe-grid"></div>
       </section>
 
       <section class="card">
@@ -264,5 +281,127 @@ const estimatedHours = walk.data.difficulty === "Hard"
       }
     }
   </script>
+  <script>
+    // Strava stats
+    const stravaSection = document.getElementById('strava-stats') as HTMLElement | null;
+    const stravaDate    = stravaSection?.dataset.date;
+
+    if (stravaDate && stravaSection) {
+      fetch(`/api/strava?date=${stravaDate}`)
+        .then(r => r.json())
+        .then(({ activity }: { activity: any }) => {
+          if (!activity) { stravaSection.hidden = true; return; }
+
+          const fmt = (v: string | number | null, unit: string) =>
+            v != null ? `<strong>${v}</strong><span>${unit}</span>` : '';
+
+          const hrs  = activity.moving_time_min ? Math.floor(activity.moving_time_min / 60) : null;
+          const mins = activity.moving_time_min ? activity.moving_time_min % 60 : null;
+          const time = hrs != null
+            ? `<strong>${hrs}h ${String(mins).padStart(2,'0')}m</strong><span>time</span>`
+            : '';
+
+          stravaSection.innerHTML = `
+            <div class="strava-head">
+              <span class="strava-name">${activity.name}</span>
+              ${activity.strava_url ? `<a href="${activity.strava_url}" class="strava-link" target="_blank" rel="noreferrer">View on Strava →</a>` : ''}
+            </div>
+            <div class="strava-grid">
+              ${fmt(activity.distance_miles, 'miles')}
+              ${fmt(activity.elevation_ft ? activity.elevation_ft.toLocaleString() : null, 'ft gain')}
+              ${time}
+              ${fmt(activity.avg_hr, 'avg bpm')}
+              ${fmt(activity.calories, 'kcal')}
+            </div>`;
+        })
+        .catch(() => { if (stravaSection) stravaSection.hidden = true; });
+    } else if (stravaSection) {
+      stravaSection.hidden = true;
+    }
+  </script>
+
+  <script>
+    const wweSection = document.getElementById('wwe-photos') as HTMLElement | null;
+    const wweGrid    = document.getElementById('wwe-grid');
+    const wweDate    = (wweSection as HTMLElement | null)?.dataset.date;
+
+    if (wweDate && wweSection && wweGrid) {
+      fetch(`https://upload.nickward.co.uk/api/gallery/wwe?date=${wweDate}`)
+        .then(r => r.json())
+        .then(({ images }: { images: any[] }) => {
+          if (!images?.length) { wweSection.hidden = true; return; }
+          wweGrid.innerHTML = images.map(img => {
+            const thumb = img.image_url.replace('/upload/', '/upload/w_600,c_limit,q_auto/');
+            const alt   = img.caption || img.location_name || 'Walk photo';
+            return `<a href="${img.image_url}" target="_blank" rel="noreferrer" class="wwe-thumb">
+              <img src="${thumb}" alt="${alt}" loading="lazy" />
+            </a>`;
+          }).join('');
+        })
+        .catch(() => { if (wweSection) wweSection.hidden = true; });
+    } else if (wweSection) {
+      wweSection.hidden = true;
+    }
+  </script>
+
+  <style>
+    /* Strava */
+    .strava-stats[hidden] { display: none; }
+    .strava-loading { color: #b0a090; font-size: 0.85rem; }
+    .strava-head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .strava-logo { width: 1.4rem; height: 1.4rem; flex-shrink: 0; }
+    .strava-name { font-weight: 600; font-size: 1rem; flex: 1; min-width: 0; }
+    .strava-link {
+      font-size: 0.75rem;
+      color: #FC4C02;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .strava-link:hover { text-decoration: underline; }
+    .strava-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem 2rem;
+    }
+    .strava-grid strong {
+      display: block;
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1;
+      color: #2a1f16;
+    }
+    .strava-grid span {
+      display: block;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #9a8070;
+      margin-top: 0.2rem;
+    }
+
+    /* WWE photos */
+    .wwe-photos[hidden] { display: none; }
+    .wwe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .wwe-thumb img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      display: block;
+      border-radius: 4px;
+      transition: opacity 0.2s;
+    }
+    .wwe-thumb:hover img { opacity: 0.85; }
+  </style>
 </BaseLayout>
 

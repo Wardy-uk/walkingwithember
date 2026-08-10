@@ -1,0 +1,260 @@
+---
+export const prerender = true;
+
+const PAGES = [
+  { slug: 'home',    label: 'Home',    path: 'src/content/pages/home.md' },
+  { slug: 'about',   label: 'About',   path: 'src/content/pages/about.md' },
+  { slug: 'contact', label: 'Contact', path: 'src/content/pages/contact.md' },
+  { slug: 'privacy', label: 'Privacy', path: 'src/content/pages/privacy.md' },
+];
+---
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
+  <title>Pages · Walking with Ember</title>
+  <style>
+    :root { --bg:#efe3cf; --card:#fff8ee; --text:#2b1d14; --muted:#7c6654; --line:#dcc6ac; --accent:#be6d37; --accent2:#8a4f27; --ok:#3f7a3f; --err:#8a2020; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:"Manrope","Segoe UI",Arial,sans-serif; font-size:.95rem; color:var(--text); background:linear-gradient(130deg,#f3e7d4 0%,#ecd9be 45%,#e3c9a9 100%); min-height:100vh; }
+    .wrap { width:min(960px,calc(100% - 2rem)); margin:1.2rem auto 3rem; display:grid; gap:.9rem; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:.6rem; flex-wrap:wrap; }
+    .page-title { font-family:"Fraunces",Georgia,serif; font-size:1.3rem; color:var(--accent2); }
+    .card { background:linear-gradient(180deg,var(--card) 0%,#f6ebdc 100%); border:1px solid var(--line); border-radius:18px; padding:1.1rem 1.2rem; }
+    .btn { border:0; border-radius:999px; padding:.58rem 1rem; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff6ed; text-decoration:none; cursor:pointer; font:700 .88rem "Manrope",sans-serif; letter-spacing:.01em; transition:opacity .15s; display:inline-block; }
+    .btn:hover { opacity:.88; }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .btn.ghost { background:#fff5e8; border:1px solid #d9b995; color:#6f3f20; }
+    .btn.big { padding:.72rem 1.6rem; font-size:1rem; }
+    /* ── Layout ── */
+    .editor-layout { display:grid; grid-template-columns:200px 1fr; gap:1rem; align-items:start; }
+    /* ── Page list ── */
+    .page-list { display:grid; gap:.4rem; }
+    .page-tab {
+      padding:.65rem .85rem;
+      border-radius:10px;
+      cursor:pointer;
+      border:1px solid transparent;
+      font-weight:600;
+      font-size:.9rem;
+      transition:background .15s, border-color .15s;
+      background:transparent;
+      text-align:left;
+      color:var(--text);
+      width:100%;
+    }
+    .page-tab:hover { background:#f7ede0; }
+    .page-tab.active { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff6ed; border-color:transparent; }
+    /* ── Editor ── */
+    .editor-panel { display:grid; gap:.7rem; }
+    .field { display:grid; gap:.3rem; }
+    label { font-weight:700; font-size:.84rem; color:#5d4431; }
+    label .opt { font-weight:400; color:var(--muted); }
+    input[type="text"], input[type="password"] { width:100%; border:1px solid #d7bda0; border-radius:10px; padding:.56rem .7rem; font:inherit; font-size:.93rem; color:var(--text); background:#fffaf2; transition:border-color .15s; }
+    input:focus, textarea:focus { outline:none; border-color:var(--accent); }
+    textarea { width:100%; border:1px solid #d7bda0; border-radius:10px; padding:.56rem .7rem; font:inherit; font-size:.9rem; color:var(--text); background:#fffaf2; resize:vertical; line-height:1.6; min-height:320px; }
+    .char-counter { font-size:.78rem; color:var(--muted); text-align:right; }
+    .char-counter.warn { color:#c06020; }
+    .status-msg { padding:.7rem .9rem; border-radius:10px; font-weight:700; font-size:.9rem; display:none; }
+    .status-msg.show { display:block; }
+    .status-msg.ok  { background:#d9f0d9; color:var(--ok); border:1px solid #b3d9b3; }
+    .status-msg.err { background:#fde8e8; color:var(--err); border:1px solid #e8b3b3; }
+    .status-msg.info { background:#f0e8d9; color:#7a5a30; border:1px solid var(--line); }
+    .spin { display:inline-block; width:1em; height:1em; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .save-row { display:flex; gap:.7rem; align-items:flex-end; flex-wrap:wrap; }
+    .save-row .field { flex:1; min-width:160px; }
+    .placeholder-msg { color:var(--muted); font-style:italic; padding:1rem 0; }
+    @media (max-width:700px) { .editor-layout { grid-template-columns:1fr; } .page-list { grid-template-columns:repeat(2,1fr); } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div style="display:flex;gap:.4rem;">
+      <a class="btn ghost" href="/admin/dashboard/">← Dashboard</a>
+      <a class="btn ghost" href="/" target="_blank" rel="noreferrer">View site</a>
+    </div>
+    <span class="page-title">Edit Pages</span>
+  </div>
+
+  <section class="card">
+    <div style="display:flex;gap:.7rem;align-items:flex-end;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:160px;">
+        <label for="passwordInput">Admin password</label>
+        <input type="password" id="passwordInput" placeholder="Enter password…" />
+      </div>
+    </div>
+  </section>
+
+  <div class="editor-layout">
+    <!-- Page list -->
+    <div class="card" style="padding:.7rem;">
+      <div class="page-list" id="pageList">
+        {PAGES.map(p => (
+          <button class="page-tab" data-slug={p.slug} data-path={p.path} data-label={p.label} type="button">
+            {p.label}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- Editor panel -->
+    <div class="card" id="editorCard">
+      <p class="placeholder-msg" id="placeholderMsg">← Pick a page to edit</p>
+
+      <div id="editorForm" style="display:none;">
+        <div class="editor-panel">
+          <div class="field">
+            <label for="pageTitle">Page title</label>
+            <input type="text" id="pageTitle" />
+          </div>
+          <div class="field">
+            <label for="seoDesc">SEO description <span class="opt">(max 200 chars)</span></label>
+            <input type="text" id="seoDesc" maxlength="200" />
+            <div class="char-counter" id="seoCounter">0 / 200</div>
+          </div>
+          <div class="field">
+            <label for="pageBody">Content <span class="opt">(markdown)</span></label>
+            <textarea id="pageBody"></textarea>
+          </div>
+          <div class="save-row">
+            <button class="btn big" id="saveBtn" type="button">Save page</button>
+          </div>
+          <div class="status-msg" id="saveStatus"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+(function () {
+  let currentPath = null;
+  let currentSha  = null;
+
+  const $ = id => document.getElementById(id);
+  const passwordInput = $('passwordInput');
+  const editorForm    = $('editorForm');
+  const placeholderMsg = $('placeholderMsg');
+  const saveBtn       = $('saveBtn');
+  const saveStatus    = $('saveStatus');
+  const seoDesc       = $('seoDesc');
+  const seoCounter    = $('seoCounter');
+
+  seoDesc.addEventListener('input', () => {
+    const len = seoDesc.value.length;
+    seoCounter.textContent = `${len} / 200`;
+    seoCounter.classList.toggle('warn', len > 170);
+  });
+
+  // ── Page tab clicks ──
+  document.getElementById('pageList').addEventListener('click', async (e) => {
+    const tab = e.target.closest('.page-tab');
+    if (!tab) return;
+
+    const pw = passwordInput.value.trim();
+    if (!pw) { alert('Enter the admin password first.'); return; }
+
+    document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    const path  = tab.dataset.path;
+    const label = tab.dataset.label;
+
+    placeholderMsg.textContent = 'Loading…';
+    editorForm.style.display = 'none';
+    hideMsg(saveStatus);
+
+    try {
+      const res  = await fetch(`/api/read-content?path=${encodeURIComponent(path)}&password=${encodeURIComponent(pw)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+      currentPath = path;
+      currentSha  = data.sha;
+
+      const { title, seoDescription, body } = parseFrontmatter(data.content);
+      $('pageTitle').value = title || '';
+      seoDesc.value        = seoDescription || '';
+      seoDesc.dispatchEvent(new Event('input'));
+      $('pageBody').value  = body || '';
+
+      placeholderMsg.style.display = 'none';
+      editorForm.style.display = 'block';
+    } catch (err) {
+      placeholderMsg.textContent = 'Error loading: ' + err.message;
+    }
+  });
+
+  // ── Save ──
+  saveBtn.addEventListener('click', async () => {
+    const pw = passwordInput.value.trim();
+    if (!pw) { showMsg(saveStatus, 'Enter password.', 'err'); return; }
+    if (!currentPath) { showMsg(saveStatus, 'Pick a page first.', 'err'); return; }
+
+    const title = $('pageTitle').value.trim();
+    const seo   = seoDesc.value.trim();
+    const body  = $('pageBody').value;
+
+    const content = buildMarkdown(title, seo, body);
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spin"></span> Saving…';
+    showMsg(saveStatus, 'Committing to GitHub…', 'info');
+
+    try {
+      const res  = await fetch('/api/save-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: pw,
+          path:     currentPath,
+          content,
+          message:  `Update page: ${title}`,
+          sha:      currentSha,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+      showMsg(saveStatus, '✓ Page saved! Site rebuilding — live in ~2 minutes.', 'ok');
+      currentSha = null;
+    } catch (err) {
+      showMsg(saveStatus, 'Error: ' + err.message, 'err');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save page';
+    }
+  });
+
+  // ── Frontmatter parser ──
+  function parseFrontmatter(raw) {
+    const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (!match) return { title: '', seoDescription: '', body: raw };
+
+    const fm   = match[1];
+    const body = match[2].trim();
+
+    const title          = (fm.match(/^title:\s*["']?(.*?)["']?\s*$/m) || [])[1] || '';
+    const seoDescription = (fm.match(/^seoDescription:\s*["']?(.*?)["']?\s*$/m) || [])[1] || '';
+
+    return { title: title.replace(/^["']|["']$/g, ''), seoDescription: seoDescription.replace(/^["']|["']$/g, ''), body };
+  }
+
+  function q(s) { return '"' + String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"'; }
+
+  function buildMarkdown(title, seoDesc, body) {
+    return `---\ntitle: ${q(title)}\nseoDescription: ${q(seoDesc)}\n---\n${body ? '\n' + body.trim() + '\n' : ''}`;
+  }
+
+  function showMsg(el, text, type) { el.textContent = text; el.className = `status-msg show ${type}`; }
+  function hideMsg(el) { el.className = 'status-msg'; el.textContent = ''; }
+})();
+</script>
+</body>
+</html>

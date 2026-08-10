@@ -1,0 +1,282 @@
+---
+export const prerender = true;
+---
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
+  <title>Site Settings · Walking with Ember</title>
+  <style>
+    :root { --bg:#efe3cf; --card:#fff8ee; --text:#2b1d14; --muted:#7c6654; --line:#dcc6ac; --accent:#be6d37; --accent2:#8a4f27; --ok:#3f7a3f; --err:#8a2020; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Manrope","Segoe UI",Arial,sans-serif; font-size:.95rem; color:var(--text); background:linear-gradient(130deg,#f3e7d4 0%,#ecd9be 45%,#e3c9a9 100%); min-height:100vh; }
+    .wrap { width:min(860px,calc(100% - 2rem)); margin:1.2rem auto 3rem; display:grid; gap:.9rem; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:.6rem; flex-wrap:wrap; }
+    .page-title { font-family:"Fraunces",Georgia,serif; font-size:1.3rem; color:var(--accent2); }
+    .card { background:linear-gradient(180deg,var(--card) 0%,#f6ebdc 100%); border:1px solid var(--line); border-radius:18px; padding:1.1rem 1.2rem; }
+    .card h2 { font-family:"Fraunces",Georgia,serif; font-size:1.1rem; margin-bottom:.7rem; }
+    .card h3 { font-family:"Fraunces",Georgia,serif; font-size:.95rem; color:var(--accent2); margin:1rem 0 .5rem; }
+    .card h3:first-child { margin-top:0; }
+    .btn { border:0; border-radius:999px; padding:.58rem 1rem; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff6ed; text-decoration:none; cursor:pointer; font:700 .88rem "Manrope",sans-serif; letter-spacing:.01em; transition:opacity .15s; display:inline-block; }
+    .btn:hover { opacity:.88; }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .btn.ghost { background:#fff5e8; border:1px solid #d9b995; color:#6f3f20; }
+    .btn.big { padding:.72rem 1.6rem; font-size:1rem; }
+    .field { display:grid; gap:.3rem; }
+    label { font-weight:700; font-size:.84rem; color:#5d4431; }
+    label .opt { font-weight:400; color:var(--muted); }
+    input[type="text"], input[type="url"], input[type="password"] { width:100%; border:1px solid #d7bda0; border-radius:10px; padding:.56rem .7rem; font:inherit; font-size:.93rem; color:var(--text); background:#fffaf2; transition:border-color .15s; }
+    input:focus { outline:none; border-color:var(--accent); }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
+    /* ── Image list ── */
+    .img-list { display:grid; gap:.5rem; }
+    .img-row { display:flex; gap:.5rem; align-items:center; }
+    .img-row input { flex:1; }
+    .img-row .del-btn { flex-shrink:0; width:32px; height:32px; border-radius:50%; background:#fde8e8; border:1px solid #e8b3b3; color:var(--err); font-size:1.1rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .img-preview { width:48px; height:48px; object-fit:cover; border-radius:6px; border:1px solid var(--line); flex-shrink:0; background:#f0e8d9; }
+    .add-img-row { display:flex; gap:.5rem; margin-top:.4rem; }
+    /* ── Status ── */
+    .status-msg { padding:.7rem .9rem; border-radius:10px; font-weight:700; font-size:.9rem; display:none; margin-top:.8rem; }
+    .status-msg.show { display:block; }
+    .status-msg.ok  { background:#d9f0d9; color:var(--ok); border:1px solid #b3d9b3; }
+    .status-msg.err { background:#fde8e8; color:var(--err); border:1px solid #e8b3b3; }
+    .status-msg.info { background:#f0e8d9; color:#7a5a30; border:1px solid var(--line); }
+    .spin { display:inline-block; width:1em; height:1em; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .save-row { display:flex; gap:.7rem; align-items:flex-end; flex-wrap:wrap; }
+    .save-row .field { flex:1; min-width:160px; }
+    @media (max-width:640px) { .grid-2 { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div style="display:flex;gap:.4rem;">
+      <a class="btn ghost" href="/admin/dashboard/">← Dashboard</a>
+      <a class="btn ghost" href="/" target="_blank" rel="noreferrer">View site</a>
+    </div>
+    <span class="page-title">Site Settings</span>
+  </div>
+
+  <section class="card" id="loadCard">
+    <h2>Load current settings</h2>
+    <div class="save-row">
+      <div class="field">
+        <label for="passwordInput">Admin password</label>
+        <input type="password" id="passwordInput" placeholder="Enter password…" />
+      </div>
+      <button class="btn big" id="loadBtn" type="button">Load settings</button>
+    </div>
+    <div class="status-msg" id="loadStatus"></div>
+  </section>
+
+  <div id="settingsForm" style="display:none; display:grid; gap:.9rem;">
+
+    <section class="card">
+      <h2>Site Info</h2>
+      <div class="grid-2" style="margin-bottom:.7rem;">
+        <div class="field">
+          <label for="siteName">Site name</label>
+          <input type="text" id="siteName" />
+        </div>
+        <div class="field">
+          <label for="tagline">Tagline</label>
+          <input type="text" id="tagline" />
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="instagram">Instagram URL <span class="opt">(optional)</span></label>
+          <input type="url" id="instagram" placeholder="https://instagram.com/…" />
+        </div>
+        <div class="field">
+          <label for="facebook">Facebook URL <span class="opt">(optional)</span></label>
+          <input type="url" id="facebook" placeholder="https://facebook.com/…" />
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Homepage Images</h2>
+      <h3>Masthead image</h3>
+      <div class="field" style="margin-bottom:.9rem;">
+        <label for="mastheadUrl">Image URL</label>
+        <input type="url" id="mastheadUrl" placeholder="https://…" />
+      </div>
+      <img id="mastheadPreview" src="" alt="" style="max-height:160px;object-fit:cover;border-radius:10px;border:1px solid var(--line);width:100%;display:none;margin-bottom:.9rem;" />
+
+      <h3>Gallery images</h3>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:.6rem;">These appear on the homepage. Paste image URLs — one per row.</p>
+      <div class="img-list" id="galleryList"></div>
+      <button class="btn ghost" id="addGalleryImg" type="button" style="margin-top:.5rem;">+ Add image</button>
+    </section>
+
+    <section class="card">
+      <div class="save-row">
+        <div class="field">
+          <label for="savePassword">Confirm password</label>
+          <input type="password" id="savePassword" placeholder="Enter password…" />
+        </div>
+        <button class="btn big" id="saveBtn" type="button">Save settings</button>
+      </div>
+      <div class="status-msg" id="saveStatus"></div>
+    </section>
+
+  </div>
+</div>
+
+<script is:inline>
+(function () {
+  let fileSha = null;
+
+  const $ = id => document.getElementById(id);
+  const passwordInput = $('passwordInput');
+  const savePassword  = $('savePassword');
+  const loadBtn       = $('loadBtn');
+  const saveBtn       = $('saveBtn');
+  const loadStatus    = $('loadStatus');
+  const saveStatus    = $('saveStatus');
+  const settingsForm  = $('settingsForm');
+  const mastheadUrl   = $('mastheadUrl');
+  const mastheadPreview = $('mastheadPreview');
+  const galleryList   = $('galleryList');
+
+  // ── Masthead preview ──
+  mastheadUrl.addEventListener('input', () => {
+    const url = mastheadUrl.value.trim();
+    mastheadPreview.src = url;
+    mastheadPreview.style.display = url ? 'block' : 'none';
+  });
+
+  // ── Load settings ──
+  loadBtn.addEventListener('click', async () => {
+    const pw = passwordInput.value;
+    if (!pw) { showMsg(loadStatus, 'Enter password first.', 'err'); return; }
+
+    loadBtn.disabled = true;
+    loadBtn.innerHTML = '<span class="spin"></span> Loading…';
+    showMsg(loadStatus, 'Fetching from GitHub…', 'info');
+
+    try {
+      const res  = await fetch(`/api/read-content?path=src/content/settings/site.json&password=${encodeURIComponent(pw)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+      const settings = JSON.parse(data.content);
+      fileSha = data.sha;
+
+      $('siteName').value   = settings.siteName   || '';
+      $('tagline').value    = settings.tagline     || '';
+      $('instagram').value  = settings.social?.instagram || '';
+      $('facebook').value   = settings.social?.facebook  || '';
+      mastheadUrl.value     = settings.homepage?.mastheadImage || '';
+      mastheadUrl.dispatchEvent(new Event('input'));
+
+      renderGallery(settings.homepage?.galleryImages || []);
+
+      savePassword.value = pw;
+      settingsForm.style.display = 'grid';
+      hideMsg(loadStatus);
+    } catch (err) {
+      showMsg(loadStatus, 'Error: ' + err.message, 'err');
+    } finally {
+      loadBtn.disabled = false;
+      loadBtn.textContent = 'Reload';
+    }
+  });
+
+  // ── Gallery image list ──
+  function renderGallery(images) {
+    galleryList.innerHTML = '';
+    images.forEach(url => addGalleryRow(url));
+  }
+
+  function addGalleryRow(url = '') {
+    const row = document.createElement('div');
+    row.className = 'img-row';
+
+    const img = document.createElement('img');
+    img.className = 'img-preview';
+    img.src = url;
+    img.alt = '';
+
+    const input = document.createElement('input');
+    input.type = 'url';
+    input.value = url;
+    input.placeholder = 'https://…';
+    input.addEventListener('input', () => { img.src = input.value; });
+
+    const del = document.createElement('button');
+    del.className = 'del-btn';
+    del.type = 'button';
+    del.innerHTML = '×';
+    del.addEventListener('click', () => row.remove());
+
+    row.append(img, input, del);
+    galleryList.appendChild(row);
+  }
+
+  $('addGalleryImg').addEventListener('click', () => addGalleryRow());
+
+  // ── Save settings ──
+  saveBtn.addEventListener('click', async () => {
+    const pw = savePassword.value;
+    if (!pw) { showMsg(saveStatus, 'Enter password.', 'err'); return; }
+    if (!fileSha) { showMsg(saveStatus, 'Load settings first.', 'err'); return; }
+
+    const galleryImages = Array.from(galleryList.querySelectorAll('input[type="url"]'))
+      .map(i => i.value.trim()).filter(Boolean);
+
+    const settings = {
+      siteName: $('siteName').value.trim(),
+      tagline:  $('tagline').value.trim(),
+      baseUrl:  'https://www.walkingwithember.co.uk',
+      social: {
+        instagram: $('instagram').value.trim(),
+        facebook:  $('facebook').value.trim(),
+      },
+      homepage: {
+        mastheadImage: mastheadUrl.value.trim(),
+        galleryImages,
+      },
+    };
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spin"></span> Saving…';
+    showMsg(saveStatus, 'Committing to GitHub…', 'info');
+
+    try {
+      const res = await fetch('/api/save-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password: pw,
+          path:    'src/content/settings/site.json',
+          content: JSON.stringify(settings, null, 2) + '\n',
+          message: 'Update site settings',
+          sha:     fileSha,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+      showMsg(saveStatus, '✓ Settings saved! Site rebuilding — live in ~2 minutes.', 'ok');
+      fileSha = null;
+    } catch (err) {
+      showMsg(saveStatus, 'Error: ' + err.message, 'err');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save settings';
+    }
+  });
+
+  function showMsg(el, text, type) { el.textContent = text; el.className = `status-msg show ${type}`; }
+  function hideMsg(el) { el.className = 'status-msg'; el.textContent = ''; }
+})();
+</script>
+</body>
+</html>
