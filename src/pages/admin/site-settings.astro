@@ -127,17 +127,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
     <span class="page-title">Site Settings</span>
   </div>
 
-  <section class="card" id="loadCard">
-    <h2>Load current settings</h2>
-    <div class="save-row">
-      <div class="field">
-        <label for="passwordInput">Admin password</label>
-        <input type="password" id="passwordInput" placeholder="Enter password…" />
-      </div>
-      <button class="btn big" id="loadBtn" type="button">Load settings</button>
-    </div>
-    <div class="status-msg" id="loadStatus"></div>
-  </section>
+  <div class="status-msg info show" id="loadStatus" style="margin:0;">Loading settings…</div>
 
   <div id="settingsForm" style="display:none;">
     <div style="display:grid;gap:.9rem;">
@@ -211,29 +201,37 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
   </div>
 </div>
 
+<script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
 <script is:inline define:vars={{ PHOTO_BASE }}>
 (function () {
-  let fileSha     = null;
-  let allPhotos   = [];
-  let pickerTarget = null; // 'masthead' | HTMLElement (gallery row input)
+  let fileSha      = null;
+  let allPhotos    = [];
+  let pickerTarget = null;
 
   const $ = id => document.getElementById(id);
 
-  const passwordInput   = $('passwordInput');
-  const savePassword    = passwordInput; // same field reused
-  const loadBtn         = $('loadBtn');
-  const saveBtn         = $('saveBtn');
-  const loadStatus      = $('loadStatus');
-  const saveStatus      = $('saveStatus');
-  const settingsForm    = $('settingsForm');
-  const mastheadUrl     = $('mastheadUrl');
+  const saveBtn      = $('saveBtn');
+  const loadStatus   = $('loadStatus');
+  const saveStatus   = $('saveStatus');
+  const settingsForm = $('settingsForm');
+  const mastheadUrl  = $('mastheadUrl');
   const mastheadPreview = $('mastheadPreview');
-  const galleryList     = $('galleryList');
-  const pickerBackdrop  = $('pickerBackdrop');
-  const pickerGrid      = $('pickerGrid');
-  const pickerStatus    = $('pickerStatus');
-  const pickerSearch    = $('pickerSearch');
-  const pickerDate      = $('pickerDate');
+  const galleryList  = $('galleryList');
+  const pickerBackdrop = $('pickerBackdrop');
+  const pickerGrid   = $('pickerGrid');
+  const pickerStatus = $('pickerStatus');
+  const pickerSearch = $('pickerSearch');
+  const pickerDate   = $('pickerDate');
+
+  // ── Auth: get JWT from Netlify Identity ──
+  async function getToken() {
+    const identity = window.netlifyIdentity;
+    if (!identity) throw new Error('Identity widget not available');
+    identity.init();
+    const user = identity.currentUser();
+    if (!user) throw new Error('Not logged in — please log in from the dashboard first.');
+    return user.jwt();
+  }
 
   // ── Masthead preview ──
   mastheadUrl.addEventListener('input', () => {
@@ -243,17 +241,17 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
   });
 
   // ── Load settings ──
-  async function doLoad(pw) {
-    loadBtn.disabled = true;
-    loadBtn.innerHTML = '<span class="spin"></span> Loading…';
-    showMsg(loadStatus, 'Fetching from GitHub…', 'info');
+  async function doLoad() {
+    showMsg(loadStatus, 'Loading settings…', 'info');
     try {
-      const res  = await fetch(`/api/read-content?path=src/content/settings/site.json&password=${encodeURIComponent(pw)}`);
+      const token = await getToken();
+      const res   = await fetch('/api/read-content?path=src/content/settings/site.json', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       const settings = JSON.parse(data.content);
       fileSha = data.sha;
-      sessionStorage.setItem('wwe_admin_pw', pw);
       $('siteName').value  = settings.siteName || '';
       $('tagline').value   = settings.tagline  || '';
       $('instagram').value = settings.social?.instagram || '';
@@ -262,28 +260,26 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
       mastheadUrl.dispatchEvent(new Event('input'));
       renderGallery(settings.homepage?.galleryImages || []);
       settingsForm.style.display = 'block';
-      $('loadCard').style.display = 'none';
       hideMsg(loadStatus);
-      loadPhotos(); // pre-load picker in background
+      loadPhotos();
     } catch (err) {
-      sessionStorage.removeItem('wwe_admin_pw');
-      $('loadCard').style.display = '';
-      showMsg(loadStatus, 'Error: ' + err.message, 'err');
-    } finally {
-      loadBtn.disabled = false;
-      loadBtn.textContent = 'Reload';
+      showMsg(loadStatus, err.message, 'err');
     }
   }
 
-  loadBtn.addEventListener('click', async () => {
-    const pw = passwordInput.value;
-    if (!pw) { showMsg(loadStatus, 'Enter password first.', 'err'); return; }
-    await doLoad(pw);
-  });
-
-  // ── Auto-load if password is cached ──
-  const cached = sessionStorage.getItem('wwe_admin_pw');
-  if (cached) { passwordInput.value = cached; doLoad(cached); }
+  // ── Auto-load once Identity is ready ──
+  function tryAutoLoad(triesLeft) {
+    const identity = window.netlifyIdentity;
+    if (identity) {
+      identity.init();
+      if (identity.currentUser()) { doLoad(); return; }
+      showMsg(loadStatus, 'Not logged in — <a href="/admin/dashboard/" style="color:inherit;font-weight:700;">log in from the dashboard</a> first.', 'err');
+      return;
+    }
+    if (triesLeft > 0) setTimeout(() => tryAutoLoad(triesLeft - 1), 200);
+    else showMsg(loadStatus, 'Could not load identity widget.', 'err');
+  }
+  setTimeout(() => tryAutoLoad(20), 300);
 
   // ── Gallery list ──
   function renderGallery(images) {
@@ -415,9 +411,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
 
   // ── Save settings ──
   saveBtn.addEventListener('click', async () => {
-    const pw = savePassword.value;
-    if (!pw) { showMsg(saveStatus, 'Enter password.', 'err'); return; }
-    if (!fileSha) { showMsg(saveStatus, 'Load settings first.', 'err'); return; }
+    if (!fileSha) { showMsg(saveStatus, 'Settings not loaded yet.', 'err'); return; }
     const galleryImages = Array.from(galleryList.querySelectorAll('input[type="url"]'))
       .map(i => i.value.trim()).filter(Boolean);
     const settings = {
@@ -431,11 +425,11 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
     saveBtn.innerHTML = '<span class="spin"></span> Saving…';
     showMsg(saveStatus, 'Committing to GitHub…', 'info');
     try {
+      const token = await getToken();
       const res = await fetch('/api/save-content', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          password: pw,
           path:    'src/content/settings/site.json',
           content: JSON.stringify(settings, null, 2) + '\n',
           message: 'Update site settings',

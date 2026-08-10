@@ -82,14 +82,6 @@ const PAGES = [
     <span class="page-title">Edit Pages</span>
   </div>
 
-  <section class="card" id="passwordCard">
-    <div style="display:flex;gap:.7rem;align-items:flex-end;flex-wrap:wrap;">
-      <div class="field" style="flex:1;min-width:160px;">
-        <label for="passwordInput">Admin password</label>
-        <input type="password" id="passwordInput" placeholder="Enter password…" />
-      </div>
-    </div>
-  </section>
 
   <div class="editor-layout">
     <!-- Page list -->
@@ -132,13 +124,13 @@ const PAGES = [
   </div>
 </div>
 
+<script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
 <script is:inline>
 (function () {
   let currentPath = null;
   let currentSha  = null;
 
   const $ = id => document.getElementById(id);
-  const passwordInput = $('passwordInput');
   const editorForm    = $('editorForm');
   const placeholderMsg = $('placeholderMsg');
   const saveBtn       = $('saveBtn');
@@ -152,11 +144,13 @@ const PAGES = [
     seoCounter.classList.toggle('warn', len > 170);
   });
 
-  // ── Auto-fill password from sessionStorage ──
-  const cachedPw = sessionStorage.getItem('wwe_admin_pw');
-  if (cachedPw) {
-    passwordInput.value = cachedPw;
-    document.getElementById('passwordCard').style.display = 'none';
+  async function getToken() {
+    const identity = window.netlifyIdentity;
+    if (!identity) throw new Error('Identity widget not available');
+    identity.init();
+    const user = identity.currentUser();
+    if (!user) throw new Error('Not logged in — log in from the dashboard first.');
+    return user.jwt();
   }
 
   // ── Page tab clicks ──
@@ -164,26 +158,24 @@ const PAGES = [
     const tab = e.target.closest('.page-tab');
     if (!tab) return;
 
-    const pw = passwordInput.value.trim();
-    if (!pw) { alert('Enter the admin password first.'); return; }
-
     document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
 
     const path  = tab.dataset.path;
-    const label = tab.dataset.label;
 
     placeholderMsg.textContent = 'Loading…';
+    placeholderMsg.style.display = '';
     editorForm.style.display = 'none';
     hideMsg(saveStatus);
 
     try {
-      const res  = await fetch(`/api/read-content?path=${encodeURIComponent(path)}&password=${encodeURIComponent(pw)}`);
+      const token = await getToken();
+      const res   = await fetch(`/api/read-content?path=${encodeURIComponent(path)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-      sessionStorage.setItem('wwe_admin_pw', pw);
-      document.getElementById('passwordCard').style.display = 'none';
       currentPath = path;
       currentSha  = data.sha;
 
@@ -196,14 +188,12 @@ const PAGES = [
       placeholderMsg.style.display = 'none';
       editorForm.style.display = 'block';
     } catch (err) {
-      placeholderMsg.textContent = 'Error loading: ' + err.message;
+      placeholderMsg.textContent = 'Error: ' + err.message;
     }
   });
 
   // ── Save ──
   saveBtn.addEventListener('click', async () => {
-    const pw = passwordInput.value.trim();
-    if (!pw) { showMsg(saveStatus, 'Enter password.', 'err'); return; }
     if (!currentPath) { showMsg(saveStatus, 'Pick a page first.', 'err'); return; }
 
     const title = $('pageTitle').value.trim();
@@ -217,15 +207,15 @@ const PAGES = [
     showMsg(saveStatus, 'Committing to GitHub…', 'info');
 
     try {
-      const res  = await fetch('/api/save-content', {
+      const token = await getToken();
+      const res   = await fetch('/api/save-content', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          password: pw,
-          path:     currentPath,
+          path:    currentPath,
           content,
-          message:  `Update page: ${title}`,
-          sha:      currentSha,
+          message: `Update page: ${title}`,
+          sha:     currentSha,
         }),
       });
       const data = await res.json();

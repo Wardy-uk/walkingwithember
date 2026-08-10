@@ -7,7 +7,7 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
-export default async function handler(req) {
+export default async function handler(req, context) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   if (!GITHUB_TOKEN) return json({ error: 'GITHUB_TOKEN not configured' }, 503);
@@ -18,7 +18,8 @@ export default async function handler(req) {
 
   const { password, path, content, message, sha } = body;
 
-  if (password !== ADMIN_PASSWORD) return json({ error: 'Invalid password' }, 403);
+  const authed = context.clientContext?.user || password === ADMIN_PASSWORD;
+  if (!authed) return json({ error: 'Unauthorized' }, 403);
   if (!path)    return json({ error: 'Missing path' }, 400);
   if (!content) return json({ error: 'Missing content' }, 400);
 

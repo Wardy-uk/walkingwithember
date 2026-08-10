@@ -432,10 +432,6 @@ export const prerender = true;
   <section class="card">
     <h2>Publish</h2>
     <div class="save-row">
-      <div class="field">
-        <label for="adminPassword">Admin password</label>
-        <input type="password" id="adminPassword" placeholder="Enter password…" />
-      </div>
       <div class="field" style="justify-content:end;">
         <label>&nbsp;</label>
         <div class="toggle-row">
@@ -487,14 +483,18 @@ export const prerender = true;
   const summaryCounter = el('summaryCounter');
   const walkTags     = el('walkTags');
   const walkNotes    = el('walkNotes');
-  const adminPassword = el('adminPassword');
   const saveDraft    = el('saveDraft');
   const saveBtn      = el('saveBtn');
   const saveStatus   = el('saveStatus');
 
-  // ── Auto-fill password from sessionStorage ──
-  const _cachedPw = sessionStorage.getItem('wwe_admin_pw');
-  if (_cachedPw) adminPassword.value = _cachedPw;
+  async function getToken() {
+    const identity = window.netlifyIdentity;
+    if (!identity) throw new Error('Identity widget not available');
+    identity.init();
+    const user = identity.currentUser();
+    if (!user) throw new Error('Not logged in — log in from the dashboard first.');
+    return user.jwt();
+  }
 
   // ── Summary counter ───────────────────────────────────────
   walkSummary.addEventListener('input', () => {
@@ -721,15 +721,12 @@ export const prerender = true;
   saveBtn.addEventListener('click', saveWalk);
 
   async function saveWalk() {
-    const password = adminPassword.value;
-    if (!password) { showMsg(saveStatus, 'Enter the admin password.', 'err'); return; }
 
     const today = new Date().toISOString().slice(0, 10);
 
     const tagsArr = walkTags.value.split(',').map(s => s.trim()).filter(Boolean);
 
     const payload = {
-      password,
       title:        walkTitle.value.trim(),
       summary:      walkSummary.value.trim(),
       heroImage:    heroUrl,
@@ -755,16 +752,16 @@ export const prerender = true;
     showMsg(saveStatus, 'Committing to GitHub…', 'info');
 
     try {
-      const res  = await fetch('/api/save-walk', {
+      const token = await getToken();
+      const res   = await fetch('/api/save-walk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-      sessionStorage.setItem('wwe_admin_pw', password);
       const slug = data.slug;
       const path = payload.draft ? `/preview/walks/${slug}/` : `/walks/${slug}/`;
       showMsg(saveStatus, `✓ Walk saved! Netlify is rebuilding — it'll be live in ~2 minutes.<br><br><a href="${path}" target="_blank" rel="noreferrer" style="color:var(--ok);font-weight:700;">Preview: ${path}</a>`, 'ok');
@@ -789,5 +786,6 @@ export const prerender = true;
   }
 })();
 </script>
+<script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
 </body>
 </html>
