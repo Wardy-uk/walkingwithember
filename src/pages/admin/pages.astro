@@ -82,7 +82,7 @@ const PAGES = [
     <span class="page-title">Edit Pages</span>
   </div>
 
-  <section class="card">
+  <section class="card" id="passwordCard">
     <div style="display:flex;gap:.7rem;align-items:flex-end;flex-wrap:wrap;">
       <div class="field" style="flex:1;min-width:160px;">
         <label for="passwordInput">Admin password</label>
@@ -154,7 +154,10 @@ const PAGES = [
 
   // ── Auto-fill password from sessionStorage ──
   const cachedPw = sessionStorage.getItem('wwe_admin_pw');
-  if (cachedPw) passwordInput.value = cachedPw;
+  if (cachedPw) {
+    passwordInput.value = cachedPw;
+    document.getElementById('passwordCard').style.display = 'none';
+  }
 
   // ── Page tab clicks ──
   document.getElementById('pageList').addEventListener('click', async (e) => {
@@ -180,6 +183,7 @@ const PAGES = [
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
       sessionStorage.setItem('wwe_admin_pw', pw);
+      document.getElementById('passwordCard').style.display = 'none';
       currentPath = path;
       currentSha  = data.sha;
 

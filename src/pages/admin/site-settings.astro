@@ -262,10 +262,12 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
       mastheadUrl.dispatchEvent(new Event('input'));
       renderGallery(settings.homepage?.galleryImages || []);
       settingsForm.style.display = 'block';
+      $('loadCard').style.display = 'none';
       hideMsg(loadStatus);
       loadPhotos(); // pre-load picker in background
     } catch (err) {
       sessionStorage.removeItem('wwe_admin_pw');
+      $('loadCard').style.display = '';
       showMsg(loadStatus, 'Error: ' + err.message, 'err');
     } finally {
       loadBtn.disabled = false;
