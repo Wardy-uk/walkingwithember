@@ -632,18 +632,37 @@ export const prerender = true;
     photoGridEl.classList.add('hidden');
     photoGridEl.innerHTML = '';
 
+    // Remove any previous "no photos" note
+    photoGridEl.parentNode.querySelectorAll('.no-photos-note').forEach(n => n.remove());
+
     let photos = [];
     try {
-      const res  = await fetch(`${PHOTO_BASE}/api/gallery/wwe?date=${date}`);
+      const res  = await fetch(`${PHOTO_BASE}/api/gallery`);
       if (!res.ok) throw new Error(`${res.status}`);
       const data = await res.json();
-      photos = normalizePhotos(data);
+      const all  = Array.isArray(data) ? data : (data.images || data.photos || data.results || []);
+      // Filter to photos taken on the selected date
+      photos = all
+        .filter(item => {
+          const takenAt = item.taken_at || item.date || '';
+          return takenAt.startsWith(date);
+        })
+        .map(item => {
+          const full  = item.image_url || item.url || item.src || '';
+          // Cloudinary thumbnail: insert w_300,h_300,c_fill transform
+          const thumb = full.includes('cloudinary.com')
+            ? full.replace('/upload/', '/upload/w_400,h_400,c_fill/')
+            : full;
+          return { thumb, full, caption: item.caption || item.location_name || '' };
+        })
+        .filter(p => p.full);
     } catch (err) {
       hideMsg(photoStatusEl);
       const note = document.createElement('p');
+      note.className = 'no-photos-note';
       note.style.color = 'var(--muted)';
       note.style.fontSize = '0.85rem';
-      note.textContent = `No photos found for ${date} — paste an image URL below.`;
+      note.textContent = `Could not load photos — paste an image URL below.`;
       photoGridEl.parentNode.insertBefore(note, photoGridEl);
       return;
     }
@@ -652,18 +671,20 @@ export const prerender = true;
 
     if (!photos.length) {
       const note = document.createElement('p');
+      note.className = 'no-photos-note';
       note.style.color = 'var(--muted)';
       note.style.fontSize = '0.85rem';
-      note.textContent = `No photos found for ${date} — paste an image URL below.`;
+      note.textContent = `No photos found for ${date} on upload.nickward.co.uk — paste an image URL below.`;
       photoGridEl.before(note);
       return;
     }
 
-    photos.forEach(({ thumb, full }) => {
+    photos.forEach(({ thumb, full, caption }) => {
       const div = document.createElement('div');
       div.className = 'photo-thumb';
       div.dataset.url = full;
-      div.innerHTML = `<img src="${thumb}" loading="lazy" alt="" /><span class="tick">✓</span>`;
+      div.title = caption || full;
+      div.innerHTML = `<img src="${thumb}" loading="lazy" alt="${caption}" /><span class="tick">✓</span>`;
       div.addEventListener('click', () => selectPhoto(full, div));
       photoGridEl.appendChild(div);
     });
@@ -675,8 +696,10 @@ export const prerender = true;
     const arr = Array.isArray(data) ? data : (data.photos || data.images || data.results || []);
     return arr.map(item => {
       if (typeof item === 'string') return { thumb: item, full: item };
-      const full  = item.url || item.src || item.image || item.full || '';
-      const thumb = item.thumbnail || item.thumb || item.small || full;
+      const full  = item.image_url || item.url || item.src || item.image || item.full || '';
+      const thumb = full.includes('cloudinary.com')
+        ? full.replace('/upload/', '/upload/w_400,h_400,c_fill/')
+        : (item.thumbnail || item.thumb || item.small || full);
       return { thumb, full };
     }).filter(p => p.full);
   }

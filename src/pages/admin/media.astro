@@ -1,500 +1,252 @@
 ---
 export const prerender = true;
+const PHOTO_BASE = 'https://upload.nickward.co.uk';
 ---
-
 <!doctype html>
 <html lang="en-GB">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" />
-    <title>Google Photos Media | Admin</title>
-    <style>
-      :root { --bg:#efe3cf; --card:#fff8ee; --text:#2b1d14; --muted:#7c6654; --line:#dcc6ac; --accent:#be6d37; --accent-2:#8a4f27; }
-      * { box-sizing:border-box; }
-      body { margin:0; font-family:"Manrope","Segoe UI",Arial,sans-serif; color:var(--text); background:linear-gradient(130deg,#f3e7d4 0%,#ecd9be 45%,#e3c9a9 100%); }
-      .wrap { width:min(1100px,calc(100% - 2rem)); margin:1rem auto 2rem; display:grid; gap:.8rem; }
-      .bar { display:flex; justify-content:space-between; align-items:center; gap:.5rem; flex-wrap:wrap; }
-      .bar-actions,.controls { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
-      .field { border:1px solid #d9b995; border-radius:10px; padding:.48rem .62rem; background:#fff9f0; color:#5d4431; }
-      .card { background:linear-gradient(180deg,var(--card) 0%,#f6ebdc 100%); border:1px solid var(--line); border-radius:16px; padding:.9rem; }
-      h1,h2 { margin:0 0 .5rem; font-family:"Fraunces",Georgia,serif; }
-      p { margin:0 0 .6rem; color:var(--muted); }
-      button,.button { border:0; border-radius:999px; padding:.55rem .95rem; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff6ed; text-decoration:none; cursor:pointer; font-weight:700; }
-      button:disabled { opacity:.5; cursor:not-allowed; }
-      .ghost { background:#fff5e8; border:1px solid #d9b995; color:#6f3f20; }
-      .status { padding:.65rem .75rem; border-radius:10px; border:1px solid var(--line); background:#f8ecdc; color:#5a3a22; font-weight:700; }
-      .status.error { background:#fff0ea; color:#8a3f1d; border-color:#e6bfa1; }
-      .tiny { font-size:.78rem; color:#7c6654; word-break:break-word; }
-      .grid { display:grid; gap:.8rem; grid-template-columns:repeat(3,minmax(0,1fr)); }
-      .tile { border:1px solid #d8bea0; border-radius:14px; overflow:hidden; background:#fffdf8; display:grid; }
-      .tile-media { aspect-ratio:16/9; display:grid; place-items:center; background:#f4e8d8; color:#74573e; font-weight:700; }
-      .tile-media img { width:100%; height:100%; object-fit:cover; }
-      .tile-body { padding:.65rem; display:grid; gap:.45rem; }
-      .log { border:1px solid var(--line); border-radius:10px; background:#fff6e9; padding:.6rem; max-height:220px; overflow:auto; white-space:pre-wrap; font-size:.82rem; color:#5d4431; }
-      .progress-modal { position: fixed; inset: 0; display: none; place-items: center; background: rgba(34, 18, 8, 0.45); z-index: 50; padding: 1rem; }
-      .progress-modal.show { display: grid; }
-      .progress-card { width: min(520px, 100%); background: #fff8ee; border: 1px solid var(--line); border-radius: 14px; padding: .9rem; display: grid; gap: .6rem; }
-      .progress-bar-wrap { width: 100%; height: 12px; border-radius: 999px; border: 1px solid #d8bea0; background: #f4e8d8; overflow: hidden; }
-      .progress-bar { height: 100%; width: 0%; background: linear-gradient(135deg,var(--accent),var(--accent-2)); transition: width .2s ease; }
-      @media (max-width:980px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
-      @media (max-width:520px){ .grid{grid-template-columns:1fr;} }
-    </style>
-  </head>
-  <body>
-    <main class="wrap">
-      <section class="card bar">
-        <div class="bar-actions">
-          <a class="button ghost" href="/admin/dashboard/">Back to Admin</a>
-          <a class="button ghost" href="/admin/media-library/">Site Images</a>
-          <button id="loginBtn" type="button" class="ghost">Log in</button>
-          <button id="logoutBtn" type="button" class="ghost">Log out</button>
-        </div>
-        <span id="who" class="status">Checking admin session...</span>
-      </section>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Fraunces:opsz,wght@9..144,400&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <title>Photo Library · Walking with Ember</title>
+  <style>
+    :root {
+      --bg:#F5F0E8; --surface:#FDFAF6; --text:#1C1510; --muted:#8A7A6A;
+      --line:rgba(28,21,16,0.13); --brand:#C65D1E; --brand-deep:#9A4515;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:"Manrope","Segoe UI",sans-serif; font-size:.9rem; color:var(--text); background:var(--bg); min-height:100vh; }
+    .wrap { width:min(1200px,calc(100% - 2rem)); margin:1.2rem auto 3rem; display:grid; gap:.8rem; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:.6rem; flex-wrap:wrap; }
+    .page-title { font-family:"Fraunces",Georgia,serif; font-size:1.3rem; }
+    .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:1rem 1.2rem; }
+    .btn { border:0; border-radius:999px; padding:.58rem 1rem; background:var(--brand); color:#FFF8F2; text-decoration:none; cursor:pointer; font:700 .82rem "Manrope",sans-serif; letter-spacing:.06em; transition:background .15s; display:inline-block; }
+    .btn:hover { background:var(--brand-deep); }
+    .btn.ghost { background:var(--bg); border:1px solid var(--line); color:var(--text); }
+    .btn.ghost:hover { background:#EDE8DE; }
 
-      <section class="card">
-        <h1>Google Photos Media Hub</h1>
-        <p>Session starts automatically. Open Picker, select images, then use one bulk action.</p>
-        <div class="controls">
-          <button id="openPickerBtn" type="button" class="ghost" disabled>Open Picker</button>
-          <button id="bulkImportBtn" type="button" disabled>Load + Import Selected</button>
-          <button id="bulkLinkBtn" type="button" class="ghost" disabled>Load + Use Google Links</button>
-          <select id="importFolderMode" class="field">
-            <option value="none" selected>No Folder</option>
-            <option value="auto">GPS + Date Folder</option>
-            <option value="manual">Manual Folder</option>
-          </select>
-          <input id="manualFolderInput" class="field" type="text" placeholder="manual folder (e.g. peak-district/2026-02)" style="display:none;min-width:240px;" />
-        </div>
-        <p id="sessionInfo" class="tiny">No active picker session.</p>
-      </section>
+    /* Filters */
+    .filters { display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; }
+    .filters input, .filters select {
+      border:1px solid var(--line); border-radius:999px; padding:.42rem .85rem;
+      font:inherit; font-size:.82rem; background:var(--surface); color:var(--text);
+    }
+    .filters input:focus, .filters select:focus { outline:none; border-color:var(--brand); }
+    .filters input[type="search"] { min-width:220px; }
 
-      <section class="card">
-        <div id="status" class="status">Log in as admin. Session will auto-start.</div>
-        <div id="log" class="log">Media tool ready.</div>
-      </section>
+    /* Grid */
+    .photo-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+      gap:.75rem;
+    }
+    .photo-card {
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      background:var(--surface);
+      cursor:pointer;
+      transition:transform .2s, box-shadow .2s;
+      position:relative;
+    }
+    .photo-card:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(28,21,16,0.12); }
+    .photo-card.copied { border-color:var(--brand); }
+    .photo-card img { width:100%; height:160px; object-fit:cover; display:block; }
+    .photo-meta { padding:.5rem .65rem; }
+    .photo-meta .loc { font-size:.74rem; font-weight:600; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .photo-meta .date { font-size:.7rem; color:var(--muted); opacity:.7; margin-top:.1rem; }
+    .copy-badge {
+      position:absolute; top:.4rem; right:.4rem;
+      background:var(--brand); color:#fff;
+      font-size:.68rem; font-weight:700; letter-spacing:.06em;
+      padding:.2rem .5rem; border-radius:999px;
+      opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .photo-card.copied .copy-badge { opacity:1; }
 
-      <section class="grid" id="mediaGrid"></section>
-    </main>
-    <div id="importProgressModal" class="progress-modal" aria-hidden="true">
-      <div class="progress-card">
-        <h2>Importing Images</h2>
-        <div id="importProgressText" class="tiny">Preparing import...</div>
-        <div class="progress-bar-wrap"><div id="importProgressBar" class="progress-bar"></div></div>
-      </div>
+    /* States */
+    .status { padding:.9rem 1.1rem; border-radius:10px; font-weight:600; font-size:.88rem; }
+    .status.loading { background:#f0e8d9; color:#7a5a30; border:1px solid var(--line); }
+    .status.error   { background:#fde8e8; color:#7a2323; border:1px solid #e8b3b3; }
+    .status.empty   { background:var(--surface); color:var(--muted); border:1px solid var(--line); }
+
+    .count { font-size:.78rem; color:var(--muted); }
+    .spin { display:inline-block; width:.9em; height:.9em; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:.35em; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* Toast */
+    .toast {
+      position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%) translateY(4px);
+      background:var(--text); color:var(--bg); padding:.55rem 1.1rem; border-radius:999px;
+      font-size:.82rem; font-weight:700; opacity:0; pointer-events:none;
+      transition:opacity .2s, transform .2s; z-index:99;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div style="display:flex;gap:.4rem;">
+      <a class="btn ghost" href="/admin/dashboard/">← Dashboard</a>
     </div>
+    <span class="page-title">Photo Library</span>
+    <a class="btn ghost" href="https://upload.nickward.co.uk" target="_blank" rel="noreferrer">Open upload.nickward.co.uk ↗</a>
+  </div>
 
-    <script src="https://unpkg.com/netlify-identity-widget@1.9.2/build/netlify-identity-widget.js"></script>
-    <script>
-      const whoEl = document.getElementById("who");
-      const statusEl = document.getElementById("status");
-      const logEl = document.getElementById("log");
-      const mediaGrid = document.getElementById("mediaGrid");
-      const sessionInfoEl = document.getElementById("sessionInfo");
-      const openPickerBtn = document.getElementById("openPickerBtn");
-      const bulkImportBtn = document.getElementById("bulkImportBtn");
-      const bulkLinkBtn = document.getElementById("bulkLinkBtn");
-      const importFolderMode = document.getElementById("importFolderMode");
-      const manualFolderInput = document.getElementById("manualFolderInput");
-      const importProgressModal = document.getElementById("importProgressModal");
-      const importProgressText = document.getElementById("importProgressText");
-      const importProgressBar = document.getElementById("importProgressBar");
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem;margin-bottom:.8rem;">
+      <div class="filters">
+        <input type="search" id="searchInput" placeholder="Search location or caption…" />
+        <input type="date"   id="dateInput" />
+        <button class="btn ghost" id="clearBtn" type="button">Clear</button>
+      </div>
+      <span class="count" id="countLabel"></span>
+    </div>
+    <div id="statusEl"></div>
+    <div id="photoGrid" class="photo-grid"></div>
+  </section>
 
-      let sessionId = "";
-      let pickerUri = "";
-      let integrationConfigured = false;
-      let importConfigured = false;
+  <section class="card" style="font-size:.82rem;color:var(--muted);">
+    <strong style="color:var(--text);">How to use</strong> — Click any photo to copy its URL to the clipboard. Paste it into the <strong>hero image</strong> field in the walk builder or site settings.
+  </section>
+</div>
 
-      function appendLog(message) {
-        const stamp = new Date().toLocaleTimeString("en-GB", { hour12: false });
-        const line = `[${stamp}] ${String(message || "")}`;
-        logEl.textContent = (line + "\n" + (logEl.textContent || "")).trim();
-      }
+<div class="toast" id="toast">URL copied</div>
 
-      function setStatus(message, error) {
-        statusEl.textContent = message;
-        statusEl.classList.toggle("error", Boolean(error));
-        appendLog(message);
-      }
+<script is:inline define:vars={{ PHOTO_BASE }}>
+(function () {
+  const photoGrid   = document.getElementById('photoGrid');
+  const statusEl    = document.getElementById('statusEl');
+  const countLabel  = document.getElementById('countLabel');
+  const searchInput = document.getElementById('searchInput');
+  const dateInput   = document.getElementById('dateInput');
+  const clearBtn    = document.getElementById('clearBtn');
+  const toast       = document.getElementById('toast');
 
-      function setupHint(missingEnv) {
-        const vars = (missingEnv || []).join(", ");
-        return `Google Photos Picker is not configured yet. Add these Netlify env vars and redeploy: ${vars}`;
-      }
+  let allPhotos = [];
+  let toastTimer = null;
 
-      function refreshButtons() {
-        const hasSession = Boolean(sessionId);
-        openPickerBtn.disabled = !integrationConfigured || !hasSession || !pickerUri;
-        bulkLinkBtn.disabled = !integrationConfigured || !hasSession;
-        bulkImportBtn.disabled = !integrationConfigured || !importConfigured || !hasSession;
-      }
+  function showStatus(html, type) {
+    statusEl.innerHTML = `<div class="status ${type}">${html}</div>`;
+  }
 
-      function setImportProgress(complete, total, label) {
-        const safeTotal = Math.max(1, Number(total || 0));
-        const safeComplete = Math.min(safeTotal, Math.max(0, Number(complete || 0)));
-        const percent = Math.round((safeComplete / safeTotal) * 100);
-        importProgressText.textContent = `${label || "Importing..."} (${safeComplete}/${safeTotal})`;
-        importProgressBar.style.width = `${percent}%`;
-      }
+  function clearStatus() { statusEl.innerHTML = ''; }
 
-      function showImportProgress(total) {
-        setImportProgress(0, total, "Starting import");
-        importProgressModal.classList.add("show");
-        importProgressModal.setAttribute("aria-hidden", "false");
-      }
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
 
-      function hideImportProgress() {
-        importProgressModal.classList.remove("show");
-        importProgressModal.setAttribute("aria-hidden", "true");
-      }
+  function cloudinaryThumb(url) {
+    if (!url || !url.includes('cloudinary.com')) return url;
+    return url.replace('/upload/', '/upload/w_400,h_300,c_fill,q_auto/');
+  }
 
-      function syncFolderControls() {
-        const mode = String(importFolderMode?.value || "none");
-        if (!manualFolderInput) return;
-        manualFolderInput.style.display = mode === "manual" ? "inline-block" : "none";
-      }
+  function formatDate(iso) {
+    if (!iso) return '';
+    return iso.slice(0, 10);
+  }
 
-      function setSession(data) {
-        sessionId = String(data?.id || "");
-        pickerUri = String(data?.pickerUri || "");
-        const selected = Boolean(data?.mediaItemsSet);
-        const expireTime = String(data?.expireTime || "");
-        sessionInfoEl.textContent = sessionId
-          ? `Session: ${sessionId} | Selected: ${selected ? "yes" : "no"} | Expires: ${expireTime || "unknown"}`
-          : "No active picker session.";
-        refreshButtons();
-      }
+  function renderGrid(photos) {
+    photoGrid.innerHTML = '';
+    countLabel.textContent = `${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
 
-      async function getIdentityClient(triesLeft = 30) {
-        const identity = window.netlifyIdentity;
-        if (identity) return identity;
-        if (triesLeft <= 0) throw new Error("Netlify Identity is unavailable.");
-        await new Promise((resolve) => setTimeout(resolve, 250));
-        return getIdentityClient(triesLeft - 1);
-      }
+    if (!photos.length) {
+      showStatus('No photos match your filter.', 'empty');
+      return;
+    }
 
-      async function requireAdminToken() {
-        const identity = await getIdentityClient();
-        identity.init();
-        const user = identity.currentUser();
-        if (!user) {
-          identity.open("login");
-          throw new Error("Please log in as admin first.");
-        }
-        return user.jwt(true);
-      }
+    clearStatus();
 
-      async function apiCall(token, payload) {
-        const response = await fetch("/.netlify/functions/google-photos-media", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify(payload),
-        });
+    photos.forEach(photo => {
+      const card = document.createElement('div');
+      card.className = 'photo-card';
+      card.title = 'Click to copy URL';
 
-        const raw = await response.text();
-        let data = {};
-        try { data = raw ? JSON.parse(raw) : {}; } catch {}
-        if (!response.ok) {
-          const missingEnv = Array.isArray(data.missingEnv) ? data.missingEnv : [];
-          if (missingEnv.length) throw new Error(setupHint(missingEnv));
-          const detail = data.error || raw || response.statusText || "Unknown error";
-          throw new Error(`Request failed (${response.status}): ${String(detail).trim()}`);
-        }
-        return data;
-      }
+      const loc  = photo.location_name || photo.caption || '';
+      const date = formatDate(photo.taken_at);
 
-      async function checkIntegrationSetup() {
-        const token = await requireAdminToken();
-        const data = await apiCall(token, { action: "setup" });
-        integrationConfigured = Boolean(data?.configured);
-        importConfigured = Boolean(data?.importConfigured);
+      card.innerHTML = `
+        <img src="${cloudinaryThumb(photo.image_url)}" loading="lazy" alt="${loc}" />
+        <div class="photo-meta">
+          ${loc ? `<div class="loc">${loc}</div>` : ''}
+          ${date ? `<div class="date">${date}</div>` : ''}
+        </div>
+        <span class="copy-badge">Copied!</span>
+      `;
 
-        if (!integrationConfigured) {
-          setStatus(setupHint(Array.isArray(data?.missingGoogleEnv) ? data.missingGoogleEnv : []), true);
-          refreshButtons();
-          return false;
-        }
-
-        if (!importConfigured) {
-          const missing = Array.isArray(data?.missingImportEnv) ? data.missingImportEnv.join(", ") : "GITHUB_TOKEN, GITHUB_REPO";
-          setStatus(`Picker works, but import is not configured yet. Missing: ${missing}`, true);
-        } else {
-          setStatus("Google Photos Picker configured. Creating session automatically...");
-        }
-
-        refreshButtons();
-        return true;
-      }
-
-      async function startPickerSession() {
-        const token = await requireAdminToken();
-        const data = await apiCall(token, { action: "create_session", maxItemCount: 200 });
-        setSession(data.session || {});
-        mediaGrid.innerHTML = "";
-        setStatus("Picker session created automatically. Click Open Picker.");
-      }
-
-      async function ensureSession() {
-        if (sessionId) return;
-        await startPickerSession();
-      }
-
-      function renderMedia(items) {
-        mediaGrid.innerHTML = "";
-        for (const item of items || []) {
-          const tile = document.createElement("article");
-          tile.className = "tile";
-
-          const media = document.createElement("div");
-          media.className = "tile-media";
-          if (item.previewUrl) {
-            const img = document.createElement("img");
-            img.src = item.previewUrl;
-            img.alt = item.filename || item.id || "Selected media";
-            img.loading = "lazy";
-            media.appendChild(img);
-          } else {
-            media.textContent = String(item.mimeType || "").startsWith("video/") ? "Video" : "Photo";
-          }
-
-          const body = document.createElement("div");
-          body.className = "tile-body";
-
-          const name = document.createElement("div");
-          name.className = "tiny";
-          name.textContent = item.filename || item.id;
-
-          const meta = document.createElement("div");
-          meta.className = "tiny";
-          meta.textContent = `${item.mimeType || "unknown"}${item.createTime ? ` | ${item.createTime}` : ""}`;
-
-          body.append(name, meta);
-          tile.append(media, body);
-          mediaGrid.appendChild(tile);
-        }
-      }
-
-      async function loadAllSelectedMedia() {
-        if (!sessionId) throw new Error("Start a picker session first.");
-        const token = await requireAdminToken();
-        let all = [];
-        let pageToken = "";
-        do {
-          const data = await apiCall(token, {
-            action: "list_picked_media",
-            sessionId,
-            pageSize: 100,
-            ...(pageToken ? { pageToken } : {}),
-          });
-          const items = Array.isArray(data.mediaItems) ? data.mediaItems : [];
-          all = all.concat(items);
-          pageToken = String(data.nextPageToken || "");
-        } while (pageToken);
-        return all;
-      }
-
-      async function bulkUseGoogleLinks() {
-        setStatus("Loading selected items...");
-        const items = await loadAllSelectedMedia();
-        if (items.length === 0) {
-          setStatus("No selected items found in picker session.", true);
-          return;
-        }
-        renderMedia(items);
-        const links = items.map((item) => item.downloadUrl || item.baseUrl).filter(Boolean);
-        if (links.length === 0) {
-          setStatus("No Google links found for selected items.", true);
-          return;
-        }
-        await navigator.clipboard.writeText(links.join("\n"));
-        setStatus(`Loaded ${items.length} selected item(s). Copied ${links.length} Google link(s) to clipboard.`);
-      }
-
-      async function bulkImportToSite() {
-        setStatus("Loading selected items for import...");
-        const items = await loadAllSelectedMedia();
-        if (items.length === 0) {
-          setStatus("No selected items found in picker session.", true);
-          return;
-        }
-        renderMedia(items);
-
-        const token = await requireAdminToken();
-        const previews = [];
-        for (const item of items) {
-          const preview = await apiCall(token, {
-            action: "preview_import",
-            mediaItemId: item.id,
-            mimeType: item.mimeType,
-            filename: item.filename,
-          });
-          previews.push({ item, preview });
-        }
-
-        const existing = previews.filter((row) => Boolean(row.preview?.exists));
-        if (existing.length > 0) {
-          const confirmed = window.confirm(`${existing.length} selected image(s) already exist in site storage. Continue and overwrite those files?`);
-          if (!confirmed) {
-            setStatus("Import cancelled.");
-            return;
-          }
-        }
-
-        const importedPaths = [];
-        showImportProgress(previews.length);
+      card.addEventListener('click', async () => {
         try {
-          for (let i = 0; i < previews.length; i += 1) {
-            const row = previews[i];
-            const item = row.item;
-            const label = item.filename || item.id || "image";
-            setImportProgress(i, previews.length, `Importing ${label}`);
-            setStatus(`Importing ${label}...`);
-            const result = await apiCall(token, {
-              action: "import_media",
-              mediaItemId: item.id,
-              baseUrl: item.baseUrl,
-              mimeType: item.mimeType,
-              filename: item.filename,
-              createTime: item.createTime,
-              latitude: item.latitude,
-              longitude: item.longitude,
-            });
-            const localPath = result?.imported?.publicPath || row.preview?.importTarget?.publicPath || "";
-            if (localPath) importedPaths.push(localPath);
-            setImportProgress(i + 1, previews.length, `Imported ${label}`);
-          }
-        } finally {
-          hideImportProgress();
+          await navigator.clipboard.writeText(photo.image_url);
+        } catch {
+          // fallback
+          const ta = document.createElement('textarea');
+          ta.value = photo.image_url;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
         }
-
-        if (importedPaths.length > 0) {
-          const mode = String(importFolderMode?.value || "none");
-          if (mode === "auto") {
-            setStatus("Assigning imported images to GPS/date folders...");
-            await apiCall(token, { action: "auto_group", items: importedPaths });
-          } else if (mode === "manual") {
-            const folder = String(manualFolderInput?.value || "").trim();
-            if (!folder) {
-              setStatus("Import succeeded, but manual folder is blank. Set a folder name and retry grouping in Media Library.", true);
-            } else {
-              setStatus(`Assigning imported images to folder: ${folder}`);
-              await apiCall(token, { action: "set_groups", items: importedPaths, folder });
-            }
-          }
-
-          await navigator.clipboard.writeText(importedPaths.join("\n"));
-          const label = mode === "auto"
-            ? " Imported items auto-grouped by GPS/date."
-            : mode === "manual"
-            ? " Imported items assigned to manual folder."
-            : "";
-          setStatus(`Imported ${importedPaths.length} item(s). Local paths copied to clipboard.${label}`);
-        } else {
-          setStatus("Import completed, but no local paths were returned.");
-        }
-      }
-
-      document.getElementById("loginBtn")?.addEventListener("click", async () => {
-        try {
-          const identity = await getIdentityClient();
-          identity.open("login");
-        } catch (error) {
-          setStatus(String(error?.message || error), true);
-        }
+        card.classList.add('copied');
+        setTimeout(() => card.classList.remove('copied'), 1800);
+        showToast('URL copied to clipboard');
       });
 
-      document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-        try {
-          const identity = await getIdentityClient();
-          await identity.logout();
-          whoEl.textContent = "Not logged in";
-          setStatus("Logged out.");
-          integrationConfigured = false;
-          importConfigured = false;
-          setSession({});
-          mediaGrid.innerHTML = "";
-          refreshButtons();
-        } catch (error) {
-          setStatus(String(error?.message || error), true);
-        }
-      });
+      photoGrid.appendChild(card);
+    });
+  }
 
-      openPickerBtn?.addEventListener("click", async () => {
-        try {
-          await ensureSession();
-          if (!pickerUri) {
-            setStatus("No picker URL available.", true);
-            return;
-          }
-          window.open(`${pickerUri}/autoclose`, "_blank", "noopener");
-          setStatus("Opened Google Picker. Make selections, then click one bulk action.");
-        } catch (error) {
-          setStatus(String(error?.message || error), true);
-        }
-      });
+  function applyFilters() {
+    const q    = searchInput.value.trim().toLowerCase();
+    const date = dateInput.value.trim();
 
-      importFolderMode?.addEventListener("change", syncFolderControls);
-
-      bulkLinkBtn?.addEventListener("click", async () => {
-        bulkLinkBtn.disabled = true;
-        bulkImportBtn.disabled = true;
-        try {
-          await ensureSession();
-          await bulkUseGoogleLinks();
-        } catch (error) {
-          setStatus(String(error?.message || error), true);
-        } finally {
-          refreshButtons();
-        }
-      });
-
-      bulkImportBtn?.addEventListener("click", async () => {
-        bulkLinkBtn.disabled = true;
-        bulkImportBtn.disabled = true;
-        try {
-          await ensureSession();
-          await bulkImportToSite();
-        } catch (error) {
-          setStatus(String(error?.message || error), true);
-        } finally {
-          refreshButtons();
-        }
-      });
-
-      async function initIdentityStatus() {
-        try {
-          const identity = await getIdentityClient();
-          identity.init();
-          const user = identity.currentUser();
-          if (user) {
-            whoEl.textContent = user.email || "Admin logged in";
-            appendLog("Identity session detected.");
-          } else {
-            whoEl.textContent = "Not logged in";
-            appendLog("No active identity session.");
-          }
-        } catch (error) {
-          whoEl.textContent = "Not logged in";
-          setStatus(String(error?.message || error), true);
-        }
+    const filtered = allPhotos.filter(p => {
+      if (date && !(p.taken_at || '').startsWith(date)) return false;
+      if (q) {
+        const haystack = `${p.location_name || ''} ${p.caption || ''}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
       }
+      return true;
+    });
 
-      appendLog("Google Photos media page ready.");
-      syncFolderControls();
-      refreshButtons();
+    renderGrid(filtered);
+  }
 
-      (async () => {
-        await initIdentityStatus();
-        try {
-          const ok = await checkIntegrationSetup();
-          if (ok) await startPickerSession();
-        } catch (error) {
-          setStatus(String(error?.message || error), true);
-        }
-      })();
-    </script>
-  </body>
+  async function loadPhotos() {
+    showStatus('<span class="spin"></span> Loading photos from upload.nickward.co.uk…', 'loading');
+    photoGrid.innerHTML = '';
+    countLabel.textContent = '';
+
+    try {
+      const res  = await fetch(`${PHOTO_BASE}/api/gallery`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      allPhotos  = Array.isArray(data) ? data : (data.images || []);
+      // Sort newest first
+      allPhotos.sort((a, b) => (b.taken_at || '').localeCompare(a.taken_at || ''));
+      clearStatus();
+      applyFilters();
+    } catch (err) {
+      showStatus(`Failed to load photos: ${err.message}`, 'error');
+      countLabel.textContent = '';
+    }
+  }
+
+  searchInput.addEventListener('input', applyFilters);
+  dateInput.addEventListener('input', applyFilters);
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    dateInput.value   = '';
+    applyFilters();
+  });
+
+  loadPhotos();
+})();
+</script>
+</body>
 </html>
