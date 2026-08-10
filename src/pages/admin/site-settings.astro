@@ -183,11 +183,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
       </section>
 
       <section class="card">
-        <div class="save-row">
-          <div class="field">
-            <label for="savePassword">Confirm password</label>
-            <input type="password" id="savePassword" placeholder="Enter password…" />
-          </div>
+        <div style="display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;">
           <button class="btn big" id="saveBtn" type="button">Save settings</button>
         </div>
         <div class="status-msg" id="saveStatus"></div>
@@ -224,7 +220,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
   const $ = id => document.getElementById(id);
 
   const passwordInput   = $('passwordInput');
-  const savePassword    = $('savePassword');
+  const savePassword    = passwordInput; // same field reused
   const loadBtn         = $('loadBtn');
   const saveBtn         = $('saveBtn');
   const loadStatus      = $('loadStatus');
@@ -266,7 +262,6 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
       mastheadUrl.value    = settings.homepage?.mastheadImage || '';
       mastheadUrl.dispatchEvent(new Event('input'));
       renderGallery(settings.homepage?.galleryImages || []);
-      savePassword.value = pw;
       settingsForm.style.display = 'block';
       hideMsg(loadStatus);
       loadPhotos(); // pre-load picker in background
