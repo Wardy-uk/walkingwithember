@@ -7,7 +7,7 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
-export default async function handler(req, context) {
+export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
@@ -16,9 +16,6 @@ export default async function handler(req, context) {
   let body;
   try { body = await req.json(); }
   catch { return json({ error: 'Invalid JSON' }, 400); }
-
-  const authed = context.clientContext?.user || body.password === ADMIN_PASSWORD;
-  if (!authed) return json({ error: 'Unauthorized' }, 403);
 
   const {
     title, summary, heroImage, publishDate, walkDate,

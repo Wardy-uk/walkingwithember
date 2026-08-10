@@ -7,15 +7,11 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
-export default async function handler(req, context) {
+export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
-  const url      = new URL(req.url);
-  const path     = url.searchParams.get('path');
-  const password = url.searchParams.get('password');
-
-  const authed = context.clientContext?.user || password === ADMIN_PASSWORD;
-  if (!authed) return json({ error: 'Unauthorized' }, 403);
+  const url  = new URL(req.url);
+  const path = url.searchParams.get('path');
   if (!path) return json({ error: 'Missing path param' }, 400);
   if (!GITHUB_TOKEN) return json({ error: 'GITHUB_TOKEN not configured' }, 503);
 
