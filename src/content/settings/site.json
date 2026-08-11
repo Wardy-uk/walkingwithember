@@ -9,8 +9,8 @@
   "homepage": {
     "mastheadImage": "https://res.cloudinary.com/xcvta5p6/image/upload/v1786275902/photo-library/uougpkxmloyl38jnkkgs.jpg",
     "galleryImages": [
-      "/uploads/images/5da590c5-0884-4c1c-8fc1-012850f889fa-80ba7d9489.jpg",
-      "/uploads/images/48e7f19f-7631-48c9-98e6-96917f61b6b4-a9cc5231a3.jpg"
+      "https://res.cloudinary.com/xcvta5p6/image/upload/v1786275863/photo-library/kl3y0yjmfcua7mfki6yf.jpg",
+      "https://res.cloudinary.com/xcvta5p6/image/upload/v1786275726/photo-library/pe27nlwwn7t4az49erq2.jpg"
     ]
   }
 }
