@@ -61,10 +61,13 @@ function difficultyLabel(d: string | undefined) {
       <h2>Nick and Ember,<br/>out in all weathers.</h2>
       <p>Honest route notes from a hillwalker and his dog. No sponsored shortcuts, no sugar-coating — just the real detail on what you'll find underfoot, overhead, and at the gate.</p>
     </div>
-    <div class="v2-ember-photo">
+    <div class="v2-ember-photos">
       {galleryImages[0]
-        ? <img src={imgSrc(galleryImages[0])} alt="Nick and Ember" loading="lazy" />
+        ? <img class="v2-ember-img" src={imgSrc(galleryImages[0])} alt="Nick and Ember" loading="lazy" />
         : <span class="v2-ember-photo-fallback">🐕</span>
+      }
+      {galleryImages[1] &&
+        <img class="v2-ember-img" src={imgSrc(galleryImages[1])} alt="Nick and Ember on the trail" loading="lazy" />
       }
     </div>
   </section>
@@ -167,13 +170,13 @@ function difficultyLabel(d: string | undefined) {
         <a class="button ghost-dark" href="/blog/">Read trail stories</a>
       </article>
       <div class="v2-image-stack">
-        {galleryImages.length >= 2 ? (
-          galleryImages.slice(0, 2).map((img, i) => (
-            <img src={imgSrc(img)} alt={`Trail photo ${i + 1}`} loading="lazy" />
+        {walks.length >= 2 ? (
+          walks.slice(0, 2).map((walk, i) => (
+            <img src={imgSrc(walk.data.heroImage)} alt={walk.data.title} loading="lazy" />
           ))
-        ) : galleryImages.length === 1 ? (
+        ) : walks.length === 1 ? (
           <>
-            <img src={imgSrc(galleryImages[0])} alt="Trail photo" loading="lazy" />
+            <img src={imgSrc(walks[0].data.heroImage)} alt={walks[0].data.title} loading="lazy" />
             <div style="background:var(--bg-soft);border-radius:4px;display:flex;align-items:center;justify-content:center;height:200px;color:var(--muted);font-size:2rem;">⛰️</div>
           </>
         ) : (
