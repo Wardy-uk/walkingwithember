@@ -37,17 +37,28 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
     input:focus { outline:none; border-color:var(--brand); }
     .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:.7rem; }
 
-    /* ── Image field with pick button ── */
-    .img-field { display:flex; gap:.4rem; align-items:center; }
-    .img-field input { flex:1; min-width:0; }
-    .img-preview { width:64px; height:48px; object-fit:cover; border-radius:8px; border:1px solid var(--line); flex-shrink:0; background:var(--bg); }
+    /* ── Masthead field ── */
+    .img-field { display:grid; gap:.4rem; }
+    .img-field-row { display:flex; gap:.4rem; align-items:center; }
+    .img-field-row input { flex:1; min-width:0; }
+    .img-preview {
+      width:100%; max-height:220px; object-fit:cover;
+      border-radius:10px; border:1px solid var(--line);
+      background:var(--bg);
+    }
 
     /* ── Gallery list ── */
-    .img-list { display:grid; gap:.5rem; }
-    .img-row { display:flex; gap:.4rem; align-items:center; }
-    .img-row input { flex:1; min-width:0; }
+    .img-list { display:grid; gap:.6rem; }
+    .img-row { display:grid; gap:.4rem; }
+    .img-row-controls { display:flex; gap:.4rem; align-items:center; }
+    .img-row-controls input { flex:1; min-width:0; }
     .img-row .del-btn { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:#fde8e8; border:1px solid #e8b3b3; color:#8a2020; font-size:1rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-    .img-row-preview { width:44px; height:36px; object-fit:cover; border-radius:6px; border:1px solid var(--line); flex-shrink:0; background:var(--bg); }
+    .img-row-preview {
+      width:100%; max-height:180px; object-fit:cover;
+      border-radius:8px; border:1px solid var(--line);
+      background:var(--bg); display:none;
+    }
+    .img-row-preview.loaded { display:block; }
 
     /* ── Status ── */
     .status-msg { padding:.7rem .9rem; border-radius:10px; font-weight:700; font-size:.9rem; display:none; margin-top:.8rem; }
@@ -161,9 +172,11 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
 
         <h3>Masthead / hero image</h3>
         <div class="img-field" style="margin-bottom:.6rem;">
+          <div class="img-field-row">
+            <input type="url" id="mastheadUrl" placeholder="https://res.cloudinary.com/…" />
+            <button class="btn pick" type="button" data-picker="masthead">Pick photo</button>
+          </div>
           <img id="mastheadPreview" class="img-preview" src="" alt="" style="display:none;" />
-          <input type="url" id="mastheadUrl" placeholder="https://res.cloudinary.com/…" />
-          <button class="btn pick" type="button" data-picker="masthead">Pick photo</button>
         </div>
 
         <h3>Homepage gallery photos</h3>
@@ -291,16 +304,27 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
     const row = document.createElement('div');
     row.className = 'img-row';
 
+    const controls = document.createElement('div');
+    controls.className = 'img-row-controls';
+
     const preview = document.createElement('img');
     preview.className = 'img-row-preview';
-    preview.src = url ? cloudThumb(url, 88, 66) : '';
     preview.alt = '';
+
+    function setPreview(u) {
+      if (!u) { preview.classList.remove('loaded'); return; }
+      const src = cloudThumb(u, 800, 500);
+      preview.src = src;
+      preview.onload  = () => preview.classList.add('loaded');
+      preview.onerror = () => preview.classList.remove('loaded');
+    }
+    setPreview(url);
 
     const input = document.createElement('input');
     input.type = 'url';
     input.value = url;
-    input.placeholder = 'https://res.cloudinary.com/…';
-    input.addEventListener('input', () => { preview.src = cloudThumb(input.value.trim(), 88, 66); });
+    input.placeholder = 'https://res.cloudinary.com/… (use Pick to choose)';
+    input.addEventListener('input', () => setPreview(input.value.trim()));
 
     const pick = document.createElement('button');
     pick.className = 'btn pick';
@@ -314,7 +338,8 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
     del.innerHTML = '×';
     del.addEventListener('click', () => row.remove());
 
-    row.append(preview, input, pick, del);
+    controls.append(input, pick, del);
+    row.append(controls, preview);
     galleryList.appendChild(row);
     return row;
   }
