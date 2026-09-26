@@ -1,0 +1,49 @@
+---
+// Reports the homepage A/B assignment to GA4.
+//
+// Both variants are served at "/", so GA4's own page_view cannot tell them
+// apart. This sends the variant as an event parameter on every homepage
+// pageview and on each CTA click.
+//
+// NOTE: "ab_home" and "ab_goal" must be registered as custom dimensions in
+// GA4 (Admin → Custom definitions, event-scoped) before they show up in
+// reports. Data sent before they are registered is not backfilled.
+//
+// Analytics is consent-gated by CookieBanner, so this only ever measures
+// visitors who accepted cookies.
+---
+
+<script is:inline>
+  (() => {
+    const root = document.querySelector(".v2-home");
+    const variant = root?.dataset.ab;
+    if (!variant) return;
+
+    window.__wweAbVariant = variant;
+
+    // Events must land after gtag's config call, or GA4 drops them, so
+    // everything waits for CookieBanner to signal that GA4 is configured.
+    const send = (name, params) => {
+      if (typeof window.gtag !== "function") return;
+      window.gtag("event", name, { ...params, ab_home: variant });
+    };
+
+    const sendWhenReady = (name, params) => {
+      if (window.__ga4Loaded) {
+        send(name, params);
+      } else {
+        window.addEventListener("wwe-ga4-ready", () => send(name, params), { once: true });
+      }
+    };
+
+    sendWhenReady("ab_impression", {});
+
+    document.addEventListener("click", (event) => {
+      const target = event.target instanceof Element
+        ? event.target.closest("[data-ab-goal]")
+        : null;
+      if (!target) return;
+      sendWhenReady("ab_goal", { goal: target.getAttribute("data-ab-goal") });
+    });
+  })();
+</script>

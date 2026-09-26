@@ -1,4 +1,7 @@
 ---
+// Variant B of the homepage A/B test. Never linked or indexed — the
+// ab-home edge function rewrites "/" here for the B cohort, so visitors
+// see this content at "/" and never at this URL.
 import BaseLayout from "../layouts/BaseLayout.astro";
 import HomeSections from "../components/HomeSections.astro";
 import { getRegions, getSiteSettings } from "../lib/content";
@@ -13,6 +16,8 @@ const regions = await getRegions();
   regions={regions}
   siteName={settings.siteName}
   tagline={settings.tagline}
+  canonicalPath="/"
+  noindex={true}
 >
-  <HomeSections variant="a" />
+  <HomeSections variant="b" />
 </BaseLayout>

@@ -10,10 +10,14 @@ interface Props {
   regions?: string[];
   siteName: string;
   tagline: string;
+  /** Force the canonical URL to a different path (A/B variants point at the real URL). */
+  canonicalPath?: string;
+  /** Keep the page out of search results (A/B variants, previews). */
+  noindex?: boolean;
 }
 
-const { title, description, regions = [], siteName, tagline } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const { title, description, regions = [], siteName, tagline, canonicalPath, noindex = false } = Astro.props;
+const canonical = new URL(canonicalPath ?? Astro.url.pathname, Astro.site).toString();
 ---
 
 <!doctype html>
@@ -27,6 +31,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).toString();
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
