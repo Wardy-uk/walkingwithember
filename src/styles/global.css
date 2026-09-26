@@ -588,14 +588,22 @@ input:focus, select:focus, textarea:focus {
 .v2-hero-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(28,21,16,0.1) 0%,
-    transparent 35%,
-    transparent 45%,
-    rgba(28,21,16,0.55) 70%,
-    rgba(28,21,16,0.85) 100%
-  );
+  background:
+    /* right-hand scrim, so the text stays legible against bright sky */
+    linear-gradient(
+      to left,
+      rgba(28,21,16,0.62) 0%,
+      rgba(28,21,16,0.34) 28%,
+      transparent 58%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(28,21,16,0.1) 0%,
+      transparent 35%,
+      transparent 45%,
+      rgba(28,21,16,0.55) 70%,
+      rgba(28,21,16,0.85) 100%
+    );
 }
 
 .v2-hero-overlay {
@@ -604,6 +612,15 @@ input:focus, select:focus, textarea:focus {
   padding: clamp(2rem, 5vw, 4rem);
   color: #F5F0E8;
   max-width: 720px;
+  /* Sits right so it clears Nick and Ember, who are on the left of the
+     masthead. margin-left:auto rather than align-self, because the hero is
+     a flex row and auto margin is what pushes a single child across. */
+  margin-left: auto;
+  text-align: right;
+}
+
+.v2-hero-overlay .v2-hero-ctas {
+  justify-content: flex-end;
 }
 
 .v2-hero-kicker {
@@ -1051,4 +1068,14 @@ input:focus, select:focus, textarea:focus {
   font-size: 0.75rem;
   color: var(--muted, #6b6259);
   text-align: center;
+}
+
+/* ── Hero overlay: back to full width on small screens ─────────────── */
+@media (max-width: 720px) {
+  .v2-hero-overlay {
+    margin-left: 0;
+    text-align: left;
+    max-width: none;
+  }
+  .v2-hero-overlay .v2-hero-ctas { justify-content: flex-start; }
 }
