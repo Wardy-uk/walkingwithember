@@ -170,6 +170,7 @@ for (const photo of photos) {
   if (claimed) {
     byWalk.get(claimed.walk.date).push({
       path: photo.path,
+      source: photo.source ?? null,
       filename: photo.filename,
       time: photo.time,
       lat: photo.lat,

@@ -33,6 +33,7 @@ const PHOTO_JSON = join(ROOT, "public", "photos");
 
 const argv = process.argv.slice(2);
 const SOURCE = argv.find((a) => !a.startsWith("--"));
+const FROM_LIBRARY = argv.includes("--photos-library");
 const flag = (n, d) => {
   const i = argv.indexOf(`--${n}`);
   return i !== -1 && argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[i + 1] : d;
@@ -41,17 +42,27 @@ const WIDTH = Number(flag("width", "1600"));
 const ONLY = flag("walk", null);
 const LIMIT = flag("limit", null) ? Number(flag("limit", null)) : null;
 const FORCE = argv.includes("--force");
+// Photos' on-disk derivatives are only ~480px — too soft for a walk page.
+// Skip them unless explicitly allowed, so a half-finished iCloud download
+// cannot quietly bake thumbnails into the site.
+const ALLOW_DERIVATIVES = argv.includes("--allow-derivatives");
 
-if (!SOURCE) {
-  console.error("Usage: node scripts/build-walk-photos.mjs <exported-folder> [--width 1600] [--walk DATE] [--limit 12] [--force]");
+if (!SOURCE && !FROM_LIBRARY) {
+  console.error("Usage: node scripts/build-walk-photos.mjs <exported-folder> | --photos-library [--width 1600] [--walk DATE] [--limit 12] [--force] [--allow-derivatives]");
   process.exit(1);
 }
 
 const exists = (p) => access(p).then(() => true, () => false);
 
 // Re-run the index + match over the export folder so the pipeline is one step.
-console.log("Indexing exported folder…");
-await exec("node", [join(__dir, "index-photos.mjs"), SOURCE], { cwd: ROOT, maxBuffer: 1 << 28 });
+console.log(FROM_LIBRARY ? "Indexing Photos library…" : "Indexing exported folder…");
+await exec(
+  "node",
+  FROM_LIBRARY
+    ? [join(__dir, "index-photos.mjs"), "--photos-library", ...(SOURCE ? [SOURCE] : [])]
+    : [join(__dir, "index-photos.mjs"), SOURCE],
+  { cwd: ROOT, maxBuffer: 1 << 28 },
+);
 console.log("Matching against walks…");
 await exec("node", [join(__dir, "match-photos.mjs")], { cwd: ROOT, maxBuffer: 1 << 28 });
 
@@ -69,6 +80,8 @@ await mkdir(PHOTO_JSON, { recursive: true });
 
 let converted = 0;
 let kept = 0;
+let skippedDerivative = 0;
+let skippedNoFile = 0;
 
 for (const walk of matches) {
   const chosen = spread(walk.photos, LIMIT);
@@ -77,7 +90,14 @@ for (const walk of matches) {
 
   const pins = [];
   for (const [i, photo] of chosen.entries()) {
-    if (!photo.path) continue;
+    if (!photo.path) {
+      skippedNoFile++;
+      continue;
+    }
+    if (photo.source === "derivative" && !ALLOW_DERIVATIVES) {
+      skippedDerivative++;
+      continue;
+    }
     const stem = basename(photo.path, extname(photo.path));
     const name = `${String(i + 1).padStart(2, "0")}-${stem.slice(0, 8).toLowerCase()}.jpg`;
     const outPath = join(outDir, name);
@@ -117,3 +137,11 @@ for (const walk of matches) {
 }
 
 console.log(`\n${kept} photos across ${matches.length} walks; ${converted} newly converted at ${WIDTH}px.`);
+if (skippedDerivative) {
+  console.log(
+    `${skippedDerivative} skipped — only a ~480px derivative is on disk, not the original.\n` +
+    "  iCloud is still downloading. Re-run later to pick them up, or pass\n" +
+    "  --allow-derivatives to publish the low-res versions anyway.",
+  );
+}
+if (skippedNoFile) console.log(`${skippedNoFile} skipped — no local file at all.`);

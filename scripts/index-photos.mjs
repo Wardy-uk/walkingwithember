@@ -108,6 +108,51 @@ async function indexFolder(root) {
 
 // ── Source B: the Photos library database (needs Full Disk Access) ──────────
 
+/**
+ * Maps asset UUID → local derivative JPEG.
+ *
+ * With iCloud "Optimise Mac Storage" the originals/ tree is empty, but Photos
+ * keeps a smaller rendition of every asset under resources/derivatives. Those
+ * are only ~480px on the long edge — fine for map-pin popups and thumbnails,
+ * not for a hero image — but they are on disk right now, which beats waiting
+ * on a background sync that may never run.
+ */
+async function buildDerivativeIndex(libPath) {
+  const root = join(libPath, "resources", "derivatives");
+  const index = new Map();
+
+  const walk = async (dir) => {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) await walk(p);
+      else if (/\.(jpe?g|heic)$/i.test(e.name)) {
+        // Files are named <UUID>_<variant>.jpeg — key on the UUID.
+        const uuid = e.name.split("_")[0].toUpperCase();
+        const prev = index.get(uuid);
+        // Prefer the largest rendition when several exist.
+        if (!prev) index.set(uuid, p);
+        else {
+          try {
+            const [a, b] = await Promise.all([stat(prev), stat(p)]);
+            if (b.size > a.size) index.set(uuid, p);
+          } catch {
+            /* keep what we have */
+          }
+        }
+      }
+    }
+  };
+
+  await walk(root);
+  return index;
+}
+
 async function indexPhotosLibrary(libPath) {
   const db = join(libPath, "database", "Photos.sqlite");
   const uri = `file:${db}?immutable=1`;
@@ -135,9 +180,14 @@ async function indexPhotosLibrary(libPath) {
   const sql = `SELECT ${dateCol}, ${latCol}, ${lonCol}, ${dirCol}, ${nameCol} FROM ZASSET ${where};`;
   const { stdout } = await exec("sqlite3", ["-separator", SEP, uri, sql], { maxBuffer: 1 << 28 });
 
+  const derivatives = await buildDerivativeIndex(libPath);
+
   // Core Data stores timestamps as seconds since 2001-01-01 UTC.
   const APPLE_EPOCH = Date.UTC(2001, 0, 1);
   const out = [];
+  let fromOriginal = 0;
+  let fromDerivative = 0;
+
   for (const line of stdout.split("\n")) {
     if (!line.trim()) continue;
     const [d, lat, lon, dir, name] = line.split(SEP);
@@ -145,16 +195,37 @@ async function indexPhotosLibrary(libPath) {
     if (!Number.isFinite(secs)) continue;
     const time = new Date(APPLE_EPOCH + secs * 1000);
     if (isNaN(time)) continue;
+
+    const uuid = (name || "").split(".")[0].toUpperCase();
+    const original = dir && name ? join(libPath, "originals", dir, name) : null;
+    let path = null;
+    let source = null;
+    if (original && (await exists(original))) {
+      path = original;
+      source = "original";
+      fromOriginal++;
+    } else if (derivatives.has(uuid)) {
+      path = derivatives.get(uuid);
+      source = "derivative";
+      fromDerivative++;
+    }
+
     const la = Number(lat);
     const lo = Number(lon);
     out.push({
-      path: dir && name ? join(libPath, "originals", dir, name) : null,
+      path,
+      source,
       filename: name || null,
       time: time.toISOString(),
       // Photos writes -180 to mean "no location"
       lat: Number.isFinite(la) && la !== -180 ? la : null,
       lon: Number.isFinite(lo) && lo !== -180 ? lo : null,
     });
+  }
+
+  console.log(`  ${fromOriginal} full originals, ${fromDerivative} derivatives on disk`);
+  if (fromDerivative && !fromOriginal) {
+    console.log("  (iCloud Optimise Mac Storage is on — derivatives are ~480px)");
   }
   return out;
 }
