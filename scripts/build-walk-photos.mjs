@@ -32,12 +32,18 @@ const IMG_ROOT = join(ROOT, "public", "uploads", "images", "walks");
 const PHOTO_JSON = join(ROOT, "public", "photos");
 
 const argv = process.argv.slice(2);
-const SOURCE = argv.find((a) => !a.startsWith("--"));
 const FROM_LIBRARY = argv.includes("--photos-library");
 const flag = (n, d) => {
   const i = argv.indexOf(`--${n}`);
   return i !== -1 && argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[i + 1] : d;
 };
+
+// A bare word is the source path — but only if it is not the value belonging
+// to a preceding flag, or "--width 480" would be read as a path of "480".
+const VALUE_FLAGS = new Set(["--width", "--walk", "--limit", "--photos-library"]);
+const SOURCE = argv.find(
+  (a, i) => !a.startsWith("--") && !(i > 0 && VALUE_FLAGS.has(argv[i - 1])),
+);
 const WIDTH = Number(flag("width", "1600"));
 const ONLY = flag("walk", null);
 const LIMIT = flag("limit", null) ? Number(flag("limit", null)) : null;

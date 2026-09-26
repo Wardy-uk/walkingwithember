@@ -13,7 +13,7 @@
  * Writes .cache/photo-index.json
  */
 
-import { writeFile, mkdir, readdir } from "fs/promises";
+import { writeFile, mkdir, readdir, stat, access } from "fs/promises";
 import { join, dirname, extname } from "path";
 import { fileURLToPath } from "url";
 import { execFile } from "child_process";
@@ -25,6 +25,8 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 const CACHE = join(__dir, "..", ".cache");
 
 const SEP = String.fromCharCode(31); // ASCII unit separator, safe inside filenames
+
+const exists = (p) => access(p).then(() => true, () => false);
 
 const IMAGE_EXT = new Set([
   ".jpg", ".jpeg", ".heic", ".heif", ".png",
