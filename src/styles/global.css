@@ -1014,3 +1014,41 @@ input:focus, select:focus, textarea:focus {
   [data-ab="b"] .v2-ember-photos { height: 220px; }
   [data-ab="b"] .v2-ember-img { width: 100%; height: 100%; }
 }
+
+/* ── Route map photo pins ─────────────────────────────────────────────── */
+.route-photo-pin {
+  background: var(--brand, #be6d37);
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.route-photo-pin:hover,
+.route-photo-pin:focus-visible {
+  background: var(--brand-deep, #9c5325);
+  transform: scale(1.15);
+}
+
+.route-photo-popup { margin: 0; }
+
+.route-photo-popup img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+}
+
+.route-photo-popup figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--muted, #6b6259);
+  text-align: center;
+}

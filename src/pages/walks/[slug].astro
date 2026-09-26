@@ -29,6 +29,8 @@ const walkDateStr = (walk.data.walkDate ?? walk.data.publishDate).toISOString().
 const routeFilePath = join(process.cwd(), "public", "routes", `${walkDateStr}.json`);
 const hasRoute = existsSync(routeFilePath);
 const routeUrl = hasRoute ? `/routes/${walkDateStr}.json` : "";
+// Photo pins are optional: the map fetches this and quietly skips a 404.
+const photosUrl = walkDateStr ? `/photos/${walkDateStr}.json` : "";
 const estimatedHours = walk.data.difficulty === "Hard"
   ? Math.max(3, Math.round(walk.data.distance / 2))
   : walk.data.difficulty === "Moderate"
@@ -91,6 +93,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
             data-zoom={String(walk.data.routeMapZoom)}
             data-map-api-key={mapApiKey}
             data-gpx-url={gpxUrl}
+            data-photos-url={photosUrl}
           ></div>
           <div id="route-debug-log" hidden style="margin-top:0.65rem;max-height:140px;overflow:auto;white-space:pre-wrap;padding:0.55rem 0.65rem;border:1px solid #dcc6ac;border-radius:10px;background:#fff6e9;color:#5d4431;font-size:0.78rem;"></div>
         </section>
@@ -268,6 +271,8 @@ const estimatedHours = walk.data.difficulty === "Hard"
             L.circleMarker(routePoints[0], { radius: 5, color: "#1f7a1f", weight: 2, fillOpacity: 1 }).addTo(map);
             L.circleMarker(routePoints[routePoints.length - 1], { radius: 5, color: "#9e2a2a", weight: 2, fillOpacity: 1 }).addTo(map);
             logDebug("Route rendered successfully.");
+
+            await dropPhotoPins(map, L);
           } catch (error) {
             logDebug(`GPX render error: ${error?.message || error}`);
             dropFallbackMarker();
@@ -278,6 +283,60 @@ const estimatedHours = walk.data.difficulty === "Hard"
       } catch (error) {
         logDebug(`Map init error: ${error?.message || error}`);
         showMapMessage("Map failed to load on this page.");
+      }
+
+      /**
+       * Pins each photo on the map at the spot it was taken.
+       * Photos matched on time alone carry no trustworthy position, so they
+       * are excluded here (they still appear in the gallery below the map).
+       */
+      async function dropPhotoPins(map, L) {
+        const photosUrl = mapContainer.dataset.photosUrl;
+        if (!photosUrl) return;
+
+        let data;
+        try {
+          const res = await fetch(photosUrl);
+          if (!res.ok) return; // no photo set for this walk yet
+          data = await res.json();
+        } catch {
+          return;
+        }
+
+        const pinnable = (data.photos || []).filter(
+          (p) => p.pinnable && typeof p.lat === "number" && typeof p.lon === "number",
+        );
+        if (!pinnable.length) return;
+
+        const group = L.layerGroup().addTo(map);
+        pinnable.forEach((photo, i) => {
+          const km = (photo.metresAlongRoute ?? 0) / 1000;
+          const time = new Date(photo.time).toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          L.marker([photo.lat, photo.lon], {
+            icon: L.divIcon({
+              className: "route-photo-pin",
+              html: `<span>${i + 1}</span>`,
+              iconSize: [22, 22],
+              iconAnchor: [11, 11],
+            }),
+            alt: `Photo ${i + 1}, taken at ${time}`,
+            keyboard: true,
+          })
+            .bindPopup(
+              `<figure class="route-photo-popup">
+                 <img src="${photo.src}" alt="Taken at ${time}, ${km.toFixed(1)}km into the walk" loading="lazy" />
+                 <figcaption>${time} · ${km.toFixed(1)}km in</figcaption>
+               </figure>`,
+              { minWidth: 220, maxWidth: 280 },
+            )
+            .addTo(group);
+        });
+
+        logDebug(`Photo pins rendered: ${pinnable.length}`);
       }
     }
   </script>
