@@ -6,6 +6,16 @@ type Variant = (typeof VARIANTS)[number];
 
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days — a returning visitor keeps their variant
 
+/**
+ * Share of new visitors sent to variant B, 0 to 1.
+ *
+ * Parked at 0 because variant B draws its ethos images from *published*
+ * walks, and every walk is still a draft — so that section renders as two
+ * empty grey boxes. Set this to 0.5 once a couple of walks are live and the
+ * test becomes meaningful. ?ab=b still forces variant B for eyeballing it.
+ */
+const B_SHARE = 0;
+
 function isVariant(value: string | undefined): value is Variant {
   return value === "a" || value === "b";
 }
@@ -28,7 +38,7 @@ export default async function handler(request: Request, context: Context) {
     variant = existing;
     shouldSetCookie = false;
   } else {
-    variant = Math.random() < 0.5 ? "a" : "b";
+    variant = Math.random() < B_SHARE ? "b" : "a";
     shouldSetCookie = true;
   }
 
