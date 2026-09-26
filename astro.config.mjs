@@ -6,9 +6,10 @@ export default defineConfig({
   output: "static",
   integrations: [
     sitemap({
-      // /home-b/ is the B arm of the homepage A/B test — it is served at "/"
-      // by the ab-home edge function and must never be indexed on its own.
-      filter: (page) => !page.includes("/home-b"),
+      // Keep out of search:
+      //  • /home-b/ — the B arm of the homepage A/B test, served at "/"
+      //  • /preview/ — unpublished drafts, still full of TODO prompts
+      filter: (page) => !page.includes("/home-b") && !page.includes("/preview/"),
     }),
   ],
 });
