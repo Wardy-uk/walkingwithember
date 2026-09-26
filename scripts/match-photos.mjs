@@ -65,7 +65,13 @@ for (const w of manifest) {
     console.warn(`! ${w.date}: GPX missing (${w.gpxDownload}) — skipped`);
     continue;
   }
-  if (points.length < 2) continue;
+  // Timed points only: positionAtTime binary-searches on the clock, so an
+  // untimed point would break the ordering invariant it relies on.
+  points = points.filter((p) => p.time && !isNaN(p.time));
+  if (points.length < 2) {
+    console.warn(`! ${w.date}: track has no timestamps — skipped`);
+    continue;
+  }
 
   const cumulative = [0];
   for (let i = 1; i < points.length; i++) {
@@ -82,25 +88,42 @@ for (const w of manifest) {
   });
 }
 
-/** Nearest track point to a photo, with distance and progress along route. */
-function nearest(walk, lat, lon) {
-  let best = Infinity;
-  let bestIdx = 0;
-  // Full scan: tracks are ~10-20k points and there are only a handful of
-  // walks, so this stays well under a second and avoids an index structure.
-  for (let i = 0; i < walk.points.length; i++) {
-    const d = haversine({ lat, lon }, walk.points[i]);
-    if (d < best) {
-      best = d;
-      bestIdx = i;
-      if (d < 5) break; // close enough; no better match matters
-    }
+/**
+ * Where along the route the walker was at a given moment.
+ *
+ * Position comes from the photo's timestamp, not from the nearest track
+ * point. On an out-and-back the two legs run metres apart, so a nearest-point
+ * lookup cannot tell the outbound pass from the return one and scrambles the
+ * ordering. The clock is unambiguous.
+ */
+function positionAtTime(walk, ms) {
+  const pts = walk.points;
+  let lo = 0;
+  let hi = pts.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (pts[mid].time.getTime() < ms) lo = mid + 1;
+    else hi = mid;
   }
+  const total = walk.cumulative[walk.cumulative.length - 1];
   return {
-    metres: best,
-    alongMetres: walk.cumulative[bestIdx],
-    fraction: walk.cumulative[bestIdx] / walk.cumulative[walk.cumulative.length - 1],
+    idx: lo,
+    alongMetres: walk.cumulative[lo],
+    fraction: total ? walk.cumulative[lo] / total : 0,
   };
+}
+
+/**
+ * True distance from a point to the track — a full scan, no early exit.
+ * Used only to decide whether a photo belongs to this walk at all.
+ */
+function distanceToTrack(walk, lat, lon) {
+  let best = Infinity;
+  for (const p of walk.points) {
+    const d = haversine({ lat, lon }, p);
+    if (d < best) best = d;
+  }
+  return best;
 }
 
 const byWalk = new Map(walks.map((w) => [w.date, []]));
@@ -119,20 +142,27 @@ for (const photo of photos) {
     // Prefer the walk whose track the photo actually sits on.
     let best = null;
     for (const w of inWindow) {
-      const n = nearest(w, photo.lat, photo.lon);
-      if (!best || n.metres < best.n.metres) best = { w, n };
+      const metres = distanceToTrack(w, photo.lat, photo.lon);
+      if (!best || metres < best.metres) best = { w, metres };
     }
-    if (best && best.n.metres <= MAX_METRES) {
-      claimed = { walk: best.w, ...best.n, basis: "gps+time" };
+    if (best && best.metres <= MAX_METRES) {
+      const pos = positionAtTime(best.w, ms);
+      claimed = { walk: best.w, metres: best.metres, ...pos, basis: "gps+time" };
     } else if (best) {
       unmatched.push({
         ...photo,
-        reason: `nearest walk ${best.w.date} was ${Math.round(best.n.metres)}m away (limit ${MAX_METRES}m)`,
+        reason: `nearest walk ${best.w.date} was ${Math.round(best.metres)}m away (limit ${MAX_METRES}m)`,
       });
     }
   } else if (inWindow.length === 1) {
-    // No GPS, but only one walk was happening — take it, and say so.
-    claimed = { walk: inWindow[0], metres: null, alongMetres: null, fraction: null, basis: "time-only" };
+    // No GPS on the photo, but only one walk was happening — take it, and say
+    // so. The timestamp still places it along the route.
+    claimed = {
+      walk: inWindow[0],
+      metres: null,
+      ...positionAtTime(inWindow[0], ms),
+      basis: "time-only",
+    };
   } else {
     unmatched.push({ ...photo, reason: "no GPS and overlapping walk windows" });
   }
