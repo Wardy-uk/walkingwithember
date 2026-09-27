@@ -1,7 +1,7 @@
 ---
 title: "Sheffield — 10.2 miles"
 summary: "10.2 miles and 711m of ascent around Sheffield, walked in 5h04. Route notes to follow."
-heroImage: "/uploads/images/walks/2026-04-06/01-92e6fb74.jpg"
+heroImage: "/uploads/images/walks/2026-04-06/12-631af3a1.jpg"
 publishDate: 2026-04-06
 walkDate: 2026-04-06
 difficulty: Moderate

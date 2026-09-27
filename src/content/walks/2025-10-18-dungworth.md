@@ -1,7 +1,7 @@
 ---
 title: "Dungworth — 16.2 miles"
 summary: "16.2 miles and 811m of ascent around Dungworth, walked in 6h53. Route notes to follow."
-heroImage: "/uploads/images/walks/2025-10-18/01-e196772b.jpg"
+heroImage: "/uploads/images/walks/2025-10-18/12-f0671d4b.jpg"
 publishDate: 2025-10-18
 walkDate: 2025-10-18
 difficulty: Hard

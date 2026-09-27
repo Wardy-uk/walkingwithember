@@ -1174,3 +1174,21 @@ input:focus, select:focus, textarea:focus {
   -webkit-mask-image: radial-gradient(ellipse 85% 70% at 50% 45%, #000 40%, transparent 100%);
   mask-image: radial-gradient(ellipse 85% 70% at 50% 45%, #000 40%, transparent 100%);
 }
+
+/* ── Walk page hero ───────────────────────────────────────────────────
+   Walk heroes are picked for content (a view, nobody in frame) rather than
+   shape, so most are portrait. Full-bleed at natural aspect that would be a
+   metre of phone photo before the title. Constrain it to a banner and let
+   object-fit do the cropping at display time — the file keeps its full
+   composition for the gallery and the map pins. */
+.article > img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center 40%; /* favour the horizon over the foreground */
+  border-radius: 14px;
+}
+
+@media (max-width: 720px) {
+  .article > img { aspect-ratio: 4 / 3; }
+}

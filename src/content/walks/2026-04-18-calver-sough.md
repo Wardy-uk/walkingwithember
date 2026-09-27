@@ -1,7 +1,7 @@
 ---
 title: "Calver Sough — 8 miles"
 summary: "8 miles and 692m of ascent around Calver Sough, walked in 5h02. Route notes to follow."
-heroImage: "/uploads/images/walks/2026-04-18/01-207cf094.jpg"
+heroImage: "/uploads/images/walks/2026-04-18/12-13e55bb3.jpg"
 publishDate: 2026-04-18
 walkDate: 2026-04-18
 difficulty: Moderate

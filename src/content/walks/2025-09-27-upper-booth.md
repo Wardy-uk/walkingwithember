@@ -1,7 +1,7 @@
 ---
 title: "Upper Booth — 14.7 miles"
 summary: "14.7 miles and 962m of ascent around Upper Booth, walked in 6h01. Route notes to follow."
-heroImage: "/uploads/images/walks/2025-09-27/01-be03a368.jpg"
+heroImage: "/uploads/images/walks/2025-09-27/11-2e9e53b2.jpg"
 publishDate: 2025-09-27
 walkDate: 2025-09-27
 difficulty: Hard
