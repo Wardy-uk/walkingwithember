@@ -385,14 +385,16 @@ const estimatedHours = walk.data.difficulty === "Hard"
             minute: "2-digit",
           });
 
+          // Colour by subject so the map reads at a glance: views, Ember, people.
+          const subject = photo.subject ?? "scenery";
           const marker = L.marker([photo.lat, photo.lon], {
             icon: L.divIcon({
-              className: "route-photo-pin",
+              className: `route-photo-pin is-${subject}`,
               html: `<span>${i + 1}</span>`,
               iconSize: [22, 22],
               iconAnchor: [11, 11],
             }),
-            alt: `Photo ${i + 1}, taken at ${time}, ${km.toFixed(1)}km into the walk`,
+            alt: `${subject} photo ${i + 1}, taken at ${time}, ${km.toFixed(1)}km into the walk`,
             keyboard: true,
           }).addTo(group);
 
@@ -458,6 +460,21 @@ const estimatedHours = walk.data.difficulty === "Hard"
           show(index);
         }
 
+
+        // A legend, but only for the subjects actually present on this walk.
+        const present = [...new Set(pinnable.map((p) => p.subject ?? "scenery"))];
+        if (present.length > 1) {
+          const labels = { scenery: "View", dog: "Ember", people: "People" };
+          const legend = L.control({ position: "bottomleft" });
+          legend.onAdd = () => {
+            const el = L.DomUtil.create("div", "route-photo-legend");
+            el.innerHTML = present
+              .map((s) => `<span class="is-${s}"><i></i>${labels[s] ?? s}</span>`)
+              .join("");
+            return el;
+          };
+          legend.addTo(map);
+        }
         logDebug(`Photo pins rendered: ${pinnable.length}`);
       }    }
   </script>

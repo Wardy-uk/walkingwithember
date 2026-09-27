@@ -1335,3 +1335,48 @@ input:focus, select:focus, textarea:focus {
   .archive-table th:nth-child(4),
   .archive-table td:nth-child(4) { display: none; }
 }
+
+/* ── Photo pin colour coding ──────────────────────────────────────────
+   Three subjects, from the library's own face detection: a view, Ember in
+   the landscape, or a photo with people in it. Colours are distinguishable
+   by lightness as well as hue, so the pins still separate for anyone who
+   cannot tell the greens from the browns apart. */
+.route-photo-pin.is-scenery { background: #2F7D63; }  /* green  — a view */
+.route-photo-pin.is-dog     { background: #C98A1E; }  /* amber  — Ember */
+.route-photo-pin.is-people  { background: #9C4A7C; }  /* plum   — people */
+
+.route-photo-pin.is-scenery:hover { background: #24614C; }
+.route-photo-pin.is-dog:hover     { background: #A87016; }
+.route-photo-pin.is-people:hover  { background: #7D3A63; }
+
+.route-photo-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 0.4rem 0.55rem;
+  background: rgba(253, 252, 249, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.72rem;
+  color: var(--ink, #2A2018);
+  box-shadow: 0 2px 8px rgba(28, 21, 16, 0.18);
+}
+
+.route-photo-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.route-photo-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+}
+
+.route-photo-legend .is-scenery i { background: #2F7D63; }
+.route-photo-legend .is-dog i     { background: #C98A1E; }
+.route-photo-legend .is-people i  { background: #9C4A7C; }

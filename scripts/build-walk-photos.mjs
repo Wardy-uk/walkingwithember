@@ -19,6 +19,7 @@
  */
 
 import { readFile, writeFile, mkdir, access, readdir } from "fs/promises";
+import { homedir } from "os";
 import { join, dirname, extname, basename } from "path";
 import { fileURLToPath } from "url";
 import { execFile } from "child_process";
@@ -75,6 +76,48 @@ await exec("node", [join(__dir, "match-photos.mjs")], { cwd: ROOT, maxBuffer: 1 
 let matches = JSON.parse(await readFile(join(CACHE, "photo-matches.json"), "utf8"));
 if (ONLY) matches = matches.filter((w) => w.date === ONLY);
 
+/**
+ * What each photo is of, so the map can colour its pin.
+ *
+ * Photos records human and animal faces separately (ZDETECTIONTYPE 1 and 3),
+ * which is exactly the distinction worth showing: a view, Ember in the
+ * landscape, or a photo with people in it.
+ */
+const subjects = new Map();
+{
+  const uuids = [
+    ...new Set(
+      matches
+        .flatMap((w) => w.photos.map((p) => (p.filename ?? "").split(".")[0].toUpperCase()))
+        .filter(Boolean),
+    ),
+  ];
+  if (uuids.length) {
+    const lib = join(homedir(), "Pictures", "Photos Library.photoslibrary");
+    const sql = `SELECT upper(a.ZUUID),
+      (SELECT COUNT(*) FROM ZDETECTEDFACE f WHERE f.ZASSETFORFACE = a.Z_PK AND f.ZDETECTIONTYPE = 1),
+      (SELECT COUNT(*) FROM ZDETECTEDFACE f WHERE f.ZASSETFORFACE = a.Z_PK AND f.ZDETECTIONTYPE = 3)
+      FROM ZASSET a WHERE upper(a.ZUUID) IN (${uuids.map((u) => `'${u}'`).join(",")});`;
+    try {
+      const { stdout } = await exec(
+        "sqlite3",
+        ["-separator", "|", `file:${join(lib, "database", "Photos.sqlite")}?immutable=1`, sql],
+        { maxBuffer: 1 << 28 },
+      );
+      for (const line of stdout.trim().split("\n")) {
+        if (!line) continue;
+        const [uuid, people, animals] = line.split("|");
+        subjects.set(
+          uuid,
+          +people > 0 ? "people" : +animals > 0 ? "dog" : "scenery",
+        );
+      }
+    } catch {
+      console.warn("  ! could not read face data — pins will all be unclassified");
+    }
+  }
+}
+
 /** Keep `n` photos spread evenly along the route rather than the first n. */
 function spread(photos, n) {
   if (!n || photos.length <= n) return photos;
@@ -129,6 +172,7 @@ for (const walk of matches) {
       // Photos matched on time alone have no trustworthy position, so the map
       // should not pin them — the gallery still shows them.
       pinnable: photo.basis === "gps+time",
+      subject: subjects.get((photo.filename ?? "").split(".")[0].toUpperCase()) ?? "scenery",
     });
     kept++;
   }

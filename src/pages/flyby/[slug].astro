@@ -1,4 +1,6 @@
 ---
+import { existsSync } from "fs";
+import { join } from "path";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import FlybyPanel from "../../components/FlybyPanel.astro";
 import { getPublishedWalks, getRegions, getSiteSettings } from "../../lib/content";
@@ -16,6 +18,10 @@ const settings = await getSiteSettings();
 const regions = await getRegions();
 const mapApiKey = import.meta.env.PUBLIC_OS_MAPS_API_KEY ?? "";
 const gpxUrl = walk.data.gpxDownload ?? "";
+const walkDateStr = (walk.data.walkDate ?? walk.data.publishDate).toISOString().slice(0, 10);
+const routeFilePath = join(process.cwd(), "public", "routes", `${walkDateStr}.json`);
+const hasRoute = existsSync(routeFilePath);
+const routeUrl = hasRoute ? `/routes/${walkDateStr}.json` : "";
 const autoPlay = Astro.url.searchParams.get("autoplay") === "1";
 ---
 
@@ -34,10 +40,9 @@ const autoPlay = Astro.url.searchParams.get("autoplay") === "1";
         <a class="button ghost-dark" href={`/walks/${walk.slug}/`}>Back To Walk</a>
       </p>
     </section>
-    {gpxUrl && (
-      <FlybyPanel
-        gpxUrl={gpxUrl}
-        osApiKey={mapApiKey}
+    {hasRoute && (
+        <FlybyPanel
+          routeUrl={routeUrl}
         autoPlay={autoPlay}
         showOpenTab={false}
         panelTitle="3D Flyby"
