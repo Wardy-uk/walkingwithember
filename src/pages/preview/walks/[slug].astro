@@ -129,8 +129,17 @@ const estimatedHours = walk.data.difficulty === "Hard"
 
       <section class="card planning-strip">
         <div>
-          <h2>Map And Navigation</h2>
-          <p>Route line is drawn from this walk GPX on OS mapping where available.</p>
+          <h2>Map and navigation</h2>
+          <p>
+            The line on the map is the GPX from the day, so it is the route as
+            actually walked. You will not find numbered directions telling you to
+            bear left at the third gate.
+          </p>
+          <p class="muted">
+            That is on purpose. This is not about telling you where to go. It is
+            about sharing a route that works with a dog, and getting you out to
+            explore it yourself.
+          </p>
         </div>
         <div class="planning-links">
           {walk.data.osMapsLink && <a class="button" href={walk.data.osMapsLink} target="_blank" rel="noreferrer">Open OS Maps Route</a>}
