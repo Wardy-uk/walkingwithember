@@ -14,3 +14,15 @@
   from = "/admin"
   to = "/admin/"
   status = 301
+
+# Renamed 2026-09-27: "Ringinglow" was the geocoded midpoint, the walk is the
+# Redmires Reservoir circular. Keep the old URL working.
+[[redirects]]
+  from = "/walks/2026-08-06-ringinglow/"
+  to = "/walks/2026-08-06-redmires-reservoir-circular/"
+  status = 301
+
+[[redirects]]
+  from = "/flyby/2026-08-06-ringinglow/"
+  to = "/flyby/2026-08-06-redmires-reservoir-circular/"
+  status = 301

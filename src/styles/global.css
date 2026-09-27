@@ -416,16 +416,19 @@ input:focus, select:focus, textarea:focus {
 .share-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
 /* ── Map / flyby ─────────────────────────────────────────────────────── */
-.map-panel { height: 360px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.map-panel { height: 520px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 .map-compare { display: grid; gap: 1rem; }
-.map-compare.two-panels { grid-template-columns: 1fr 1fr; align-items: start; }
+.map-compare.two-panels { grid-template-columns: 1fr; align-items: start; }
 .map-card { display: grid; gap: 0.75rem; }
 
-.flyby-panel { display: grid; gap: 0.75rem; padding: 0.85rem; }
+/* Matches .card so the map and the flyby line up exactly when stacked.
+   They used to sit side by side, where a 20px difference in inset did not
+   show; stacked, it reads as a misalignment. */
+.flyby-panel { display: grid; gap: 0.75rem; padding: 1.2rem 1.4rem; }
 .flyby-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
 .flyby-head h2 { margin: 0; }
 .flyby-map-wrap { position: relative; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.flyby-map { height: 360px; }
+.flyby-map { height: 520px; }
 .flyby-controls { display: grid; grid-template-columns: 90px 1fr 88px 130px 130px 210px; gap: 0.55rem; align-items: center; }
 .flyby-range { width: 100%; }
 .flyby-select { width: 100%; }
@@ -1392,3 +1395,11 @@ input:focus, select:focus, textarea:focus {
   color: var(--muted, #6b6259);
 }
 .writeup-notice strong { color: var(--ink, #2A2018); }
+
+/* ── Map panels on small screens ──────────────────────────────────────
+   520px of map is right on a full-width desktop block and far too much
+   on a phone, where it would push the route notes off the screen. */
+@media (max-width: 720px) {
+  .map-panel { height: 340px; }
+  .flyby-map { height: 340px; }
+}

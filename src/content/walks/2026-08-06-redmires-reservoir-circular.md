@@ -1,5 +1,5 @@
 ---
-title: "Ringinglow, 10.6 miles"
+title: "Redmires Reservoir Circular"
 summary: "10.6 miles and 325m of ascent around Ringinglow, walked in 4h52. Route notes to follow."
 heroImage: "/uploads/images/walks/2026-08-06/01-0850dc60.jpg"
 publishDate: 2026-08-06
