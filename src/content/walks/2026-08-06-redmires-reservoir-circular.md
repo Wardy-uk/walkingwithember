@@ -28,7 +28,7 @@ August 2026. 325m of climbing and 4h52 on the move.
 
 Cloud and sun taking turns, 15 to 16 degrees, wind gusting to 51km/h, dry underfoot all day.
 
-Out with Lizzy, 11:25 to 16:17. 12 photographs from the day, 11:43 to 15:36, 6 of the view, 2 with Ember in them.
+Out with Lizzy, 11:25 to 16:17.
 
 ## The route
 
@@ -60,8 +60,6 @@ a route to follow this is closer to 8 miles. The GPX download has the whole
 thing, retrace and all.
 
 ## For the dog
-
-Ember is in 2 of the photographs from this one, both near the end.
 
 She was on a long lead through Wyming Brook and went through the water rather
 than over the stepping stones, which is the sensible choice when you have four

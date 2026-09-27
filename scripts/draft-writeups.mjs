@@ -156,7 +156,14 @@ function weatherSentence(w) {
   return bits.join(", ").replace(/, ([^,]*)$/, ", $1") + ".";
 }
 
-/** What the photographs say about the day, without guessing at it. */
+/**
+ * A tally of the day's photographs.
+ *
+ * Deliberately not used in the prose any more. The page shows the photographs,
+ * so counting them reads as filler: "2 of the photographs from this one" tells
+ * a reader nothing about the walk. Kept because it is useful on the console
+ * when deciding which walks have enough material to write up.
+ */
 function photoSentence(photos) {
   if (!photos?.length) return null;
   const n = photos.length;
@@ -269,7 +276,6 @@ ${[
     : names
       ? `Out with ${names}.`
       : null,
-  pics,
 ].filter(Boolean).join(" ")}
 
 > **Proposed write-up.** The route, the timings and the weather above are all
@@ -285,12 +291,6 @@ ${relief ? `\n${relief}\n` : ""}${climb ? `\n${climb}\n` : ""}
 > and the stiles, where the path gives up, and what is worth stopping for.
 
 ## For the dog
-
-${
-  photos.some((p) => p.subject === "dog")
-    ? `Ember is in ${photos.filter((p) => p.subject === "dog").length} of the photographs from this one.`
-    : "No photographs of Ember from this day."
-}
 
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
