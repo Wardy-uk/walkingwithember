@@ -1,7 +1,6 @@
 import { requireAdmin, deny } from './lib/auth.mjs';
 
 const GITHUB_TOKEN   = process.env.GITHUB_TOKEN;
-const ADMIN_PASSWORD = process.env.WALK_BUILDER_PASSWORD;
 const REPO           = 'Wardy-uk/walkingwithember';
 
 const CORS = {
