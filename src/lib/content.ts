@@ -19,9 +19,23 @@ export async function getAllWalks() {
   return walks.sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());
 }
 
+/**
+ * Walks that get a page of their own on the public site.
+ *
+ * A walk needs a reviewed write-up as well as photographs. An unreviewed
+ * draft is honest about the route and the weather but still carries TODO
+ * prompts where Nick's own knowledge goes, and those are not for visitors.
+ * Until it is reviewed a walk sits in the archive with its GPX, and returns
+ * to the walks list the moment writeupStatus flips to reviewed.
+ */
 export async function getPublishedWalks() {
   const walks = await getAllWalks();
-  return walks.filter((walk) => !walk.data.draft && !walk.data.catalogueOnly);
+  return walks.filter(
+    (walk) =>
+      !walk.data.draft &&
+      !walk.data.catalogueOnly &&
+      walk.data.writeupStatus === "reviewed",
+  );
 }
 
 /**
@@ -31,7 +45,11 @@ export async function getPublishedWalks() {
  */
 export async function getCatalogueWalks() {
   const walks = await getAllWalks();
-  return walks.filter((walk) => !walk.data.draft && walk.data.catalogueOnly);
+  return walks.filter(
+    (walk) =>
+      !walk.data.draft &&
+      (walk.data.catalogueOnly || walk.data.writeupStatus !== "reviewed"),
+  );
 }
 
 /**
