@@ -2,6 +2,12 @@
   command = "npm run build"
   publish = "dist"
 
+  # The local shell defaults to Node 12, which cannot build this. Pin the
+  # build image to the same version the site is developed against rather
+  # than inheriting whatever the default image ships.
+  [build.environment]
+    NODE_VERSION = "20"
+
 [[headers]]
   for = "/*"
   [headers.values]
