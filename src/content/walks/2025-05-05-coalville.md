@@ -26,16 +26,15 @@ May 2025. 11.1 miles round with 580m of climbing, 3h51 on the move.
 
 A bit of light drizzle but nothing that lasted, 8 to 11 degrees, wind gusting to 49km/h.
 
-Out at 09:32, back at 13:24. 8 photographs from the day, 10:21 to 13:32, 2 of the view, 6 with Ember in them.
+Out at 09:32, back at 13:24.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Whitwick, out over Oaks in Charnwood and Bardon, and back round to Whitwick.
+From Birch Avenue, out over Leicester Road, Swannymote Road, Abbey Road, Warren Hills Road and Kingfisher Close, and back round to Birch Avenue.
+
+The high point is Bardon at 279m, the low Old City of Dan at 137m, so there is 142m of relief between them.
 
 The 580m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +43,15 @@ The 580m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-Ember is in 6 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4399 1567**, Birch Avenue, LE67 5GB.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

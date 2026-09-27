@@ -71,6 +71,13 @@ const PREFERENCE = [
 /** Roads whose names say nothing useful about where you were. */
 const DULL = /^(unnamed|track|path|footpath|public footpath|bridleway|unclassified)$/i;
 
+/**
+ * Nominatim sometimes answers with a house number appended, giving names like
+ * "Quarnford 30" and "Wildboarclough 33". A number is never part of what a
+ * walker calls a place, so strip it.
+ */
+const tidy = (n) => (n ? n.replace(/\s+\d+[A-Za-z]?$/, "").trim() || null : null);
+
 async function place(lat, lon) {
   const key = `${lat.toFixed(4)},${lon.toFixed(4)}@${ZOOM}`;
   if (geo[key]) return geo[key];
@@ -84,7 +91,7 @@ async function place(lat, lon) {
     let name = null;
     for (const k of PREFERENCE) {
       const v = a[k];
-      if (v && !DULL.test(v)) { name = v; break; }
+      if (v && !DULL.test(v)) { name = tidy(v); if (name) break; }
     }
     geo[key] = { name, county: a.county ?? a.state_district ?? null };
   } catch {

@@ -29,14 +29,11 @@ Grey the whole way, cloud never really breaking, 17 to 18 degrees and warm for i
 
 Out at 12:50, back at 14:35.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Whitwick, out over Hugglescote, and back round to Whitwick.
+From Birch Avenue, out over City Of Dan, Hermitage Road, Hotel Street, Bridge Mews and Market Place, and back round to Birch Avenue.
 
 The 59m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -45,15 +42,15 @@ The 59m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4399 1567**, Birch Avenue, LE67 5GB.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

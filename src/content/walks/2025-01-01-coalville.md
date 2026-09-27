@@ -29,14 +29,11 @@ A bit of light drizzle but nothing that lasted, 7 degrees, wind gusting to 51km/
 
 Out at 13:17, back at 14:18.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Whitwick, out over Charley, and back round to Whitwick.
+From Holly Hayes Road, out over City Of Dan, Hall Lane, Meadow Lane, Leicester Road and Birch Avenue, and back round to Holly Hayes Road.
 
 Most of the 74m lands in the third fifth.
 
@@ -45,15 +42,15 @@ Most of the 74m lands in the third fifth.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4395 1570**, Holly Hayes Road, LE67 5GG.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

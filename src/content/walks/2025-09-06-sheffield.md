@@ -26,16 +26,15 @@ September 2025. 14.7 miles round with 898m of climbing, 6h19 on the move.
 
 Grey the whole way, cloud never really breaking, 12 to 16 degrees, wind gusting to 50km/h, dry underfoot at least.
 
-Out at 09:37, back at 15:56. 12 photographs from the day, 10:18 to 15:40, 7 of the view, 1 with Ember in it.
+Out at 09:37, back at 15:56.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
 From Hope Woodlands, out over Bradfield and Derwent, and back round to Hope Woodlands.
+
+The high point is Bradfield at 550m, the low Derwent at 206m, so there is 344m of relief between them.
 
 Most of the 898m lands in the second fifth.
 
@@ -44,15 +43,15 @@ Most of the 898m lands in the second fifth.
 
 ## For the dog
 
-Ember is in 1 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 1732 8896**, Derwent Lane, S33 0AQ.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

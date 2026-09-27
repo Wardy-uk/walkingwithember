@@ -29,14 +29,11 @@ Grey the whole way, cloud never really breaking, 9 degrees, dry underfoot at lea
 
 Out at 12:32, back at 13:32.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-A loop around Whitwick.
+From Birch Avenue, out over Old City of Dan, Leicester Road, St Bernard's Road, Rosemary Crescent and Market Place, and back round to Birch Avenue.
 
 Most of the 96m lands in the second fifth.
 
@@ -45,15 +42,15 @@ Most of the 96m lands in the second fifth.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4399 1567**, Birch Avenue, LE67 5GB.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

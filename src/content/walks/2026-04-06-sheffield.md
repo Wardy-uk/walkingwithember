@@ -26,16 +26,15 @@ April 2026. 10.2 miles round with 711m of climbing, 5h04 on the move.
 
 Cloud and sun taking turns, 6 to 11 degrees, dry underfoot at least.
 
-Out at 10:09, back at 15:13. 12 photographs from the day, 10:31 to 15:07, 3 of the view.
+Out at 10:09, back at 15:13.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Hathersage, out over Sheffield, and back round to Hathersage.
+From North Lees, out over Long Causeway, Hathersage, Hathersage Booths, The Dale and Cottis Side, and back round to North Lees.
+
+The high point is Hathersage at 454m, the low Church Bank at 183m, so there is 271m of relief between them.
 
 The 711m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +43,15 @@ The 711m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 2279 8435**, North Lees.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

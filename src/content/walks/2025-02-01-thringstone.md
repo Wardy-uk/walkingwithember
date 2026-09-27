@@ -26,16 +26,15 @@ February 2025. 4.6 miles round with 226m of climbing, 1h34 on the move.
 
 Grey the whole way, cloud never really breaking, 2 to 3 degrees, cold enough to keep moving, dry underfoot at least.
 
-Out at 07:45, back at 09:20. 1 photograph from the day, 08:10 to 08:10.
+Out at 07:45, back at 09:20.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-A loop around Whitwick.
+From Birch Avenue, out over Leicester Road, Loughborough Road, Berrington Court, Oaks Road and Hilary Crescent, and back round to Birch Avenue.
+
+The high point is Whitwick at 209m, the low Old City of Dan at 138m, so there is 71m of relief between them.
 
 The 226m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +43,15 @@ The 226m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4400 1566**, Birch Avenue, LE67 5GB.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

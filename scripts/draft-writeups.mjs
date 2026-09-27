@@ -49,7 +49,7 @@ const files = (await readdir(WALKS)).filter((f) => f.endsWith(".md")).sort();
 
 /** "Hathersage, then Hollow Meadows, Ughill and Sheffield, back to Hathersage" */
 function routeSentence(wps, shape) {
-  const raw = wps.map((w) => w.name);
+  const raw = wps.map((w) => w.name).map((n) => n && n.replace(/\s+\d+[A-Za-z]?$/, "").trim());
   if (!raw.length) return null;
 
   // A route that crosses its own ground samples the same place more than
@@ -63,6 +63,19 @@ function routeSentence(wps, shape) {
     seen.add(n);
     names.push(n);
   }
+  // Eleven place names in one sentence is a list, not a route description.
+  // Keep the ends and thin the middle evenly.
+  const MAX = 6;
+  if (names.length > MAX) {
+    const first = names[0];
+    const last = names[names.length - 1];
+    const middle = names.slice(1, -1);
+    const step = middle.length / (MAX - 2);
+    const kept = Array.from({ length: MAX - 2 }, (_, i) => middle[Math.floor(i * step)]);
+    names.length = 0;
+    names.push(first, ...kept.filter(Boolean), last);
+  }
+
   if (shape === "circular" && names.length > 1 && names[names.length - 1] !== names[0]) {
     names.push(names[0]);
   }
@@ -218,7 +231,14 @@ for (const file of files) {
 
   // High and low points say more about a walk than a list of parishes.
   const relief = (() => {
-    if (!wp?.high?.ele || !wp?.low?.ele) return null;
+    if (!wp?.high || !wp?.low) return null;
+    // Some tracks carry no elevation at all and report 0m at both ends.
+    // Inland Britain has no sea level, so a 0 here means missing data.
+    if (wp.low.ele <= 0 || wp.high.ele <= 0) return null;
+    // A sentence naming the same place as both the high and the low point
+    // says nothing. Happens on 13 of the 59 where neither point sits on a
+    // named feature and the geocoder falls back to the road or parish.
+    if (wp.high.name && wp.high.name === wp.low.name) return null;
     const drop = wp.high.ele - wp.low.ele;
     if (drop < 60) return null;
     const hi = wp.high.name ? `${wp.high.name} at ${wp.high.ele}m` : `${wp.high.ele}m`;
@@ -278,10 +298,7 @@ ${[
       : null,
 ].filter(Boolean).join(" ")}
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact.${names ? "" : " Who came is still unknown."} What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact.${names ? "" : " Who came is still unknown."} What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 

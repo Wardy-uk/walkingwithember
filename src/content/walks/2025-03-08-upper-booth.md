@@ -27,16 +27,15 @@ March 2025. 11.9 miles round with 947m of climbing, 6h20 on the move.
 
 Cloud and sun taking turns, 9 to 13 degrees, dry underfoot at least.
 
-Out with Lizzy and Daniel, 11:11 to 17:31. 12 photographs from the day, 11:29 to 15:20, 7 of the view, 1 with Ember in it.
+Out with Lizzy and Daniel, 11:11 to 17:31.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Grindsbrook Booth, out over Edale and Upper Booth, and back round to Grindsbrook Booth.
+From Marys Lane, out over Edale, Upper Booth, Hayfield and Barber Booth, and back round to Marys Lane.
+
+The high point is Hayfield at 635m, the low Marys Lane at 238m, so there is 397m of relief between them.
 
 Most of the 947m lands in the first fifth. It goes up early.
 
@@ -45,15 +44,15 @@ Most of the 947m lands in the first fifth. It goes up early.
 
 ## For the dog
 
-Ember is in 1 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 1237 8531**, Marys Lane, S33 7ZP.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

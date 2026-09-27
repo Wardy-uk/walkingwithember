@@ -26,16 +26,15 @@ March 2025. 5.9 miles round with 314m of climbing, 1h57 on the move.
 
 A bit of light drizzle but nothing that lasted, 9 to 10 degrees, wind gusting to 60km/h.
 
-Out at 10:22, back at 12:19. 7 photographs from the day, 11:16 to 11:17, 4 with Ember in them.
+Out at 10:22, back at 12:19.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Whitwick, out over Bardon, and back round to Whitwick.
+From Birch Avenue, out over Peterfield Road, Meadow Lane, Vercor Close, Citron Avenue and Greenhill Road, and back round to Birch Avenue.
+
+The high point is Bardon at 279m, the low Holly Hayes Road at 145m, so there is 134m of relief between them.
 
 The 314m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +43,15 @@ The 314m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-Ember is in 4 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4399 1568**, Birch Avenue, LE67 5GB.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

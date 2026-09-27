@@ -26,16 +26,13 @@ February 2025. 2.4 miles round with 82m of climbing, 1h00 on the move.
 
 Clear, the sort of day you plan around, 7 to 8 degrees, dry underfoot at least.
 
-Out at 12:24, back at 13:24. 2 photographs from the day, 12:54 to 12:54, 2 of the view.
+Out at 12:24, back at 13:24.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-A loop around Whitwick.
+From Birch Avenue, out over Holly Hayes Road, Leicester Road, Lees Crescent, Loughborough Road and Swannymote Road, and back round to Birch Avenue.
 
 The 82m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +41,15 @@ The 82m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4399 1567**, Birch Avenue, LE67 5GB.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

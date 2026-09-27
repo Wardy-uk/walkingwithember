@@ -26,16 +26,13 @@ July 2025. 7.9 miles round with 41m of climbing, 3h07 on the move.
 
 Drizzle on and off for 2 hours, 23 to 24 degrees and warm for it.
 
-Out at 11:35, back at 14:42. 12 photographs from the day, 12:05 to 13:10, 6 of the view, 6 with Ember in them.
+Out at 11:35, back at 14:42.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Ormesby St. Margaret with Scratby, out over Hemsby and Winterton-on-Sea, and back round to Ormesby St. Margaret with Scratby.
+From Beach Road, out over Little Scratby Crescent, The Marrams, Winterton Valley Estate, Hillview Drive and The Esplanade, and back round to Beach Road.
 
 The 41m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +41,15 @@ The 41m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-Ember is in 6 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **TG 5103 1540**, Beach Road, NR29 3NW.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

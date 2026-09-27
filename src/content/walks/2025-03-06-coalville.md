@@ -26,16 +26,13 @@ March 2025. 4 miles round with 114m of climbing, 1h21 on the move.
 
 Clear, the sort of day you plan around, 4 degrees, dry underfoot at least.
 
-Out at 06:33, back at 07:54. 5 photographs from the day, 06:49 to 07:04, 5 of the view.
+Out at 06:33, back at 07:54.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-A loop around Whitwick.
+From Birch Avenue, out over Leicester Road, Lees Crescent, Whitwick, Rosemary Crescent and Hilary Crescent, and back round to Birch Avenue.
 
 The 114m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +41,15 @@ The 114m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4399 1566**, Birch Avenue, LE67 5GB.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

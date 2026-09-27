@@ -26,16 +26,15 @@ July 2025. 10.7 miles round with 896m of climbing, 6h31 on the move.
 
 A bit of light drizzle but nothing that lasted, 16 to 18 degrees and warm for it, a steady 20km/h wind.
 
-Out at 10:20, back at 16:51. 12 photographs from the day, 10:39 to 14:01, 5 of the view, 5 with Ember in them.
+Out at 10:20, back at 16:51.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Longnor, out over Hartington Middle Quarter CP, Harpur Hill, Hartington Upper Quarter and Hollinsclough, and back round to Longnor.
+From Church Street, out over Beggar's Bridge, Glutton, Glutton Bridge, Washgate Lane and New Road, and back round to Church Street.
+
+The high point is Washgate Lane at 439m, the low Beggar's Bridge at 246m, so there is 193m of relief between them.
 
 Most of the 896m lands in the second fifth.
 
@@ -44,15 +43,15 @@ Most of the 896m lands in the second fifth.
 
 ## For the dog
 
-Ember is in 5 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 0884 6499**, Church Street, SK17 0PF.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

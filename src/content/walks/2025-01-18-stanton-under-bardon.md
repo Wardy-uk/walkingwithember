@@ -27,16 +27,15 @@ January 2025. 7.2 miles round with 309m of climbing, 2h49 on the move.
 
 Grey the whole way, cloud never really breaking, 1 to 2 degrees, cold enough to keep moving, dry underfoot at least.
 
-Out with Lizzy, 11:57 to 14:46. 3 photographs from the day, 13:00 to 13:01.
+Out with Lizzy, 11:57 to 14:46.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Merry Lees, out over Markfield, Stanton under Bardon and Thornton, and back round to Merry Lees.
+From Reservoir Road, out over Markfield Lane, M1, Hillside, Cliffe Hill Road and Thornton Lane, and back round to Reservoir Road.
+
+The high point is Hillside at 223m, the low Main Street at 125m, so there is 98m of relief between them.
 
 Most of the 309m lands in the second fifth.
 
@@ -45,15 +44,15 @@ Most of the 309m lands in the second fifth.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4706 0745**, Reservoir Road, LE67 1AN.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

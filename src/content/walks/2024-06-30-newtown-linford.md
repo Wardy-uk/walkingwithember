@@ -29,14 +29,13 @@ A bit of light drizzle but nothing that lasted, 14 to 16 degrees.
 
 Out at 10:41, back at 15:33.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Woodhouse Eaves, out over Newtown Linford and Swithland, and back round to Woodhouse Eaves.
+From Breakback Road, out over Dean's Lane, Hastings Road, Newtown Linford, Roecliffe Road and Mill Road, and back round to Breakback Road.
+
+The high point is Beacon Road at 250m, the low Roecliffe Road at 85m, so there is 165m of relief between them.
 
 The 413m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -45,15 +44,15 @@ The 413m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 5217 1482**, Breakback Road, LE12 8TA.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

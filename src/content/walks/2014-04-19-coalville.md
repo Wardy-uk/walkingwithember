@@ -29,14 +29,13 @@ Cloud and sun taking turns, 5 to 7 degrees, dry underfoot at least.
 
 Out at 09:25, back at 10:59.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Whitwick, out over Charley, and back round to Whitwick.
+From Birch Avenue, out over Hilary Crescent, Leicester Road, Abbey Road, Oaks Road and St Bernard's Road, and back round to Birch Avenue.
+
+The high point is Warren Hills Road at 236m, the low Birch Avenue at 149m, so there is 87m of relief between them.
 
 Most of the 148m lands in the second fifth.
 
@@ -45,15 +44,15 @@ Most of the 148m lands in the second fifth.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4401 1568**, Birch Avenue, LE67 5GB.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

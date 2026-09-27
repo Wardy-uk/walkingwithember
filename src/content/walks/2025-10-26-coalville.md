@@ -27,16 +27,15 @@ October 2025. 9.6 miles round with 341m of climbing, 4h17 on the move.
 
 A bit of light drizzle but nothing that lasted, 7 to 8 degrees, wind gusting to 47km/h.
 
-Out with Lizzy, 10:10 to 14:27. 9 photographs from the day, 10:41 to 13:22.
+Out with Lizzy, 10:10 to 14:27.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Whitwick, out over Charley and Bardon, and back round to Whitwick.
+From Birch Avenue, out over Loughborough Road, Abbey Road, Warren Hills Road, Citron Avenue and Kingfisher Close, and back round to Birch Avenue.
+
+The high point is Bardon at 281m, the low Old City of Dan at 138m, so there is 143m of relief between them.
 
 The 341m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -45,15 +44,15 @@ The 341m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 4399 1567**, Birch Avenue, LE67 5GB.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

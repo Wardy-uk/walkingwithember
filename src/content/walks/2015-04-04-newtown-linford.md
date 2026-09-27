@@ -29,14 +29,11 @@ Grey the whole way, cloud never really breaking, 9 degrees, dry underfoot at lea
 
 Out at 14:29, back at 16:00.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Newtown Linford, out over Swithland, and back round to Newtown Linford.
+A loop around Bradgate Road.
 
 Most of the 148m lands in the first fifth. It goes up early.
 
@@ -45,15 +42,15 @@ Most of the 148m lands in the first fifth. It goes up early.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 5234 0979**, Disabled parking, LE6 0HE.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

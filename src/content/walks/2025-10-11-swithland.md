@@ -26,16 +26,15 @@ October 2025. 14.6 miles round with 752m of climbing, 5h45 on the move.
 
 Cloud and sun taking turns, 10 to 15 degrees, dry underfoot at least.
 
-Out at 09:32, back at 15:17. 12 photographs from the day, 10:03 to 14:54, 4 of the view, 3 with Ember in them.
+Out at 09:32, back at 15:17.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Nanpantan, out over Woodhouse Eaves, Swithland and Newtown Linford, and back round to Nanpantan.
+From Dean's Lane, out over Woodhouse Lane, Brand Lane, Roecliffe Road, Joe Moore's Lane and Breakback Road, and back round to Dean's Lane.
+
+The high point is Beacon Road at 250m, the low Brand Lane at 71m, so there is 179m of relief between them.
 
 The 752m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +43,15 @@ The 752m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-Ember is in 3 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 5046 1528**, Dean's Lane, LE12 8TE.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

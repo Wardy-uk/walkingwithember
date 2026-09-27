@@ -26,16 +26,15 @@ January 2026. 7.9 miles round with 493m of climbing, 3h03 on the move.
 
 Grey the whole way, cloud never really breaking, 6 degrees, dry underfoot at least.
 
-Out at 10:19, back at 13:22. 12 photographs from the day, 10:40 to 13:07, 6 of the view, 5 with Ember in them.
+Out at 10:19, back at 13:22.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Nanpantan, out over Woodhouse Eaves, and back round to Nanpantan.
+From Dean's Lane, out over Woodhouse Lane, Breakback Road, Mill Road, Hastings Road and Beacon Road, and back round to Dean's Lane.
+
+The high point is Beacon Road at 249m, the low Woodhouse Lane at 108m, so there is 141m of relief between them.
 
 The 493m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +43,15 @@ The 493m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-Ember is in 5 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 5044 1526**, Dean's Lane, LE12 8SY.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

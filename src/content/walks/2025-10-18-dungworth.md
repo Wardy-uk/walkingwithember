@@ -26,16 +26,15 @@ October 2025. 16.2 miles round with 811m of climbing, 6h53 on the move.
 
 Grey the whole way, cloud never really breaking, 9 to 11 degrees, dry underfoot at least.
 
-Out at 10:04, back at 16:56. 12 photographs from the day, 10:24 to 16:28, 5 of the view, 4 with Ember in them.
+Out at 10:04, back at 16:56.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Hathersage, out over Hollow Meadows, Ughill, Sheffield and Ringinglow, and back round to Hathersage.
+From North Lees, out over Long Causeway, Manchester Road, Wyming Brook Drive, Fulwood Lane and Hathersage, and back round to North Lees.
+
+The high point is Hathersage at 457m, the low Wyming Brook Drive at 251m, so there is 206m of relief between them.
 
 The 811m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +43,15 @@ The 811m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-Ember is in 4 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 2275 8434**, North Lees.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

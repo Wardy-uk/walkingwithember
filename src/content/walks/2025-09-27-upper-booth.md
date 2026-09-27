@@ -26,16 +26,15 @@ September 2025. 14.7 miles round with 962m of climbing, 6h01 on the move.
 
 A bit of light drizzle but nothing that lasted, 7 to 12 degrees, wind gusting to 45km/h.
 
-Out at 09:55, back at 15:56. 12 photographs from the day, 10:06 to 15:49, 10 of the view, 2 with Ember in them.
+Out at 09:55, back at 15:56.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Wash, out over Chinley, Hayfield, Edale and Castleton, and back round to Wash.
+From Sheffield Road, out over Peat Lane, Hayfield, Upper Booth, Barber Booth and Peak Forest, and back round to Sheffield Road.
+
+The high point is Chinley at 571m, the low Barber Booth at 247m, so there is 324m of relief between them.
 
 The 962m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -44,15 +43,15 @@ The 962m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-Ember is in 2 of the photographs from this one.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 0914 8246**, Sheffield Road, SK23 0QT.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

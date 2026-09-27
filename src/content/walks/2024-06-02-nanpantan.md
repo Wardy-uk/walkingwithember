@@ -26,16 +26,15 @@ June 2024. 9.8 miles round with 329m of climbing, 3h22 on the move.
 
 Cloud and sun taking turns, 19 degrees and warm for it, dry underfoot at least.
 
-Out at 12:44, back at 16:06. 6 photographs from the day, 13:02 to 15:10, 4 of the view.
+Out at 12:44, back at 16:06.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Woodhouse Eaves, out over Nanpantan and Charley, and back round to Woodhouse Eaves.
+From Breakback Road, out over Beacon Road, Shepshed Road, Dean's Lane and Woodhouse Lane, and back round to Breakback Road.
+
+The high point is Beacon Road at 250m, the low Woodhouse Lane at 106m, so there is 144m of relief between them.
 
 Most of the 329m lands in the first fifth. It goes up early.
 
@@ -44,15 +43,15 @@ Most of the 329m lands in the first fifth. It goes up early.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 5213 1475**, Breakback Road, LE12 8TA.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

@@ -29,14 +29,11 @@ Clear, the sort of day you plan around, 6 to 9 degrees, wind gusting to 58km/h, 
 
 Out at 10:47, back at 12:18.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-A loop around Hill Houses.
+From Kinder Road, out over Hill Houses, Cote Lane and Valley Road, and back round to Kinder Road.
 
 Most of the 366m lands in the second fifth.
 
@@ -45,15 +42,15 @@ Most of the 366m lands in the second fifth.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 0490 8698**, Kinder Road, SK22 2LH.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

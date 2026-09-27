@@ -29,14 +29,11 @@ Clear, the sort of day you plan around, 8 to 12 degrees, a steady 21km/h wind, d
 
 Out at 10:55, back at 13:15.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Stoneygate, out over Belgrave and Black Friars, and back round to Stoneygate.
+From Moon Close, out over St Georges Way, Abbey Park Road, Western Boulevard, Mill Lane and Rutland Street, and back round to Moon Close.
 
 Most of the 120m lands in the first fifth. It goes up early.
 
@@ -45,15 +42,15 @@ Most of the 120m lands in the first fifth. It goes up early.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 5967 0417**, Moon Close, LE2 0UA.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 

@@ -29,14 +29,11 @@ Clear, the sort of day you plan around, 12 to 15 degrees, dry underfoot at least
 
 Out at 10:07, back at 12:57.
 
-> **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. Who came is still unknown. What is still
-> missing is why this route on this day, and how it actually felt. Rewrite
-> this section and delete this note.
+> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
 
 ## The route
 
-From Highfields, out over Belgrave and Rushey Mead, and back round to Highfields.
+From Highfields, out over George Street, Vicarage Lane, Mill Close, White Horse Lane and Memory Lane, and back round to Highfields.
 
 The 614m of ascent comes in bits rather than one long pull. It keeps coming.
 
@@ -45,15 +42,15 @@ The 614m of ascent comes in bits rather than one long pull. It keeps coming.
 
 ## For the dog
 
-No photographs of Ember from this day.
-
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+The track starts at **SK 5958 0463**, Samuel Street, LE1 1RU.
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 
