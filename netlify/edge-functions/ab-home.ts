@@ -9,12 +9,13 @@ const MAX_AGE = 60 * 60 * 24 * 30; // 30 days — a returning visitor keeps thei
 /**
  * Share of new visitors sent to variant B, 0 to 1.
  *
- * Parked at 0 because variant B draws its ethos images from *published*
- * walks, and every walk is still a draft — so that section renders as two
- * empty grey boxes. Set this to 0.5 once a couple of walks are live and the
- * test becomes meaningful. ?ab=b still forces variant B for eyeballing it.
+ * Live at 50/50. Variant B was parked at 0 while every walk was a draft,
+ * because it draws its ethos images from *published* walks and rendered two
+ * empty grey boxes; publishing the sixteen walks fixed that.
+ *
+ * ?ab=a / ?ab=b forces either arm regardless of the split.
  */
-const B_SHARE = 0;
+const B_SHARE = 0.5;
 
 function isVariant(value: string | undefined): value is Variant {
   return value === "a" || value === "b";
