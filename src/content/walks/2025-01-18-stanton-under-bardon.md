@@ -8,6 +8,7 @@ difficulty: Moderate
 distance: 7.2
 location: "Stanton under Bardon, Leicestershire"
 region: "Leicestershire"
+companions: ["Lizzy"]
 dogFriendly: true
 parking: "TODO: where did you park?"
 gpxDownload: "/uploads/gpx/2025-01-18-walk.gpx"
@@ -25,12 +26,12 @@ January 2025. 7.2 miles round with 309m of climbing, 2h49 on the move.
 
 Grey the whole way, cloud never really breaking, 1 to 2 degrees, cold enough to keep moving, dry underfoot at least.
 
-Out at 11:57, back at 14:46. 3 photographs from the day, 13:00 to 13:01.
+Out with Lizzy, 11:57 to 14:46. 3 photographs from the day, 13:00 to 13:01.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

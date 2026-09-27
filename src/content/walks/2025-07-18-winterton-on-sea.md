@@ -28,9 +28,9 @@ Drizzle on and off for 2 hours, 23 to 24 degrees and warm for it.
 Out at 11:35, back at 14:42. 12 photographs from the day, 12:05 to 13:10, 6 of the view, 6 with Ember in them.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

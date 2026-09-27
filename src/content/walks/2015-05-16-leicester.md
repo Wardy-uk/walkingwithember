@@ -29,9 +29,9 @@ Cloud and sun taking turns, 12 degrees, wind gusting to 45km/h, dry underfoot at
 Out at 12:22, back at 14:02.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

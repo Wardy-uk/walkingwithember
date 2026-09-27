@@ -8,6 +8,7 @@ difficulty: Hard
 distance: 11.9
 location: "Upper Booth, Derbyshire"
 region: "Derbyshire"
+companions: ["Lizzy", "Daniel"]
 dogFriendly: true
 parking: "TODO: where did you park?"
 gpxDownload: "/uploads/gpx/2025-03-08-walk.gpx"
@@ -25,12 +26,12 @@ March 2025. 11.9 miles round with 947m of climbing, 6h20 on the move.
 
 Cloud and sun taking turns, 9 to 13 degrees, dry underfoot at least.
 
-Out at 11:11, back at 17:31. 12 photographs from the day, 11:29 to 15:20, 7 of the view, 1 with Ember in them.
+Out with Lizzy and Daniel, 11:11 to 17:31. 12 photographs from the day, 11:29 to 15:20, 7 of the view, 1 with Ember in it.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

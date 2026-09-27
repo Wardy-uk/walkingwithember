@@ -28,9 +28,9 @@ Heavy drizzle on and off for 2 hours, 0 degrees, cold enough to keep moving.
 Out at 10:44, back at 12:50. 2 photographs from the day, 11:43 to 11:43.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

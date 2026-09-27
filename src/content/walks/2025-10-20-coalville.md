@@ -28,9 +28,9 @@ A bit of light drizzle but nothing that lasted, 13 to 14 degrees.
 Out at 12:33, back at 13:32. 3 photographs from the day, 13:17 to 13:17, 3 of the view.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

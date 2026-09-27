@@ -25,12 +25,12 @@ September 2025. 14.7 miles round with 898m of climbing, 6h19 on the move.
 
 Grey the whole way, cloud never really breaking, 12 to 16 degrees, wind gusting to 50km/h, dry underfoot at least.
 
-Out at 09:37, back at 15:56. 12 photographs from the day, 10:18 to 15:40, 7 of the view, 1 with Ember in them.
+Out at 09:37, back at 15:56. 12 photographs from the day, 10:18 to 15:40, 7 of the view, 1 with Ember in it.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

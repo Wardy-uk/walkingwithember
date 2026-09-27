@@ -25,12 +25,12 @@ February 2025. 4.6 miles round with 226m of climbing, 1h34 on the move.
 
 Grey the whole way, cloud never really breaking, 2 to 3 degrees, cold enough to keep moving, dry underfoot at least.
 
-Out at 07:45, back at 09:20. 1 photographs from the day, 08:10 to 08:10.
+Out at 07:45, back at 09:20. 1 photograph from the day, 08:10 to 08:10.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

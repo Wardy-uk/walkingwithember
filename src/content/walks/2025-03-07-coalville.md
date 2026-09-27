@@ -28,9 +28,9 @@ A bit of light drizzle but nothing that lasted, 8 degrees.
 Out at 06:35, back at 08:13. 2 photographs from the day, 07:02 to 07:02, 2 with Ember in them.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

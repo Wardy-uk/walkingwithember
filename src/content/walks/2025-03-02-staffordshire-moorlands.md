@@ -28,9 +28,9 @@ Cloud and sun taking turns, 4 to 8 degrees, dry underfoot at least.
 Out at 10:35, back at 17:10. 12 photographs from the day, 10:40 to 15:58, 4 of the view, 3 with Ember in them.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

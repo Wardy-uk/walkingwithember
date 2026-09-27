@@ -8,6 +8,7 @@ difficulty: Moderate
 distance: 9.6
 location: "Coalville, Leicestershire"
 region: "Leicestershire"
+companions: ["Lizzy"]
 dogFriendly: true
 parking: "TODO: where did you park?"
 gpxDownload: "/uploads/gpx/2025-10-26-walk.gpx"
@@ -25,12 +26,12 @@ October 2025. 9.6 miles round with 341m of climbing, 4h17 on the move.
 
 A bit of light drizzle but nothing that lasted, 7 to 8 degrees, wind gusting to 47km/h.
 
-Out at 10:10, back at 14:27. 9 photographs from the day, 10:41 to 13:22.
+Out with Lizzy, 10:10 to 14:27. 9 photographs from the day, 10:41 to 13:22.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

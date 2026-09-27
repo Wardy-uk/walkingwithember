@@ -170,9 +170,9 @@ function photoSentence(photos) {
     });
   const first = local(photos[0].time);
   const last = local(photos[n - 1].time);
-  const bits = [`${n} photographs from the day, ${first} to ${last}`];
+  const bits = [`${n} photograph${n === 1 ? "" : "s"} from the day, ${first} to ${last}`];
   if (scenery) bits.push(`${scenery} of the view`);
-  if (dog) bits.push(`${dog} with Ember in them`);
+  if (dog) bits.push(`${dog} with Ember in ${dog === 1 ? "it" : "them"}`);
   return `${bits.join(", ")}.`;
 }
 
@@ -192,6 +192,13 @@ for (const file of files) {
     continue;
   }
 
+  // Companions are confirmed by Nick and live in the frontmatter, so they
+  // survive a regenerate. Never inferred: the face detector reported two
+  // people on 2026-04-06 and the photograph is Nick on his own.
+  const companionsRaw = /^companions: (\[.*\])$/m.exec(src)?.[1];
+  let companions = [];
+  try { companions = companionsRaw ? JSON.parse(companionsRaw) : []; } catch { /* none */ }
+
   const wp = byDate.get(date);
   const stats = statsBy.get(date);
   const photos = (await read(join(ROOT, "public", "photos", `${date}.json`), {}))?.photos ?? [];
@@ -205,6 +212,12 @@ for (const file of files) {
   const timing = wp ? `Out at ${wp.startTime}, back at ${wp.endTime}` : null;
 
   const weather = weatherSentence(wx.get(date));
+
+  const names = companions.length === 1
+    ? companions[0]
+    : companions.length > 1
+      ? `${companions.slice(0, -1).join(", ")} and ${companions[companions.length - 1]}`
+      : null;
 
   const opener = [
     `${wp?.month ?? ""} ${date.slice(0, 4)}.`.trim(),
@@ -221,12 +234,21 @@ ${opener}
 
 ${weather ?? ""}
 
-${wp ? `Out at ${wp.startTime}, back at ${wp.endTime}.` : ""}${pics ? ` ${pics}` : ""}
+${[
+  wp
+    ? names
+      ? `Out with ${names}, ${wp.startTime} to ${wp.endTime}.`
+      : `Out at ${wp.startTime}, back at ${wp.endTime}.`
+    : names
+      ? `Out with ${names}.`
+      : null,
+  pics,
+].filter(Boolean).join(" ")}
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact.${names ? "" : " Who came is still unknown."} What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

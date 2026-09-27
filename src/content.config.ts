@@ -14,6 +14,8 @@ const walks = defineCollection({
       ascentM: z.number().optional(),
       /** Pin to the homepage regardless of how it scores. */
       featured: z.boolean().default(false),
+      /** Who else was on the walk. Confirmed by Nick, never inferred. */
+      companions: z.array(z.string()).default([]),
       /** "draft" until Nick has been through the proposed write-up. */
       writeupStatus: z.enum(["draft", "reviewed"]).optional(),
       /**

@@ -28,9 +28,9 @@ Cloud and sun taking turns, 15 to 16 degrees, wind gusting to 51km/h, dry underf
 Out at 11:25, back at 16:17. 12 photographs from the day, 11:43 to 15:36, 7 of the view, 2 with Ember in them.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

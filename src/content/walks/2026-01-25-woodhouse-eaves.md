@@ -28,9 +28,9 @@ Grey the whole way, cloud never really breaking, 6 degrees, dry underfoot at lea
 Out at 10:19, back at 13:22. 12 photographs from the day, 10:40 to 13:07, 6 of the view, 5 with Ember in them.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

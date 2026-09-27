@@ -28,9 +28,9 @@ Grey the whole way, cloud never really breaking, 10 to 15 degrees, wind gusting 
 Out at 10:10, back at 14:03. 12 photographs from the day, 11:41 to 13:31, 3 of the view, 9 with Ember in them.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

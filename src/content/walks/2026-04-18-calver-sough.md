@@ -28,9 +28,9 @@ A bit of light drizzle but nothing that lasted, 10 to 12 degrees, wind gusting t
 Out at 10:26, back at 15:28. 12 photographs from the day, 10:54 to 14:52, 6 of the view, 3 with Ember in them.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 

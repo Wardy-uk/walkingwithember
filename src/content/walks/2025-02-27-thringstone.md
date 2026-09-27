@@ -28,9 +28,9 @@ Clear, the sort of day you plan around, 7 to 8 degrees, dry underfoot at least.
 Out at 12:24, back at 13:24. 2 photographs from the day, 12:54 to 12:54, 2 of the view.
 
 > **Proposed write-up.** The route, the timings and the weather above are all
-> recorded fact. What is still missing is the part only you know: who came,
-> why this route on this day, and how it actually felt. Rewrite this section
-> and delete this note.
+> recorded fact. Who came is still unknown. What is still
+> missing is why this route on this day, and how it actually felt. Rewrite
+> this section and delete this note.
 
 ## The route
 
