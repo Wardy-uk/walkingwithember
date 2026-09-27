@@ -12,7 +12,9 @@ location: "Redmires, Sheffield"
 region: "South Yorkshire"
 companions: ["Lizzy"]
 dogFriendly: true
-parking: "Free car park at SK 2565 8566, where Redmires Road runs out and becomes the Long Causeway, by the Upper reservoir. S10 4QZ."
+parking: "Free car park where Redmires Road runs out and becomes the Long Causeway, by the Upper reservoir."
+startGridRef: "SK 2565 8566"
+startPostcode: "S10 4QZ"
 gpxDownload: "/uploads/gpx/2026-08-06-walk.gpx"
 routeMapLat: 53.36806
 routeMapLng: -1.60004

@@ -11,6 +11,8 @@ location: "Woodhouse Eaves, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 5044 1526"
+startPostcode: "LE12 8SY"
 gpxDownload: "/uploads/gpx/2026-01-25-walk.gpx"
 routeMapLat: 52.73209
 routeMapLng: -1.24013

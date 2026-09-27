@@ -35,6 +35,16 @@ const walks = defineCollection({
       region: z.string(),
       dogFriendly: z.boolean(),
       parking: z.string(),
+      /** OS grid reference of the GPX start point, i.e. where the car goes. */
+      startGridRef: z.string().optional(),
+      /** Postcode nearest the start, for a sat nav. */
+      startPostcode: z.string().optional(),
+      /** Stiles on the route. "none" is a selling point on a dog walk. */
+      stiles: z.enum(["none", "few", "several", "many"]).optional(),
+      /** Nearest pub or cafe worth knowing about. */
+      refreshments: z.string().optional(),
+      /** Public toilets on or near the route. */
+      toilets: z.string().optional(),
       walkDate: z.coerce.date().optional(),
       gpxDownload: z.string().optional(),
       stravaRecord: z.string().url().optional(),

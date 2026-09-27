@@ -11,6 +11,8 @@ location: "Calver Sough, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 2312 8141"
+startPostcode: "S32 1BN"
 gpxDownload: "/uploads/gpx/2026-04-18-walk.gpx"
 routeMapLat: 53.31719
 routeMapLng: -1.63637

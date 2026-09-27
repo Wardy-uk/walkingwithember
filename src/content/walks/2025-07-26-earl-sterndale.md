@@ -11,6 +11,8 @@ location: "Earl Sterndale, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 0884 6499"
+startPostcode: "SK17 0PF"
 gpxDownload: "/uploads/gpx/2025-07-26-walk.gpx"
 routeMapLat: 53.19741
 routeMapLng: -1.89088

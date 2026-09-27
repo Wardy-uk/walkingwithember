@@ -11,6 +11,8 @@ location: "Woodthorpe, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 5376 1729"
+startPostcode: "LE11 2JS"
 gpxDownload: "/uploads/gpx/2023-09-23-cheeky-par-3-game-of-golf.gpx"
 routeMapLat: 52.75028
 routeMapLng: -1.20642

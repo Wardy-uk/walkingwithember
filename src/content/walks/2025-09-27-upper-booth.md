@@ -11,6 +11,8 @@ location: "Upper Booth, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 0914 8246"
+startPostcode: "SK23 0QT"
 gpxDownload: "/uploads/gpx/2025-09-27-walk.gpx"
 routeMapLat: 53.35199
 routeMapLng: -1.85702

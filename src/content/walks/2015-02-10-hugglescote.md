@@ -11,6 +11,8 @@ location: "Hugglescote, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 4400 1569"
+startPostcode: "LE67 5GB"
 gpxDownload: "/uploads/gpx/2015-02-10-lunchtime-walk-with-the-pooch-or-a-poor-alternative-to-a-swi.gpx"
 routeMapLat: 52.73337
 routeMapLng: -1.34363

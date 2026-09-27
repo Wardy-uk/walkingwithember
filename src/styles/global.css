@@ -1414,3 +1414,87 @@ input:focus, select:focus, textarea:focus {
   font-size: 0.72rem;
   color: var(--muted, #6b6259);
 }
+
+/* ── Getting there panel ─────────────────────────────────────────────── */
+.start-panel h2 { margin-top: 0; }
+
+.start-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin: 0 0 0.9rem;
+}
+
+.start-grid div { margin: 0; }
+
+.start-grid dt {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted, #6b6259);
+  margin-bottom: 0.2rem;
+}
+
+.start-grid dd { margin: 0; font-weight: 600; }
+
+.start-grid code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.95rem;
+  background: var(--bg-soft, #F7F2EA);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  /* A grid reference is meant to be copied, so keep it selectable and whole. */
+  user-select: all;
+  white-space: nowrap;
+}
+
+.start-parking { margin: 0 0 0.9rem; }
+
+.start-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* ── Nearby walks ────────────────────────────────────────────────────── */
+.nearby-walks h2 { margin-top: 0; }
+.nearby-walks .muted { margin-top: 0; font-size: 0.85rem; }
+
+.nearby-list { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+
+.nearby-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.nearby-list li:last-child { border-bottom: 0; }
+
+.nearby-main { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.nearby-main a { font-weight: 600; }
+
+/* A walk without a write-up is still listed, but should not look clickable. */
+.nearby-untitled { font-weight: 600; color: var(--muted, #6b6259); }
+
+.nearby-stats { font-size: 0.78rem; color: var(--muted, #6b6259); }
+
+.nearby-aside {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.nearby-distance { font-size: 0.78rem; color: var(--muted, #6b6259); white-space: nowrap; }
+
+.nearby-gpx {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  text-decoration: none;
+}
+
+@media (max-width: 560px) {
+  .nearby-list li { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+}

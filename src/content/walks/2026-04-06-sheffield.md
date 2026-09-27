@@ -11,6 +11,7 @@ location: "Sheffield, South Yorkshire"
 region: "South Yorkshire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 2279 8435"
 gpxDownload: "/uploads/gpx/2026-04-06-walk.gpx"
 routeMapLat: 53.34446
 routeMapLng: -1.63182

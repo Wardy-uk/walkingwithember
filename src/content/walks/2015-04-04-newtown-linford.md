@@ -11,6 +11,8 @@ location: "Newtown Linford, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 5234 0979"
+startPostcode: "LE6 0HE"
 gpxDownload: "/uploads/gpx/2015-04-04-walking-the-pooch-newtown-linford.gpx"
 routeMapLat: 52.68473
 routeMapLng: -1.21923

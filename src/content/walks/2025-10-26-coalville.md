@@ -12,6 +12,8 @@ region: "Leicestershire"
 companions: ["Lizzy"]
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 4399 1567"
+startPostcode: "LE67 5GB"
 gpxDownload: "/uploads/gpx/2025-10-26-walk.gpx"
 routeMapLat: 52.73074
 routeMapLng: -1.32544

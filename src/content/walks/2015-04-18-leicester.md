@@ -11,6 +11,8 @@ location: "Leicester, City of Leicester"
 region: "City of Leicester"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 5967 0417"
+startPostcode: "LE2 0UA"
 gpxDownload: "/uploads/gpx/2015-04-18-killing-time-wandering-round-leicester.gpx"
 routeMapLat: 52.63209
 routeMapLng: -1.13403

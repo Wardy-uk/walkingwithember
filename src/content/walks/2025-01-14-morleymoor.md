@@ -11,6 +11,8 @@ location: "Morleymoor, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 3618 4089"
+startPostcode: "DE21 5EL"
 gpxDownload: "/uploads/gpx/2025-01-14-walk.gpx"
 routeMapLat: 52.96899
 routeMapLng: -1.46278

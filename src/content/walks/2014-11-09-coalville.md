@@ -11,6 +11,8 @@ location: "Coalville, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 4400 1569"
+startPostcode: "LE67 5GB"
 gpxDownload: "/uploads/gpx/2014-11-09-sunday-lunch-escape-with-the-pooch.gpx"
 routeMapLat: 52.73484
 routeMapLng: -1.33253

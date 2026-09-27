@@ -11,6 +11,8 @@ location: "Nanpantan, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 5213 1475"
+startPostcode: "LE12 8TA"
 gpxDownload: "/uploads/gpx/2024-06-02-walk.gpx"
 routeMapLat: 52.73626
 routeMapLng: -1.24694

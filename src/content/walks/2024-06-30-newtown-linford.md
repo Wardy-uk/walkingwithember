@@ -11,6 +11,8 @@ location: "Newtown Linford, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 5217 1482"
+startPostcode: "LE12 8TA"
 gpxDownload: "/uploads/gpx/2024-06-30-walk.gpx"
 routeMapLat: 52.71041
 routeMapLng: -1.22298

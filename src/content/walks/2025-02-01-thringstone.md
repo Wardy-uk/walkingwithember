@@ -11,6 +11,8 @@ location: "Thringstone, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 4400 1566"
+startPostcode: "LE67 5GB"
 gpxDownload: "/uploads/gpx/2025-02-01-walk.gpx"
 routeMapLat: 52.74179
 routeMapLng: -1.34586

@@ -11,6 +11,7 @@ location: "Dungworth, South Yorkshire"
 region: "South Yorkshire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 2275 8434"
 gpxDownload: "/uploads/gpx/2025-10-18-walk.gpx"
 routeMapLat: 53.36549
 routeMapLng: -1.62044

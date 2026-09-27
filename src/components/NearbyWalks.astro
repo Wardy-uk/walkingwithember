@@ -1,0 +1,65 @@
+---
+/**
+ * Other walks that start near this one.
+ *
+ * Walks with a write-up link to their page; the rest offer their GPX, since a
+ * recorded route is worth having even without the words. Distance is from
+ * start point to start point, which is what matters when you are deciding
+ * what else you could do while you are out here.
+ */
+interface Props {
+  nearby: Array<{
+    walk: {
+      slug: string;
+      data: {
+        title: string;
+        distance: number;
+        routeDistance?: number;
+        ascentM?: number;
+        difficulty: string;
+        gpxDownload?: string;
+        writeupStatus?: string;
+        catalogueOnly?: boolean;
+      };
+    };
+    distanceKm: number;
+  }>;
+}
+
+const { nearby } = Astro.props;
+const hasPage = (d: Props["nearby"][number]["walk"]["data"]) =>
+  d.writeupStatus === "reviewed" && !d.catalogueOnly;
+---
+
+{nearby.length > 0 && (
+  <section class="card nearby-walks">
+    <h2>Nearby walks</h2>
+    <p class="muted">Other routes starting within a few miles of this one.</p>
+    <ul class="nearby-list">
+      {nearby.map(({ walk, distanceKm }) => (
+        <li>
+          <div class="nearby-main">
+            {hasPage(walk.data) ? (
+              <a href={`/walks/${walk.slug}/`}>{walk.data.title}</a>
+            ) : (
+              <span class="nearby-untitled">{walk.data.title}</span>
+            )}
+            <span class="nearby-stats">
+              {walk.data.routeDistance ?? walk.data.distance} mi
+              {walk.data.ascentM ? ` · ${walk.data.ascentM}m` : ""}
+              {` · ${walk.data.difficulty}`}
+            </span>
+          </div>
+          <div class="nearby-aside">
+            <span class="nearby-distance">
+              {distanceKm < 1.5 ? "same start" : `${distanceKm.toFixed(1)}km away`}
+            </span>
+            {!hasPage(walk.data) && walk.data.gpxDownload && (
+              <a class="nearby-gpx" href={walk.data.gpxDownload} download>GPX</a>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

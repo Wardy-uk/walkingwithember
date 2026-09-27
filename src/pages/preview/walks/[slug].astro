@@ -2,7 +2,9 @@
 import "leaflet/dist/leaflet.css";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import FlybyPanel from "../../../components/FlybyPanel.astro";
-import { getAllWalks, getRegions, getSiteSettings } from "../../../lib/content";
+import StartPanel from "../../../components/StartPanel.astro";
+import NearbyWalks from "../../../components/NearbyWalks.astro";
+import { getAllWalks, getNearbyWalks, getRegions, getSiteSettings } from "../../../lib/content";
 
 export async function getStaticPaths() {
   const walks = await getAllWalks();
@@ -28,6 +30,7 @@ const walkDateStr = (walk.data.walkDate ?? walk.data.publishDate).toISOString().
 // Photo pins are optional: the map fetches this and quietly skips a 404.
 const photosUrl = walkDateStr ? `/photos/${walkDateStr}.json` : "";
 const liveWalkUrl = `/walks/${walk.slug}/`;
+const nearby = await getNearbyWalks(walk, 4);
 const estimatedHours = walk.data.difficulty === "Hard"
   ? Math.max(3, Math.round(walk.data.distance / 2))
   : walk.data.difficulty === "Moderate"
@@ -158,11 +161,12 @@ const estimatedHours = walk.data.difficulty === "Hard"
 
       <section class="card">
         <h2>Downloads and Links</h2>
-        <p><strong>Parking:</strong> {walk.data.parking}</p>
         <p><strong>Mountain weather:</strong> <a href="https://www.mwis.org.uk/" target="_blank" rel="noreferrer">MWIS forecast</a></p>
         <p><strong>General weather:</strong> <a href="https://www.metoffice.gov.uk/" target="_blank" rel="noreferrer">Met Office</a></p>
         <p><a href={walk.data.gpxDownload} target="_blank" rel="noreferrer">Download GPX</a></p>
       </section>
+
+      <NearbyWalks nearby={nearby} />
 
       <section class="card">
         <h2>Share This Walk</h2>

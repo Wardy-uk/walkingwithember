@@ -11,6 +11,8 @@ location: "Leicester, City of Leicester"
 region: "City of Leicester"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 5958 0463"
+startPostcode: "LE1 1RU"
 gpxDownload: "/uploads/gpx/2015-09-26-walk.gpx"
 routeMapLat: 52.65645
 routeMapLng: -1.11938

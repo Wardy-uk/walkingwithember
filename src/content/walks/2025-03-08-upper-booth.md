@@ -12,6 +12,8 @@ region: "Derbyshire"
 companions: ["Lizzy", "Daniel"]
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 1237 8531"
+startPostcode: "S33 7ZP"
 gpxDownload: "/uploads/gpx/2025-03-08-walk.gpx"
 routeMapLat: 53.37572
 routeMapLng: -1.84648

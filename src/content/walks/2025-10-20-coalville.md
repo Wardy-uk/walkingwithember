@@ -11,6 +11,8 @@ location: "Coalville, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 4399 1566"
+startPostcode: "LE67 5GB"
 gpxDownload: "/uploads/gpx/2025-10-20-walk.gpx"
 routeMapLat: 52.73624
 routeMapLng: -1.34523

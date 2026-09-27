@@ -11,6 +11,8 @@ location: "Leicester, City of Leicester"
 region: "City of Leicester"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 5874 0461"
+startPostcode: "LE1 5EA"
 gpxDownload: "/uploads/gpx/2015-05-16-05-16-2015-city-centre-united-kingdom.gpx"
 routeMapLat: 52.6342
 routeMapLng: -1.13071

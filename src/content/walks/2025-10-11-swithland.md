@@ -11,6 +11,8 @@ location: "Swithland, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 5046 1528"
+startPostcode: "LE12 8TE"
 gpxDownload: "/uploads/gpx/2025-10-11-walk.gpx"
 routeMapLat: 52.71997
 routeMapLng: -1.22714

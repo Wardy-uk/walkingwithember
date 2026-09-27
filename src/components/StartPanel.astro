@@ -1,0 +1,77 @@
+---
+/**
+ * Where to leave the car, in the forms people actually use.
+ *
+ * Every published walk guide worth reading gives a grid reference and a
+ * postcode, because a sat nav wants one and a paper map wants the other. This
+ * walk's grid reference comes from the GPX start point rather than being typed
+ * in, so it is where the car really was.
+ */
+interface Props {
+  gridRef?: string;
+  postcode?: string;
+  parking: string;
+  lat: number;
+  lng: number;
+  stiles?: "none" | "few" | "several" | "many";
+  refreshments?: string;
+  toilets?: string;
+}
+
+const { gridRef, postcode, parking, lat, lng, stiles, refreshments, toilets } = Astro.props;
+
+// Deep links that open the start point in the tools walkers already have.
+const osMaps = `https://explore.osmaps.com/?lat=${lat}&lon=${lng}&zoom=15`;
+const googleDirections = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+const STILE_LABEL: Record<string, string> = {
+  none: "None. Gates throughout",
+  few: "A few",
+  several: "Several",
+  many: "Many",
+};
+---
+
+<section class="card start-panel">
+  <h2>Getting there</h2>
+
+  <dl class="start-grid">
+    {gridRef && (
+      <div>
+        <dt>Grid reference</dt>
+        <dd><code>{gridRef}</code></dd>
+      </div>
+    )}
+    {postcode && (
+      <div>
+        <dt>Postcode</dt>
+        <dd><code>{postcode}</code></dd>
+      </div>
+    )}
+    {stiles && (
+      <div>
+        <dt>Stiles</dt>
+        <dd>{STILE_LABEL[stiles] ?? stiles}</dd>
+      </div>
+    )}
+    {refreshments && (
+      <div>
+        <dt>Refreshments</dt>
+        <dd>{refreshments}</dd>
+      </div>
+    )}
+    {toilets && (
+      <div>
+        <dt>Toilets</dt>
+        <dd>{toilets}</dd>
+      </div>
+    )}
+  </dl>
+
+  <p class="start-parking">{parking}</p>
+
+  <div class="start-links">
+    <a class="button ghost-dark" href={osMaps} target="_blank" rel="noreferrer">Open on OS Maps</a>
+    <a class="button ghost-dark" href={googleDirections} target="_blank" rel="noreferrer">Directions to the start</a>
+  </div>
+</section>

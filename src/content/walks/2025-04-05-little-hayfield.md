@@ -11,6 +11,8 @@ location: "Little Hayfield, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 0490 8698"
+startPostcode: "SK22 2LH"
 gpxDownload: "/uploads/gpx/2025-04-05-walk.gpx"
 routeMapLat: 53.38419
 routeMapLng: -1.93006

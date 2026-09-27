@@ -11,6 +11,8 @@ location: "Winterton-on-Sea, Norfolk"
 region: "Norfolk"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "TG 5103 1540"
+startPostcode: "NR29 3NW"
 gpxDownload: "/uploads/gpx/2025-07-18-walk.gpx"
 routeMapLat: 52.70137
 routeMapLng: 1.70826

@@ -11,6 +11,8 @@ location: "Staffordshire Moorlands, Staffordshire"
 region: "Staffordshire"
 dogFriendly: true
 parking: "TODO: where did you park?"
+startGridRef: "SK 0061 6160"
+startPostcode: "ST13 8UB"
 gpxDownload: "/uploads/gpx/2025-03-02-walk.gpx"
 routeMapLat: 53.16996
 routeMapLng: -2.00255

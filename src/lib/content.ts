@@ -94,3 +94,45 @@ export async function getRegions() {
 }
 
 
+
+/**
+ * Other walks starting near this one.
+ *
+ * With 59 routes and no cross-linking, a reader who likes one has no way to
+ * find its neighbours. Proximity of the start point is the useful measure:
+ * walks from the same car park or the next valley are the ones worth
+ * offering, and it needs no tags or categories to be kept up to date.
+ *
+ * Catalogue-only walks are included, since a route with a GPX and no write-up
+ * is still worth knowing about if you are already in the area.
+ */
+export async function getNearbyWalks(
+  walk: { slug: string; data: { routeMapLat: number; routeMapLng: number } },
+  limit = 4,
+  withinKm = 12,
+) {
+  const all = await getAllWalks();
+
+  const km = (aLat: number, aLng: number, bLat: number, bLng: number) => {
+    const R = 6371;
+    const dLat = ((bLat - aLat) * Math.PI) / 180;
+    const dLng = ((bLng - aLng) * Math.PI) / 180;
+    const p1 = (aLat * Math.PI) / 180;
+    const p2 = (bLat * Math.PI) / 180;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  };
+
+  return all
+    .filter((w) => w.slug !== walk.slug && !w.data.draft)
+    .map((w) => ({
+      walk: w,
+      distanceKm: km(
+        walk.data.routeMapLat, walk.data.routeMapLng,
+        w.data.routeMapLat, w.data.routeMapLng,
+      ),
+    }))
+    .filter((w) => w.distanceKm <= withinKm)
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .slice(0, limit);
+}
