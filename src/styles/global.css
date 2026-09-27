@@ -1079,3 +1079,98 @@ input:focus, select:focus, textarea:focus {
   }
   .v2-hero-overlay .v2-hero-ctas { justify-content: flex-start; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Homepage polish: polaroid photos, softer route cards, map backdrop
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Ember strip photos as polaroids ──────────────────────────────────
+   Edge-to-edge photos on the dark peat panel read as pasted-on because
+   nothing separates them from the background. A white frame with the
+   deeper bottom margin of a real print, a slight tilt and a cast shadow
+   makes them objects lying on the panel instead. */
+
+.v2-ember-photo,
+[data-ab="b"] .v2-ember-photos {
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  overflow: visible;
+}
+
+.v2-ember-photo { width: auto; }
+
+.v2-ember-photo img,
+[data-ab="b"] .v2-ember-img {
+  /* The frame is padding on the image itself: even on three sides, deeper
+     at the foot, exactly as a Polaroid prints. */
+  box-sizing: border-box;
+  background: #FBF8F2;
+  padding: 0.6rem 0.6rem 2.1rem;
+  border-radius: 2px;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 330px;
+  object-fit: cover;
+  opacity: 1;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 10px 24px rgba(0, 0, 0, 0.45);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Alternate the tilt so a pair looks dropped rather than placed. */
+.v2-ember-photo img,
+[data-ab="b"] .v2-ember-img:first-child { transform: rotate(-2.2deg); }
+[data-ab="b"] .v2-ember-img:last-child  { transform: rotate(1.6deg); }
+[data-ab="b"] .v2-ember-img:only-child  { transform: rotate(-1.5deg); }
+
+.v2-ember-photo img:hover,
+[data-ab="b"] .v2-ember-img:hover {
+  transform: rotate(0deg) translateY(-4px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 16px 34px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-ember-photo img,
+  [data-ab="b"] .v2-ember-img,
+  .v2-ember-photo img:hover,
+  [data-ab="b"] .v2-ember-img:hover { transform: none; transition: none; }
+}
+
+/* ── Route cards: softer corners ──────────────────────────────────── */
+
+.v2-route-card { border-radius: 18px; }
+.v2-route-card .card-img { border-radius: 18px 18px 0 0; }
+.v2-route-card .card-img img { border-radius: inherit; }
+
+/* ── Soft map backdrop behind the routes section ──────────────────────
+   Contour lines drawn as an inline SVG, so there is no extra request and
+   it tints with the palette. Kept very low contrast — it should read as
+   paper texture, not as a map you are meant to follow. */
+
+.v2-section {
+  position: relative;
+  isolation: isolate;
+}
+
+.v2-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='480' viewBox='0 0 640 480'%3E%3Cg fill='none' stroke='%23A9763F' stroke-width='1.1' stroke-opacity='0.5'%3E%3Cpath d='M-40 96c70-34 150-30 214 6 64 36 132 44 200 18 68-26 140-22 206 12'/%3E%3Cpath d='M-40 140c74-36 158-32 226 6 68 38 138 44 208 16 70-28 142-22 206 14'/%3E%3Cpath d='M-40 196c80-30 166-22 234 18 68 40 136 44 202 12 66-32 136-26 204 14'/%3E%3Cpath d='M-40 262c86-26 176-14 244 28 68 42 134 42 198 8 64-34 132-30 198 12'/%3E%3Cpath d='M-40 330c92-20 186-6 254 38 68 44 132 40 194 4 62-36 128-34 192 10'/%3E%3Cpath d='M-40 400c96-14 194 2 262 46 68 44 130 38 190 0 60-38 124-38 188 6'/%3E%3C/g%3E%3Cg fill='none' stroke='%23A9763F' stroke-width='0.9' stroke-opacity='0.35'%3E%3Cpath d='M120 232c34-14 72-10 100 12 28 22 60 26 94 12'/%3E%3Cpath d='M140 268c30-12 64-8 88 12 24 20 52 24 82 10'/%3E%3Cpath d='M164 300c24-9 52-6 72 10 20 16 42 19 66 8'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 640px 480px;
+  background-position: center top;
+  opacity: 0.16;
+  /* Fade out at the edges so it never ends on a hard line. */
+  -webkit-mask-image: radial-gradient(ellipse 85% 70% at 50% 45%, #000 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 85% 70% at 50% 45%, #000 40%, transparent 100%);
+}
