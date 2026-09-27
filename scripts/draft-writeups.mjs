@@ -186,8 +186,12 @@ for (const file of files) {
   const path = join(WALKS, file);
   const src = await readFile(path, "utf8");
 
-  // Anything without the TODO scaffold has been written by hand — leave it.
-  if (!src.includes("TODO —") && !OVERWRITE) {
+  // Only writeupStatus decides this. Sniffing for a TODO marker was brittle:
+  // removing em dashes turned every "TODO —" into "TODO:", so the check
+  // silently classified all 59 drafts as hand-written and regenerating became
+  // a no-op.
+  const reviewed = /^writeupStatus: reviewed$/m.test(src);
+  if (reviewed && !OVERWRITE) {
     skipped++;
     continue;
   }
@@ -204,6 +208,29 @@ for (const file of files) {
   const photos = (await read(join(ROOT, "public", "photos", `${date}.json`), {}))?.photos ?? [];
 
   const route = wp ? routeSentence(wp.waypoints, wp.shape) : null;
+
+  // High and low points say more about a walk than a list of parishes.
+  const relief = (() => {
+    if (!wp?.high?.ele || !wp?.low?.ele) return null;
+    const drop = wp.high.ele - wp.low.ele;
+    if (drop < 60) return null;
+    const hi = wp.high.name ? `${wp.high.name} at ${wp.high.ele}m` : `${wp.high.ele}m`;
+    const lo = wp.low.name ? `${wp.low.name} at ${wp.low.ele}m` : `${wp.low.ele}m`;
+    return `The high point is ${hi}, the low ${lo}, so there is ${drop}m of relief between them.`;
+  })();
+
+  // The GPX starts where the car was parked.
+  const parking = (() => {
+    const g = wp?.startGridRef;
+    const road = wp?.startAt?.road;
+    const pc = wp?.startAt?.postcode;
+    if (!g && !road) return null;
+    const bits = [];
+    if (g) bits.push(`**${g}**`);
+    if (road) bits.push(road);
+    if (pc) bits.push(pc);
+    return `The track starts at ${bits.join(", ")}.`;
+  })();
   const climb = wp ? climbSentence(wp.climbProfile, wp.ascentM ?? stats?.ascentM) : null;
   const pics = photoSentence(photos);
 
@@ -253,7 +280,7 @@ ${[
 ## The route
 
 ${route ?? "TODO: where you started, the order of the ground, where it got interesting."}
-${climb ? `\n${climb}\n` : ""}
+${relief ? `\n${relief}\n` : ""}${climb ? `\n${climb}\n` : ""}
 > TODO: the things a map does not carry. What it was like underfoot, the gates
 > and the stiles, where the path gives up, and what is worth stopping for.
 
@@ -270,8 +297,10 @@ ${
 
 ## Parking and practicalities
 
-> TODO: where the car went, what it cost, facilities, and the one thing you
-> would want to know before setting off.
+${parking ?? ""}
+
+> TODO: whether that is where you actually parked, what it cost, facilities,
+> and the one thing you would want to know before setting off.
 
 ---
 
@@ -294,5 +323,5 @@ ${
   console.log(`  ${date}  ${route ? route.slice(0, 62) : "(no route data)"}`);
 }
 
-console.log(`\n${written} drafts written, ${skipped} left alone (already written by hand).`);
+console.log(`\n${written} drafts written, ${skipped} left alone (marked reviewed).`);
 if (DRY) console.log("(dry run — nothing written)");

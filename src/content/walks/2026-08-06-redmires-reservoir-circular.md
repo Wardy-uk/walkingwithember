@@ -12,7 +12,7 @@ location: "Redmires, Sheffield"
 region: "South Yorkshire"
 companions: ["Lizzy"]
 dogFriendly: true
-parking: "Redmires Lower reservoir car park, free."
+parking: "Free car park at SK 2565 8566, where Redmires Road runs out and becomes the Long Causeway, by the Upper reservoir. S10 4QZ."
 gpxDownload: "/uploads/gpx/2026-08-06-walk.gpx"
 routeMapLat: 53.36806
 routeMapLng: -1.60004
@@ -32,7 +32,8 @@ Out with Lizzy, 11:25 to 16:17. 12 photographs from the day, 11:43 to 15:36, 6 o
 
 ## The route
 
-Start at Redmires Lower and pick up the Long Causeway heading east. It is a
+Start at the top of Redmires Road, by the Upper reservoir, and pick up the
+Long Causeway heading east. It is a
 proper old road, a medieval packhorse route and possibly Roman before that,
 and it still walks like something built to be walked on.
 
@@ -72,8 +73,14 @@ that is sure-footed, but it is not a run-ahead sort of path.
 
 ## Parking and practicalities
 
-Redmires Lower reservoir car park, free. No facilities, so sort yourself out
-before you set off.
+**SK 2565 8566**, postcode S10 4QZ. The car park where Redmires Road runs out
+and becomes the Long Causeway, alongside the Upper reservoir with the war
+memorial opposite. Free and open access. Guidebooks tend to call it Redmires
+Plantation car park after the wood behind it.
+
+Worth being specific because there are three Redmires reservoirs and a car
+park at each end. This is the western one, a kilometre from the Lower. No
+facilities, so sort yourself out before you set off.
 
 The moor section is exposed with no shelter. The Wyming Brook half is the
 opposite, wooded and sheltered the whole way down.
