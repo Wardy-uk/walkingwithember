@@ -10,8 +10,13 @@
  * to a banner would throw away the composition; the page constrains the hero's
  * display instead (see `.article > img` in global.css), so any aspect works.
  *
- * Among the face-free candidates it prefers shots taken further along the
- * route — the view from the top beats the one from the car park.
+ * Face detection alone is not enough: a close-up of Nick's beard and mouth
+ * got through because there were no eyes in frame for Apple to detect. So
+ * candidates are then ranked by the library's own aesthetic scoring —
+ * ZPLEASANTCOMPOSITIONSCORE, lifted by ZIMMERSIVENESSSCORE, which rewards
+ * wide open views. Accidental shots score around -0.4 to -0.6 on composition
+ * with near-zero immersiveness, while real landscapes sit well above zero.
+ * Route position is kept only as a tie-break.
  *
  * Usage: node scripts/pick-hero-images.mjs [--dry-run]
  */
@@ -43,8 +48,12 @@ const uuids = [
 ];
 const sql = `SELECT upper(a.ZUUID), a.ZWIDTH, a.ZHEIGHT,
   (SELECT COUNT(*) FROM ZDETECTEDFACE f
-     WHERE f.ZASSETFORFACE = a.Z_PK AND f.ZDETECTIONTYPE = 1)
-  FROM ZASSET a WHERE upper(a.ZUUID) IN (${uuids.map((u) => `'${u}'`).join(",")});`;
+     WHERE f.ZASSETFORFACE = a.Z_PK AND f.ZDETECTIONTYPE = 1),
+  COALESCE(c.ZPLEASANTCOMPOSITIONSCORE, 0),
+  COALESCE(c.ZIMMERSIVENESSSCORE, 0)
+  FROM ZASSET a
+  LEFT JOIN ZCOMPUTEDASSETATTRIBUTES c ON a.ZCOMPUTEDATTRIBUTES = c.Z_PK
+  WHERE upper(a.ZUUID) IN (${uuids.map((u) => `'${u}'`).join(",")});`;
 
 const { stdout } = await exec(
   "sqlite3",
@@ -55,8 +64,12 @@ const { stdout } = await exec(
 const meta = new Map();
 for (const line of stdout.trim().split("\n")) {
   if (!line) continue;
-  const [uuid, w, h, faces] = line.split("|"); // faces = humans only
-  meta.set(uuid, { w: +w, h: +h, faces: +faces });
+  const [uuid, w, h, faces, composition, immersive] = line.split("|"); // faces = humans only
+  meta.set(uuid, {
+    w: +w, h: +h, faces: +faces,
+    composition: parseFloat(composition) || 0,
+    immersive: parseFloat(immersive) || 0,
+  });
 }
 
 const walkFiles = await readdir(join(ROOT, "src", "content", "walks"));
@@ -82,6 +95,11 @@ for (const walk of matches) {
       file,
       progress: photo.routeFraction ?? 0,
       orientation: m.w > m.h ? "landscape" : "portrait",
+      composition: m.composition,
+      immersive: m.immersive,
+      // Immersiveness is on a much smaller scale than composition, so it is
+      // weighted up to act as a real tilt toward wide views.
+      score: m.composition + 1.5 * m.immersive + 0.05 * (photo.routeFraction ?? 0),
     });
   }
 
@@ -90,8 +108,8 @@ for (const walk of matches) {
     continue;
   }
 
-  // Furthest along the route wins: the view from the top, not the car park.
-  candidates.sort((a, b) => b.progress - a.progress);
+  // Best-composed wins; route position only breaks ties via the score.
+  candidates.sort((a, b) => b.score - a.score);
   const pick = candidates[0];
   const src = `/uploads/images/walks/${walk.date}/${pick.file}`;
 
@@ -105,7 +123,7 @@ for (const walk of matches) {
 
   report.push({
     date: walk.date,
-    status: `${pick.orientation}, ${Math.round(pick.progress * 100)}% along the route`,
+    status: `${pick.orientation}, composition ${pick.composition.toFixed(2)}, ${Math.round(pick.progress * 100)}% along`,
     n: candidates.length,
   });
 }

@@ -1,7 +1,7 @@
 ---
 title: "Ringinglow — 10.6 miles"
 summary: "10.6 miles and 325m of ascent around Ringinglow, walked in 4h52. Route notes to follow."
-heroImage: "/uploads/images/walks/2026-08-06/11-84cbc009.jpg"
+heroImage: "/uploads/images/walks/2026-08-06/01-0850dc60.jpg"
 publishDate: 2026-08-06
 walkDate: 2026-08-06
 difficulty: Moderate

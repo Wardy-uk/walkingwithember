@@ -1,7 +1,7 @@
 ---
 title: "Coalville — 2.8 miles"
 summary: "2.8 miles and 78m of ascent around Coalville, walked in 1h00. Route notes to follow."
-heroImage: "/uploads/images/walks/2025-10-20/01-f587ed76.jpg"
+heroImage: "/uploads/images/walks/2025-10-20/03-d322e601.jpg"
 publishDate: 2025-10-20
 walkDate: 2025-10-20
 difficulty: Easy

@@ -1,7 +1,7 @@
 ---
 title: "Woodhouse Eaves — 7.9 miles"
 summary: "7.9 miles and 493m of ascent around Woodhouse Eaves, walked in 3h03. Route notes to follow."
-heroImage: "/uploads/images/walks/2026-01-25/12-e72c304a.jpg"
+heroImage: "/uploads/images/walks/2026-01-25/11-2822f5de.jpg"
 publishDate: 2026-01-25
 walkDate: 2026-01-25
 difficulty: Moderate
