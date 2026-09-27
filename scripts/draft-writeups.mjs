@@ -122,14 +122,20 @@ function weatherSentence(w) {
   if (!w) return null;
   const bits = [];
 
+  // Open-Meteo returns km/h; British walkers think in mph.
+  const mph = (kmh) => (kmh === null || kmh === undefined ? null : Math.round(kmh / 1.60934));
+  const wind = mph(w.windAvgKmh);
+  const gust = mph(w.gustMaxKmh);
+  const deg = (t) => `${t}\u00B0C`;
+
   const cold = w.tempMin !== null && w.tempMin <= 2;
   const warm = w.tempMax !== null && w.tempMax >= 18;
 
   if (w.condition && /snow/.test(w.condition)) {
     bits.push(
       w.tempMin === w.tempMax
-        ? `Snow, and ${w.tempMin} degrees with it`
-        : `Snow, and ${w.tempMin} to ${w.tempMax} degrees with it`,
+        ? `Snow, and ${deg(w.tempMin)} with it`
+        : `Snow, and ${w.tempMin} to ${deg(w.tempMax)} with it`,
     );
   } else if (w.condition && /heavy rain|heavy showers/.test(w.condition)) {
     bits.push(`Proper rain, ${w.rainMm}mm of it over ${w.wetHours} hours`);
@@ -151,17 +157,17 @@ function weatherSentence(w) {
     // On a short walk the hourly readings often do not move, and "7 to 7
     // degrees" reads like a mistake.
     const range = w.tempMin === w.tempMax
-      ? `${w.tempMin} degrees`
-      : `${w.tempMin} to ${w.tempMax} degrees`;
+      ? deg(w.tempMin)
+      : `${w.tempMin} to ${deg(w.tempMax)}`;
     bits.push(cold ? `${range}, cold enough to keep moving`
       : warm ? `${range} and warm for it`
       : range);
   }
 
-  if (w.gustMaxKmh !== null && w.gustMaxKmh >= 45) {
-    bits.push(`wind gusting to ${w.gustMaxKmh}km/h`);
-  } else if (w.windAvgKmh !== null && w.windAvgKmh >= 20) {
-    bits.push(`a steady ${w.windAvgKmh}km/h wind`);
+  if (gust !== null && gust >= 28) {
+    bits.push(`wind gusting to ${gust}mph`);
+  } else if (wind !== null && wind >= 12) {
+    bits.push(`a steady ${wind}mph wind`);
   }
 
   if (!w.rainMm && !/snow/.test(w.condition ?? "")) bits.push("dry underfoot at least");
@@ -307,7 +313,7 @@ ${relief ? `\n${relief}\n` : ""}${climb ? `\n${climb}\n` : ""}
 > TODO: the things a map does not carry. What it was like underfoot, the gates
 > and the stiles, where the path gives up, and what is worth stopping for.
 
-## For the dog
+## For your four legged companion
 
 > TODO: livestock, anything she could not get over or through, water on the
 > route, where she needed the lead, and how she was by the end.

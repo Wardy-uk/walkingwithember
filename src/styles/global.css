@@ -1498,3 +1498,52 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 560px) {
   .nearby-list li { flex-direction: column; align-items: flex-start; gap: 0.3rem; }
 }
+
+/* ── Dog checklist icons ─────────────────────────────────────────────
+   A grid of glanceable facts rather than a paragraph. Tone is carried by
+   an icon tint and a left border, never by colour alone, so it still reads
+   without colour vision. */
+.dog-checklist h2 { margin-top: 0; }
+.dog-checklist .muted { margin-top: 0; font-size: 0.85rem; }
+
+.dog-grid {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.6rem;
+}
+
+.dog-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 10px;
+  background: var(--bg-soft, #F7F2EA);
+  border-left: 3px solid var(--line);
+}
+
+.dog-item.is-good { border-left-color: #2F7D63; }
+.dog-item.is-warn { border-left-color: #C25C3A; }
+.dog-item.is-note { border-left-color: #C98A1E; }
+
+.dog-icon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  color: var(--muted, #6b6259);
+}
+
+.dog-item.is-good .dog-icon { color: #2F7D63; }
+.dog-item.is-warn .dog-icon { color: #C25C3A; }
+.dog-item.is-note .dog-icon { color: #A8741A; }
+
+.dog-icon svg { width: 22px; height: 22px; }
+
+.dog-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.dog-text strong { font-size: 0.9rem; }
+.dog-text small { font-size: 0.75rem; color: var(--muted, #6b6259); line-height: 1.35; }

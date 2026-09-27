@@ -11,6 +11,9 @@ ascentM: 325
 location: "Redmires, Sheffield"
 region: "South Yorkshire"
 companions: ["Lizzy"]
+accessLand: true
+water: plenty
+terrain: rough
 dogFriendly: true
 parking: "Free car park where Redmires Road runs out and becomes the Long Causeway, by the Upper reservoir."
 startGridRef: "SK 2565 8566"
@@ -28,9 +31,11 @@ draft: false
 
 August 2026. 325m of climbing and 4h52 on the move.
 
-Cloud and sun taking turns, 15 to 16 degrees, wind gusting to 51km/h, dry underfoot all day.
+Cloud and sun taking turns, 15 to 16°C, wind gusting to 32mph, dry underfoot all day.
 
-Out with Lizzy, 11:25 to 16:17.
+## Walking with
+
+Joined on this route by Lizzy, and of course Ember.
 
 ## The route
 
@@ -61,7 +66,7 @@ or so walked twice: we dropped a piece of kit early on and went back for it. As
 a route to follow this is closer to 8 miles. The GPX download has the whole
 thing, retrace and all.
 
-## For the dog
+## For your four legged companion
 
 She was on a long lead through Wyming Brook and went through the water rather
 than over the stepping stones, which is the sensible choice when you have four

@@ -4,6 +4,7 @@ import { existsSync } from "fs";
 import { join } from "path";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import FlybyPanel from "../../components/FlybyPanel.astro";
+import DogChecklist from "../../components/DogChecklist.astro";
 import StartPanel from "../../components/StartPanel.astro";
 import NearbyWalks from "../../components/NearbyWalks.astro";
 import { getNearbyWalks, getPublishedWalks, getRegions, getSiteSettings } from "../../lib/content";
@@ -152,15 +153,16 @@ const estimatedHours = walk.data.difficulty === "Hard"
         </div>
       </section>
 
-      <section class="card dog-panel">
-        <h2>Dog Trail Checklist</h2>
-        <ul>
-          <li>{walk.data.dogFriendly ? "Route is suitable for dogs with normal trail control." : "Route has sensitive sections. Use close lead control."}</li>
-          <li>Check livestock and ground-nesting bird signage on the day.</li>
-          <li>Carry water for your dog and avoid heat stress on exposed climbs.</li>
-          <li>Pack a towel and paw check kit for wet rock and boggy exits.</li>
-        </ul>
-      </section>
+      <DogChecklist
+        accessLand={walk.data.accessLand}
+        livestock={walk.data.livestock}
+        stiles={walk.data.stiles}
+        water={walk.data.water}
+        roads={walk.data.roads}
+        terrain={walk.data.terrain}
+        offLead={walk.data.offLead}
+        walkDate={walk.data.walkDate ?? walk.data.publishDate}
+      />
 
       <section class="card">
         <h2>Route Notes</h2>

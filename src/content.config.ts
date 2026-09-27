@@ -41,6 +41,13 @@ const walks = defineCollection({
       startPostcode: z.string().optional(),
       /** Stiles on the route. "none" is a selling point on a dog walk. */
       stiles: z.enum(["none", "few", "several", "many"]).optional(),
+      /** Open Access land: triggers the 1 Mar to 31 Jul lead requirement. */
+      accessLand: z.boolean().optional(),
+      livestock: z.enum(["none", "likely", "certain"]).optional(),
+      water: z.enum(["none", "some", "plenty"]).optional(),
+      roads: z.enum(["none", "short", "significant"]).optional(),
+      terrain: z.enum(["easy", "rough", "scrambly"]).optional(),
+      offLead: z.enum(["no", "partly", "mostly"]).optional(),
       /** Nearest pub or cafe worth knowing about. */
       refreshments: z.string().optional(),
       /** Public toilets on or near the route. */
