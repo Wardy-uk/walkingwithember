@@ -6,7 +6,6 @@ publishDate: 2026-01-25
 walkDate: 2026-01-25
 difficulty: Moderate
 distance: 7.9
-ascentM: 493
 location: "Woodhouse Eaves, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true

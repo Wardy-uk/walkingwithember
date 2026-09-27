@@ -6,8 +6,7 @@ publishDate: 2025-10-11
 walkDate: 2025-10-11
 difficulty: Hard
 distance: 14.6
-ascentM: 752
-location: "Woodhouse to Newtown Linford, Charnwood"
+location: "Swithland, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO — where did you park?"

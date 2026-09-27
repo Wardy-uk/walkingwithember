@@ -29,7 +29,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 
 import {
-  parseGpx, parseTcx, trackStats, simplify, toGpx, slugify,
+  parseGpx, parseTcx, parseFit, trackStats, simplify, toGpx, slugify,
 } from "./lib/track.mjs";
 
 const exec = promisify(execFile);
@@ -101,7 +101,14 @@ async function readSource(src) {
   );
 }
 
-/** Strava's activities.csv → Map<activityId, {name, description, type}> */
+/**
+ * Strava's activities.csv → Map<file stem, {name, description, type}>
+ *
+ * Keyed on the Filename column, NOT Activity ID. In Strava's export those
+ * two disagree for most activities — a row can carry id 18925426885 while
+ * pointing at activities/20038038854.fit.gz — so keying on the id silently
+ * loses every file whose stem differs, which here was all 714 FIT files.
+ */
 function parseActivitiesCsv(text) {
   const rows = [];
   let cur = [""];
@@ -126,12 +133,17 @@ function parseActivitiesCsv(text) {
   const iDesc = col(["activity description"]);
   const iType = col(["activity type"]);
   const iGear = col(["activity gear"]);
+  const iFilename = col(["filename"]);
 
   const map = new Map();
   for (const r of rows) {
+    const file = (r[iFilename] ?? "").trim();
+    // Strip directory and every extension: activities/123.fit.gz -> 123
+    const stem = file ? file.split("/").pop().split(".")[0] : "";
     const id = (r[iId] ?? "").trim();
-    if (!id) continue;
-    map.set(id, {
+    const key = stem || id;
+    if (!key) continue;
+    map.set(key, {
       name: (r[iName] ?? "").trim(),
       description: (r[iDesc] ?? "").trim(),
       type: (r[iType] ?? "").trim(),
@@ -164,10 +176,7 @@ for (const entry of entries) {
 
   const ext = extname(name).toLowerCase();
 
-  // Strava keeps the original upload, which is often a binary FIT file.
-  // Decoding FIT needs a real parser, so report these rather than guess.
-  if (ext === ".fit") { skippedFit.push(name); continue; }
-  if (ext !== ".gpx" && ext !== ".tcx") continue;
+  if (ext !== ".gpx" && ext !== ".tcx" && ext !== ".fit") continue;
 
   const stravaId = basename(name, ext);
   const info = meta.get(stravaId);
@@ -177,9 +186,19 @@ for (const entry of entries) {
   const typeHint = info?.type || name;
   if (!WALK_WORDS.test(typeHint)) continue;
 
-  const text = buf.toString("utf8");
-  const points = ext === ".gpx" ? parseGpx(text) : parseTcx(text);
-  if (points.length < 2) continue;
+  let points;
+  if (ext === ".fit") {
+    try {
+      points = await parseFit(buf);
+    } catch {
+      skippedFit.push(name);
+      continue;
+    }
+  } else {
+    const text = buf.toString("utf8");
+    points = ext === ".gpx" ? parseGpx(text) : parseTcx(text);
+  }
+  if (!points || points.length < 2) continue;
 
   const stats = trackStats(points);
   if (!stats.start) continue;
@@ -268,16 +287,28 @@ for (const w of walks) {
 }
 
 if (!DRY) {
-  await writeFile(join(CACHE, "walks-manifest.json"), JSON.stringify(manifest, null, 2));
+  // Merge rather than replace, so several sources can be layered. Health Auto
+  // Export carries barometric ascent from the watch and reads far higher than
+  // Strava's GPS-derived figure — 811m vs 581m on the same walk — so run the
+  // broad Strava pass first and the Health pass second to let it win on the
+  // dates it covers. A later run only overwrites a date it actually has.
+  const merged = new Map();
+  try {
+    const existing = JSON.parse(await readFile(join(CACHE, "walks-manifest.json"), "utf8"));
+    for (const w of existing) merged.set(w.date, w);
+  } catch {
+    /* first run */
+  }
+  for (const w of manifest) merged.set(w.date, w);
+
+  const all = [...merged.values()].sort((a, b) => a.date.localeCompare(b.date));
+  await writeFile(join(CACHE, "walks-manifest.json"), JSON.stringify(all, null, 2));
+  console.log(`\nmanifest now holds ${all.length} walks (${manifest.length} from this source).`);
 }
 
 console.log(`\n${manifest.length} walks ≥${MIN_MINUTES} min since ${SINCE}.`);
 if (skippedFit.length) {
-  console.log(
-    `\n⚠ ${skippedFit.length} activities are binary .fit files and were skipped.\n` +
-    `  Strava stores whatever you originally uploaded. If the newest walks are\n` +
-    `  among these, they need a FIT decoder — or re-export them as GPX.`,
-  );
+  console.log(`\n${skippedFit.length} .fit file(s) could not be decoded and were skipped.`);
 }
 if (DRY) console.log("\n(dry run — nothing written)");
 else console.log(`Manifest → .cache/walks-manifest.json`);

@@ -14,5 +14,8 @@
     "astro": "^5.2.0",
     "leaflet": "^1.9.4",
     "netlify-identity-widget": "^1.9.2"
+  },
+  "devDependencies": {
+    "fit-file-parser": "^6.1.2"
   }
 }

@@ -6,7 +6,6 @@ publishDate: 2026-04-18
 walkDate: 2026-04-18
 difficulty: Moderate
 distance: 8
-ascentM: 692
 location: "Calver Sough, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true

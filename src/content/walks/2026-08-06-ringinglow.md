@@ -6,7 +6,6 @@ publishDate: 2026-08-06
 walkDate: 2026-08-06
 difficulty: Moderate
 distance: 10.6
-ascentM: 325
 location: "Ringinglow, South Yorkshire"
 region: "South Yorkshire"
 dogFriendly: true

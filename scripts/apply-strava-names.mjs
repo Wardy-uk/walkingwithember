@@ -38,15 +38,18 @@ if (!SOURCE) {
 const GENERIC =
   /^(morning|afternoon|evening|lunch|night|early morning|late night)?\s*(monday|tuesday|wednesday|thursday|friday|saturday|sunday)?\s*(morning|afternoon|evening|lunch|night)?\s*(hike|walk|hiking|walking)\s*$/i;
 
-/** Labels from connected apps. */
-const MACHINE = /apple fitness|treadmill|^untitled|^workout\b/i;
+/** Labels from connected apps, and Strava's date-stamped auto-names. */
+const MACHINE = /apple fitness|treadmill|^untitled|^workout\b|^\d{1,2}\/\d{1,2}\/\d{4}\b/i;
+
+/** Strava's activity type is unreliable — a round of golf is filed as a walk. */
+const NOT_A_WALK = /\bgolf\b|\bpar 3\b|\bdriving range\b/i;
 
 /**
  * Strava also auto-names by location: "Woodhouse, Charnwood / Newtown
  * Linford, Charnwood". That is real information but a poor title, so it is
  * reshaped into the site's own "A to B — N miles" form rather than used raw.
  */
-const LOCATION_PAIR = /^([^,/]+),[^/]*\/\s*([^,/]+),/;
+const LOCATION_PAIR = /^([^,/]+?)(?:,[^/]*)?\s*\/\s*([^,/]+?)(?:,.*)?$/;
 
 function fromLocationPair(name, distance) {
   const m = LOCATION_PAIR.exec(name.trim());
@@ -58,12 +61,16 @@ function fromLocationPair(name, distance) {
     : `${a} to ${b} — ${distance} miles`;
 }
 
-function isUseful(name) {
+function isUseful(name, currentTitle) {
   if (!name) return false;
   const n = name.trim();
   if (n.length < 3) return false;
   if (GENERIC.test(n)) return false;
   if (MACHINE.test(n)) return false;
+  if (NOT_A_WALK.test(n)) return false;
+  // A bare place name ("Coalville") says less than the title it would replace
+  // ("Coalville — 3.1 miles"), so only take it if it adds something.
+  if (!n.includes("/") && currentTitle.toLowerCase().startsWith(n.toLowerCase())) return false;
   return true;
 }
 
@@ -127,7 +134,7 @@ for (const f of files.sort()) {
   const s = await readFile(path, "utf8");
   const current = (/^title: "(.*)"$/m.exec(s) ?? [null, "?"])[1];
 
-  if (!hit || !isUseful(hit.name)) {
+  if (!hit || !isUseful(hit.name, current)) {
     kept.push({ date, current, why: hit ? `"${hit.name}" is a default name` : "not in Strava" });
     continue;
   }

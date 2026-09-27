@@ -60,6 +60,59 @@ export function parseTcx(xml) {
   return points;
 }
 
+/**
+ * Parse a FIT file into the same shape as parseGpx.
+ *
+ * Strava's export keeps whatever you originally uploaded, and for an Apple
+ * Watch that is FIT — 714 of the 869 activity files here. Without this the
+ * back catalogue is invisible.
+ *
+ * fit-file-parser is callback-based, hence the wrapper. `force` keeps it
+ * going through the malformed trailers some exports carry.
+ */
+export async function parseFit(buffer) {
+  const { default: FitParser } = await import("fit-file-parser");
+  const parser = new FitParser({
+    force: true,
+    speedUnit: "km/h",
+    lengthUnit: "m",
+    temperatureUnit: "celsius",
+    elapsedRecordField: true,
+    mode: "list",
+  });
+
+  const data = await new Promise((resolve, reject) => {
+    parser.parse(buffer, (err, out) => (err ? reject(err) : resolve(out)));
+  });
+
+  return (data.records ?? [])
+    .filter((r) => Number.isFinite(r.position_lat) && Number.isFinite(r.position_long))
+    .map((r) => ({
+      lon: r.position_long,
+      lat: r.position_lat,
+      ele: Number.isFinite(r.altitude) ? r.altitude : 0,
+      time: r.timestamp instanceof Date ? r.timestamp : new Date(r.timestamp),
+    }));
+}
+
+/** The activity type a FIT file declares, e.g. "hiking", "walking". */
+export async function fitSport(buffer) {
+  const { default: FitParser } = await import("fit-file-parser");
+  const parser = new FitParser({ force: true, mode: "list" });
+  try {
+    const data = await new Promise((resolve, reject) => {
+      parser.parse(buffer, (err, out) => (err ? reject(err) : resolve(out)));
+    });
+    return (
+      data.sessions?.[0]?.sport ??
+      data.activity?.sessions?.[0]?.sport ??
+      null
+    );
+  } catch {
+    return null;
+  }
+}
+
 // ── Geometry ────────────────────────────────────────────────────────────────
 
 export function haversine(a, b) {

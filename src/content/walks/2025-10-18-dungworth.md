@@ -6,7 +6,6 @@ publishDate: 2025-10-18
 walkDate: 2025-10-18
 difficulty: Hard
 distance: 16.2
-ascentM: 811
 location: "Dungworth, South Yorkshire"
 region: "South Yorkshire"
 dogFriendly: true
