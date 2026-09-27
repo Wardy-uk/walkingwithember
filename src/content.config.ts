@@ -14,6 +14,12 @@ const walks = defineCollection({
       ascentM: z.number().optional(),
       /** Pin to the homepage regardless of how it scores. */
       featured: z.boolean().default(false),
+      /**
+       * Listed in the walks archive with its GPX, but gets no page of its own.
+       * Used for walks with no photographs, where a full page would be a map
+       * and four TODO headings.
+       */
+      catalogueOnly: z.boolean().default(false),
       location: z.string(),
       region: z.string(),
       dogFriendly: z.boolean(),

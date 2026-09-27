@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview"
+    "build": "npm run build:flybycore && astro build",
+    "preview": "astro preview",
+    "build:flybycore": "esbuild src/lib/flybyCore.ts --format=esm --target=es2020 --outfile=public/lib/flybyCore.js"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.2.1",

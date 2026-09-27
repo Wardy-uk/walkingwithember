@@ -79,7 +79,11 @@ const {
     lerp,
     shortestAngleDiff,
     smoothPlaybackPoints,
-  } from "../lib/flybyCore";
+  // Absolute, and pointing at the compiled copy in public/. This script is
+  // never bundled — it imports maplibre from a remote URL, so Astro emits it
+  // raw into the page — which meant "../lib/flybyCore" resolved against the
+  // page URL and 404'd as /walks/lib/flybyCore on every walk page.
+  } from "/lib/flybyCore.js";
 
   const STRAVA_ORANGE = "#FC4C02";
   const GHOST_COLOR   = "rgba(255,255,255,0.35)";

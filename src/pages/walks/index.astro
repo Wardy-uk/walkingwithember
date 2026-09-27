@@ -1,12 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getAllWalks, getRegions, getSiteSettings } from "../../lib/content";
+import { getAllWalks, getCatalogueWalks, getRegions, getSiteSettings } from "../../lib/content";
 
 const settings = await getSiteSettings();
 const regions = await getRegions();
 const walks = await getAllWalks();
-const publishedWalks = walks.filter((walk) => !walk.data.draft);
+const publishedWalks = walks.filter((walk) => !walk.data.draft && !walk.data.catalogueOnly);
 const draftWalks = walks.filter((walk) => walk.data.draft);
+// Recorded but not written up — listed with their GPX, no page of their own.
+const catalogueWalks = await getCatalogueWalks();
 const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((a, b) => a.localeCompare(b));
 ---
 
@@ -127,6 +129,46 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
           </article>
         ))}
       </div>
+
+      {catalogueWalks.length > 0 && (
+        <section class="card walk-archive">
+          <h2>Route archive</h2>
+          <p class="muted">
+            {catalogueWalks.length} more walks recorded but not written up. The GPX is here
+            if you want the route.
+          </p>
+          <table class="archive-table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Walk</th>
+                <th scope="col" class="num">Distance</th>
+                <th scope="col" class="num">Ascent</th>
+                <th scope="col"><span class="visually-hidden">GPX</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {catalogueWalks.map((walk) => (
+                <tr>
+                  <td>
+                    <time datetime={(walk.data.walkDate ?? walk.data.publishDate).toISOString().slice(0, 10)}>
+                      {(walk.data.walkDate ?? walk.data.publishDate).toLocaleDateString("en-GB", {
+                        day: "numeric", month: "short", year: "numeric",
+                      })}
+                    </time>
+                  </td>
+                  <td>{walk.data.location}</td>
+                  <td class="num">{walk.data.distance} mi</td>
+                  <td class="num">{walk.data.ascentM ? `${walk.data.ascentM} m` : "—"}</td>
+                  <td class="num">
+                    {walk.data.gpxDownload && <a href={walk.data.gpxDownload} download>GPX</a>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
 
       {draftWalks.length > 0 && (
         <section id="draft-section" class="card draft-section hidden">

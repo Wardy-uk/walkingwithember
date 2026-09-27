@@ -21,7 +21,17 @@ export async function getAllWalks() {
 
 export async function getPublishedWalks() {
   const walks = await getAllWalks();
-  return walks.filter((walk) => !walk.data.draft);
+  return walks.filter((walk) => !walk.data.draft && !walk.data.catalogueOnly);
+}
+
+/**
+ * Walks recorded but not written up — no photographs, so a page would be a
+ * map and four TODO headings. They are listed in the archive with their GPX
+ * so the route is still downloadable.
+ */
+export async function getCatalogueWalks() {
+  const walks = await getAllWalks();
+  return walks.filter((walk) => !walk.data.draft && walk.data.catalogueOnly);
 }
 
 /**

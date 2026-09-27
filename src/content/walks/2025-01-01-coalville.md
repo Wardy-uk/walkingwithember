@@ -15,6 +15,7 @@ routeMapLat: 52.73336
 routeMapLng: -1.34206
 routeMapZoom: 14
 tags: []
+catalogueOnly: true
 draft: false
 ---
 

@@ -385,25 +385,78 @@ const estimatedHours = walk.data.difficulty === "Hard"
             minute: "2-digit",
           });
 
-          L.marker([photo.lat, photo.lon], {
+          const marker = L.marker([photo.lat, photo.lon], {
             icon: L.divIcon({
               className: "route-photo-pin",
               html: `<span>${i + 1}</span>`,
               iconSize: [22, 22],
               iconAnchor: [11, 11],
             }),
-            alt: `Photo ${i + 1}, taken at ${time}`,
+            alt: `Photo ${i + 1}, taken at ${time}, ${km.toFixed(1)}km into the walk`,
             keyboard: true,
-          })
-            .bindPopup(
-              `<figure class="route-photo-popup">
-                 <img src="${photo.src}" alt="Taken at ${time}, ${km.toFixed(1)}km into the walk" loading="lazy" />
-                 <figcaption>${time} · ${km.toFixed(1)}km in</figcaption>
-               </figure>`,
-              { minWidth: 220, maxWidth: 280 },
-            )
-            .addTo(group);
+          }).addTo(group);
+
+          marker.on("click", () => openLightbox(i));
+          marker.on("keypress", (e) => {
+            if (e.originalEvent?.key === "Enter") openLightbox(i);
+          });
         });
+
+
+        // Open the photo full-size rather than inside the map panel — a
+        // Leaflet popup is capped by the map's own bounds, so a 1600px
+        // photograph was being shown at thumbnail size in the corner.
+        function openLightbox(index) {
+          const box = document.createElement("div");
+          box.className = "photo-lightbox";
+          box.innerHTML = `
+            <button class="photo-lightbox-close" aria-label="Close">&times;</button>
+            <button class="photo-lightbox-nav prev" aria-label="Previous photo">&#8249;</button>
+            <figure>
+              <img alt="" />
+              <figcaption></figcaption>
+            </figure>
+            <button class="photo-lightbox-nav next" aria-label="Next photo">&#8250;</button>`;
+          document.body.appendChild(box);
+          document.body.style.overflow = "hidden";
+
+          let i = index;
+          const img = box.querySelector("img");
+          const cap = box.querySelector("figcaption");
+
+          const show = (n) => {
+            i = (n + pinnable.length) % pinnable.length;
+            const photo = pinnable[i];
+            const km = (photo.metresAlongRoute ?? 0) / 1000;
+            const time = new Date(photo.time).toLocaleTimeString("en-GB", {
+              hour: "2-digit", minute: "2-digit",
+            });
+            img.src = photo.src;
+            img.alt = `Taken at ${time}, ${km.toFixed(1)}km into the walk`;
+            cap.textContent = `${i + 1} of ${pinnable.length} · ${time} · ${km.toFixed(1)}km in`;
+          };
+
+          const close = () => {
+            box.remove();
+            document.body.style.overflow = "";
+            document.removeEventListener("keydown", onKey);
+          };
+
+          function onKey(e) {
+            if (e.key === "Escape") close();
+            else if (e.key === "ArrowLeft") show(i - 1);
+            else if (e.key === "ArrowRight") show(i + 1);
+          }
+
+          box.querySelector(".photo-lightbox-close").addEventListener("click", close);
+          box.querySelector(".prev").addEventListener("click", (e) => { e.stopPropagation(); show(i - 1); });
+          box.querySelector(".next").addEventListener("click", (e) => { e.stopPropagation(); show(i + 1); });
+          // Clicking the backdrop closes; clicking the photo itself should not.
+          box.addEventListener("click", (e) => { if (e.target === box) close(); });
+          document.addEventListener("keydown", onKey);
+
+          show(index);
+        }
 
         logDebug(`Photo pins rendered: ${pinnable.length}`);
       }    }
