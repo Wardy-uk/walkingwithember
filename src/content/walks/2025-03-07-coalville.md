@@ -9,32 +9,48 @@ distance: 6
 location: "Coalville, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true
-parking: "TODO — where did you park?"
+parking: "TODO: where did you park?"
 gpxDownload: "/uploads/gpx/2025-03-07-walk.gpx"
 routeMapLat: 52.73935
 routeMapLng: -1.3443
 routeMapZoom: 14
 tags: []
+writeupStatus: draft
 draft: false
 ---
 
 ## The day
 
-TODO — what was the weather doing, who came, why this route?
+March 2025. 6 miles round, 1h39 on the move.
+
+A bit of light drizzle but nothing that lasted, 8 to 8 degrees.
+
+Out at 06:35, back at 08:13. 2 photographs from the day, 07:02 to 07:02, 2 with Ember in them.
+
+> **Proposed write-up.** The route, the timings and the weather above are all
+> recorded fact. What is still missing is the part only you know: who came,
+> why this route on this day, and how it actually felt. Rewrite this section
+> and delete this note.
 
 ## The route
 
-TODO — the actual line: where you started, the order of the ground, where it
-got interesting, where it got tedious.
+A loop around Whitwick.
+
+> TODO: the things a map does not carry. What it was like underfoot, the gates
+> and the stiles, where the path gives up, and what is worth stopping for.
 
 ## For the dog
 
-TODO — livestock, stiles, water, anywhere Ember needed the lead.
+Ember is in 2 of the photographs from this one.
+
+> TODO: livestock, anything she could not get over or through, water on the
+> route, where she needed the lead, and how she was by the end.
 
 ## Parking and practicalities
 
-TODO — where you left the car, what it cost, facilities, anything to know.
+> TODO: where the car went, what it cost, facilities, and the one thing you
+> would want to know before setting off.
 
 ---
 
-*Recorded 2025-03-07: 6 miles, 0m ascent, 1h39 moving.*
+*Recorded 2025-03-07. 6 miles, 0m of ascent, 1h39 moving.*

@@ -131,6 +131,12 @@ const estimatedHours = walk.data.difficulty === "Hard"
 
       <section class="card">
         <h2>Route Notes</h2>
+        {walk.data.writeupStatus === "draft" && (
+          <p class="writeup-notice">
+            <strong>Proposed write-up.</strong> Drafted from the GPS track and the
+            photographs. The weather, the company and the reasons are still missing.
+          </p>
+        )}
         <Content />
       </section>
 

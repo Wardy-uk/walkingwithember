@@ -1380,3 +1380,15 @@ input:focus, select:focus, textarea:focus {
 .route-photo-legend .is-scenery i { background: #2F7D63; }
 .route-photo-legend .is-dog i     { background: #C98A1E; }
 .route-photo-legend .is-people i  { background: #9C4A7C; }
+
+/* ── Unreviewed write-up notice ──────────────────────────────────────── */
+.writeup-notice {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--brand, #be6d37);
+  background: var(--bg-soft, #F7F2EA);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.88rem;
+  color: var(--muted, #6b6259);
+}
+.writeup-notice strong { color: var(--ink, #2A2018); }

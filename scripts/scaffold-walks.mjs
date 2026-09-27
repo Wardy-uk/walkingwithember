@@ -135,7 +135,7 @@ for (const w of walks) {
   const mins = w.durationMin % 60;
 
   const body = `---
-title: ${yaml(`${titleBase} — ${w.distanceMiles} miles`)}
+title: ${yaml(`${titleBase}, ${w.distanceMiles} miles`)}
 summary: ${yaml(`${w.distanceMiles} miles and ${w.ascentM}m of ascent around ${titleBase}, walked in ${hours}h${String(mins).padStart(2, "0")}. Route notes to follow.`)}
 heroImage: ${yaml(heroImage)}
 publishDate: ${w.date}
@@ -145,7 +145,7 @@ distance: ${w.distanceMiles}
 location: ${yaml(location)}
 region: ${yaml(region)}
 dogFriendly: true
-parking: "TODO — where did you park?"
+parking: "TODO: where did you park?"
 gpxDownload: ${yaml(w.gpxDownload)}
 routeMapLat: ${w.routeMapLat}
 routeMapLng: ${w.routeMapLng}

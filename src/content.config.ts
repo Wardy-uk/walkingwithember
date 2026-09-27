@@ -14,6 +14,8 @@ const walks = defineCollection({
       ascentM: z.number().optional(),
       /** Pin to the homepage regardless of how it scores. */
       featured: z.boolean().default(false),
+      /** "draft" until Nick has been through the proposed write-up. */
+      writeupStatus: z.enum(["draft", "reviewed"]).optional(),
       /**
        * Listed in the walks archive with its GPX, but gets no page of its own.
        * Used for walks with no photographs, where a full page would be a map

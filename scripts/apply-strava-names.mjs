@@ -57,8 +57,8 @@ function fromLocationPair(name, distance) {
   const [a, b] = [m[1].trim(), m[2].trim()];
   if (!a || !b) return null;
   return a.toLowerCase() === b.toLowerCase()
-    ? `${a} — ${distance} miles`
-    : `${a} to ${b} — ${distance} miles`;
+    ? `${a}, ${distance} miles`
+    : `${a} to ${b}, ${distance} miles`;
 }
 
 function isUseful(name, currentTitle) {
