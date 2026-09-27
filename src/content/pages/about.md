@@ -13,8 +13,8 @@ people:
       It got more ambitious as I got older. Rock climbing first, then
       mountaineering, then the sort of days that need an early alarm and a
       proper look at the forecast the night before. I am in my fifties now and
-      the Peak District is home ground. Close enough to go after work, big
-      enough that I am still finding corners of it I have never walked.
+      the Peak District is home ground. Close enough for a day's walk at the
+      weekend, big enough that I am still finding corners of it I have never walked.
 
       When I am not on a hill I am usually underwater. Scuba diving is the other
       thing that gets me out of the house, and it scratches the same itch:
@@ -49,7 +49,7 @@ people:
       us kept stopping.
 ---
 
-## A bit about us
+## A bit about Walking with Ember
 
 Between us there are 437 miles and something close to 23,500 metres of climbing
 on this site, and not one of those walks was done in order to write about it.

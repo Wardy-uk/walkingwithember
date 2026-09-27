@@ -23,6 +23,24 @@ export default defineConfig({
       // Keep out of search:
       //  • /home-b/ — the B arm of the homepage A/B test, served at "/"
       //  • /preview/ — unpublished drafts, still full of TODO prompts
+      // Attach each walk's photographs to its sitemap entry. The images are
+      // in the HTML now, so a crawler would find them eventually; this just
+      // stops it being a matter of luck.
+      serialize(item) {
+        const m = /\/walks\/([^/]+)\/$/.exec(item.url);
+        if (!m) return item;
+        const date = m[1].slice(0, 10);
+        const file = path.join("public", "photos", `${date}.json`);
+        if (!fs.existsSync(file)) return item;
+        try {
+          const photos = JSON.parse(fs.readFileSync(file, "utf8")).photos ?? [];
+          const imgs = photos.filter((p) => p?.src).map((p) => ({ url: new URL(p.src, item.url).href }));
+          if (imgs.length) item.img = imgs;
+        } catch {
+          // A malformed manifest should cost the page its images, not the build.
+        }
+        return item;
+      },
       filter: (page) =>
         !page.includes("/home-b") &&
         !page.includes("/preview/") &&

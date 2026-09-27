@@ -1,6 +1,6 @@
 ---
 import "leaflet/dist/leaflet.css";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import FlybyPanel from "../../components/FlybyPanel.astro";
@@ -35,6 +35,47 @@ const hasRoute = existsSync(routeFilePath);
 const routeUrl = hasRoute ? `/routes/${walkDateStr}.json` : "";
 // Photo pins are optional: the map fetches this and quietly skips a 404.
 const photosUrl = walkDateStr ? `/photos/${walkDateStr}.json` : "";
+
+/**
+ * Photographs, read at build time and rendered into the HTML.
+ *
+ * These used to be fetched in the browser from an external gallery API, which
+ * returns an empty list for every date, so the section hid itself on every
+ * walk and nobody ever saw a photograph. A crawler saw even less: one image on
+ * a page that has twelve.
+ *
+ * The same pictures were already sitting in public/uploads, published and
+ * unused, with a JSON manifest giving their order and how far round the route
+ * each one was taken. So they are read straight off disk instead.
+ */
+type WalkPhoto = { src: string; alt: string; width?: number; height?: number };
+const photoFile = join(process.cwd(), "public", "photos", `${walkDateStr}.json`);
+let walkPhotos: WalkPhoto[] = [];
+if (existsSync(photoFile)) {
+  try {
+    const raw = JSON.parse(readFileSync(photoFile, "utf8"));
+    walkPhotos = (raw.photos ?? [])
+      .filter((p: any) => p?.src)
+      .map((p: any) => {
+        // How far round the walk it was taken makes better alt text than
+        // "Walk photo", and it is information the reader actually wants.
+        const km = typeof p.metresAlongRoute === "number"
+          ? `${(p.metresAlongRoute / 1000).toFixed(1)}km into the route`
+          : "";
+        const subject =
+          p.subject === "dog" ? `Ember on ${walk.data.title}` :
+          p.subject === "people" ? `Walking ${walk.data.title}` :
+          walk.data.title;
+        return { src: p.src, alt: km ? `${subject}, ${km}` : subject };
+      });
+  } catch {
+    walkPhotos = [];
+  }
+}
+
+/** Netlify resizes on request, so a 850KB original is served as a ~110KB thumb. */
+const thumb = (src: string, w: number) =>
+  `/.netlify/images?url=${encodeURIComponent(src)}&w=${w}&q=72`;
 const nearby = await getNearbyWalks(walk, 4);
 // The route is real and downloadable; only the words are missing.
 const comingSoon = walk.data.writeupStatus !== "reviewed";
@@ -198,10 +239,28 @@ const estimatedHours = walk.data.difficulty === "Hard"
         </section>
       )}
 
-      <section class="card wwe-photos" id="wwe-photos" data-date={walkDateStr}>
-        <h2>Photos from this walk</h2>
-        <div class="wwe-grid" id="wwe-grid"></div>
-      </section>
+      {walkPhotos.length > 0 && (
+        <section class="card wwe-photos" id="wwe-photos" data-date={walkDateStr}>
+          <h2>Photos from this walk</h2>
+          <p class="muted">{walkPhotos.length} photographs, in the order we came to them.</p>
+          <div class="wwe-grid" id="wwe-grid">
+            {walkPhotos.map((photo) => (
+              <a href={photo.src} class="wwe-thumb" target="_blank" rel="noreferrer">
+                <img
+                  src={thumb(photo.src, 600)}
+                  srcset={`${thumb(photo.src, 400)} 400w, ${thumb(photo.src, 600)} 600w, ${thumb(photo.src, 900)} 900w`}
+                  sizes="(max-width: 700px) 45vw, 240px"
+                  alt={photo.alt}
+                  width="600"
+                  height="450"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section class="card">
         <h2>Downloads and Links</h2>
@@ -518,30 +577,6 @@ const estimatedHours = walk.data.difficulty === "Hard"
         .catch(() => { if (stravaSection) stravaSection.hidden = true; });
     } else if (stravaSection) {
       stravaSection.hidden = true;
-    }
-  </script>
-
-  <script>
-    const wweSection = document.getElementById('wwe-photos') as HTMLElement | null;
-    const wweGrid    = document.getElementById('wwe-grid');
-    const wweDate    = (wweSection as HTMLElement | null)?.dataset.date;
-
-    if (wweDate && wweSection && wweGrid) {
-      fetch(`https://upload.nickward.co.uk/api/gallery/wwe?date=${wweDate}`)
-        .then(r => r.json())
-        .then(({ images }: { images: any[] }) => {
-          if (!images?.length) { wweSection.hidden = true; return; }
-          wweGrid.innerHTML = images.map(img => {
-            const thumb = img.image_url.replace('/upload/', '/upload/w_600,c_limit,q_auto/');
-            const alt   = img.caption || img.location_name || 'Walk photo';
-            return `<a href="${img.image_url}" target="_blank" rel="noreferrer" class="wwe-thumb">
-              <img src="${thumb}" alt="${alt}" loading="lazy" />
-            </a>`;
-          }).join('');
-        })
-        .catch(() => { if (wweSection) wweSection.hidden = true; });
-    } else if (wweSection) {
-      wweSection.hidden = true;
     }
   </script>
 
