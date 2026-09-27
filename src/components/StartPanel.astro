@@ -20,6 +20,11 @@ interface Props {
 
 const { gridRef, postcode, parking, lat, lng, stiles, refreshments, toilets } = Astro.props;
 
+// Scaffolded walks carry "TODO: where did you park?" in this field. A grid
+// reference and a postcode are already enough to find the start, so show
+// nothing rather than a note to self.
+const parkingNote = parking && !/^TODO/i.test(parking.trim()) ? parking : null;
+
 // Deep links that open the start point in the tools walkers already have.
 const osMaps = `https://explore.osmaps.com/?lat=${lat}&lon=${lng}&zoom=15`;
 const googleDirections = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
@@ -68,7 +73,7 @@ const STILE_LABEL: Record<string, string> = {
     )}
   </dl>
 
-  <p class="start-parking">{parking}</p>
+  {parkingNote && <p class="start-parking">{parkingNote}</p>}
 
   <div class="start-links">
     <a class="button ghost-dark" href={osMaps} target="_blank" rel="noreferrer">Open on OS Maps</a>

@@ -1547,3 +1547,11 @@ input:focus, select:focus, textarea:focus {
 .dog-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .dog-text strong { font-size: 0.9rem; }
 .dog-text small { font-size: 0.75rem; color: var(--muted, #6b6259); line-height: 1.35; }
+
+/* ── Coming soon ─────────────────────────────────────────────────────
+   Shown in place of a write-up that is not finished. The route, map,
+   photographs and GPX are all real and stay on the page; only the words
+   are missing, and saying so is better than a 404 or a page of TODOs. */
+.coming-soon h2 { margin-top: 0; }
+.coming-soon .muted { font-size: 0.9rem; }
+.coming-soon-links { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }

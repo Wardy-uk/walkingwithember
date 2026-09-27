@@ -7,11 +7,11 @@ import FlybyPanel from "../../components/FlybyPanel.astro";
 import DogChecklist from "../../components/DogChecklist.astro";
 import StartPanel from "../../components/StartPanel.astro";
 import NearbyWalks from "../../components/NearbyWalks.astro";
-import { getNearbyWalks, getPublishedWalks, getRegions, getSiteSettings } from "../../lib/content";
+import { getNearbyWalks, getRegions, getSiteSettings, getWalksWithPages } from "../../lib/content";
 import { imgSrc } from "../../lib/imgSrc";
 
 export async function getStaticPaths() {
-  const walks = await getPublishedWalks();
+  const walks = await getWalksWithPages();
   return walks.map((walk) => ({
     params: { slug: walk.slug },
     props: { walk },
@@ -35,6 +35,8 @@ const routeUrl = hasRoute ? `/routes/${walkDateStr}.json` : "";
 // Photo pins are optional: the map fetches this and quietly skips a 404.
 const photosUrl = walkDateStr ? `/photos/${walkDateStr}.json` : "";
 const nearby = await getNearbyWalks(walk, 4);
+// The route is real and downloadable; only the words are missing.
+const comingSoon = walk.data.writeupStatus !== "reviewed";
 const estimatedHours = walk.data.difficulty === "Hard"
   ? Math.max(3, Math.round(walk.data.distance / 2))
   : walk.data.difficulty === "Moderate"
@@ -48,6 +50,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
   regions={regions}
   siteName={settings.siteName}
   tagline={settings.tagline}
+  noindex={comingSoon}
 >
   <div class="container page-grid">
     <article class="card article">
@@ -164,16 +167,29 @@ const estimatedHours = walk.data.difficulty === "Hard"
         walkDate={walk.data.walkDate ?? walk.data.publishDate}
       />
 
-      <section class="card">
-        <h2>Route Notes</h2>
-        {walk.data.writeupStatus === "draft" && (
-          <p class="writeup-notice">
-            <strong>Proposed write-up.</strong> Drafted from the GPS track and the
-            photographs. The weather, the company and the reasons are still missing.
+      {comingSoon ? (
+        <section class="card coming-soon">
+          <h2>Write-up coming soon</h2>
+          <p>
+            The route is here and so is the GPX, but the words are not written yet.
+            Everything on this page is recorded: the line on the map is the track
+            from the day, the photographs are pinned where they were taken, and the
+            numbers come off the GPS.
           </p>
-        )}
-        <Content />
-      </section>
+          <p class="muted">
+            What is missing is the part worth reading. That comes when Nick gets to it.
+          </p>
+          <div class="coming-soon-links">
+            <a class="button" href={walk.data.gpxDownload} download>Download the GPX</a>
+            <a class="button ghost-dark" href="/walks/">Browse other walks</a>
+          </div>
+        </section>
+      ) : (
+        <section class="card">
+          <h2>Route notes</h2>
+          <Content />
+        </section>
+      )}
 
       <section class="card wwe-photos" id="wwe-photos" data-date={walkDateStr}>
         <h2>Photos from this walk</h2>
@@ -201,16 +217,20 @@ const estimatedHours = walk.data.difficulty === "Hard"
     </article>
   </div>
 
-  <script type="application/ld+json" is:inline define:vars={{ walk: walk.data, pageUrl }}>
-    {JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "TouristTrip",
-      name: walk.title,
-      description: walk.summary,
-      url: pageUrl,
-      touristType: "Walkers"
-    })}
-  </script>
+  {/*
+    Structured data, built from named fields rather than the whole frontmatter.
+    define:vars serialises everything it is given into the page, so passing
+    walk.data put every unfinished field into the HTML, including
+    parking: "TODO: where did you park?" on 34 pages.
+  */}
+  <script type="application/ld+json" is:inline set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "TouristTrip",
+    name: walk.data.title,
+    description: walk.data.summary,
+    url: pageUrl,
+    touristType: "Walkers",
+  })} />
 
   <script>
     import L from "leaflet";

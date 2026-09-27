@@ -191,16 +191,20 @@ const estimatedHours = walk.data.difficulty === "Hard"
     </article>
   </div>
 
-  <script type="application/ld+json" is:inline define:vars={{ walk: walk.data, pageUrl }}>
-    {JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "TouristTrip",
-      name: walk.title,
-      description: walk.summary,
-      url: pageUrl,
-      touristType: "Walkers"
-    })}
-  </script>
+  {/*
+    Structured data, built from named fields rather than the whole frontmatter.
+    define:vars serialises everything it is given into the page, so passing
+    walk.data put every unfinished field into the HTML, including
+    parking: "TODO: where did you park?" on 34 pages.
+  */}
+  <script type="application/ld+json" is:inline set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "TouristTrip",
+    name: walk.data.title,
+    description: walk.data.summary,
+    url: pageUrl,
+    touristType: "Walkers",
+  })} />
 
   <script>
     import L from "leaflet";
