@@ -1,5 +1,5 @@
 ---
-import { getAllWalks, getPublishedWalks, getSiteSettings } from "../lib/content";
+import { getAllWalks, getFeaturedWalks, getPublishedWalks, getSiteSettings } from "../lib/content";
 import { imgSrc } from "../lib/imgSrc";
 import AbTracking from "./AbTracking.astro";
 
@@ -14,7 +14,7 @@ const isB = variant === "b";
 const settings = await getSiteSettings();
 const publishedWalks = await getPublishedWalks();
 const draftWalks = (await getAllWalks()).filter((walk) => walk.data.draft).slice(0, 3);
-const walks = publishedWalks.slice(0, 3);
+const walks = await getFeaturedWalks(3);
 const mastheadImage = settings.homepage?.mastheadImage || "/uploads/images/5da590c5-0884-4c1c-8fc1-012850f889fa-61fec1bcfa.jpg";
 const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 2);
 

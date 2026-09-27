@@ -61,6 +61,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
 
       <section class="route-facts">
         <div><span>Distance</span><strong>{walk.data.distance} mi</strong></div>
+        {walk.data.ascentM && <div><span>Ascent</span><strong>{walk.data.ascentM} m</strong></div>}
         <div><span>Difficulty</span><strong>{walk.data.difficulty}</strong></div>
         <div><span>Estimated Time</span><strong>{estimatedHours} hrs</strong></div>
         <div><span>Dog Access</span><strong>{walk.data.dogFriendly ? "Dog-friendly" : "Lead only / restricted areas"}</strong></div>

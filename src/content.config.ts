@@ -10,6 +10,10 @@ const walks = defineCollection({
       publishDate: z.coerce.date(),
       difficulty: z.enum(["Easy", "Moderate", "Hard"]),
       distance: z.number().positive(),
+      /** Total ascent in metres, from the recorded GPS track. */
+      ascentM: z.number().optional(),
+      /** Pin to the homepage regardless of how it scores. */
+      featured: z.boolean().default(false),
       location: z.string(),
       region: z.string(),
       dogFriendly: z.boolean(),

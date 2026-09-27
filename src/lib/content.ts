@@ -24,6 +24,27 @@ export async function getPublishedWalks() {
   return walks.filter((walk) => !walk.data.draft);
 }
 
+/**
+ * Walks ranked for the homepage showcase.
+ *
+ * Recency is the wrong order for a shop window — it put a 1.5 mile dog amble
+ * ahead of three 14-mile hill days. Rank by how much of a day the walk was:
+ * distance plus ascent, where 100m of climbing counts about the same as a
+ * mile on the flat. `featured: true` pins a walk above the scoring for when
+ * the numbers do not capture why a walk is worth showing.
+ */
+export async function getFeaturedWalks(limit = 3) {
+  const walks = await getPublishedWalks();
+  const score = (w: { data: { distance: number; ascentM?: number } }) =>
+    w.data.distance + (w.data.ascentM ?? 0) / 100;
+  return [...walks]
+    .sort((a, b) => {
+      if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
+      return score(b) - score(a);
+    })
+    .slice(0, limit);
+}
+
 export async function getAllBlogs() {
   const posts = await getCollection("blog");
   return posts.sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());
