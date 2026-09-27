@@ -7,6 +7,63 @@ const settings = await getSiteSettings();
 const regions = await getRegions();
 const page = (await getCollection("pages")).find((entry) => entry.slug === "about");
 const { Content } = page ? await page.render() : { Content: null };
+
+/**
+ * The numbers are counted from the walks at build time rather than typed in.
+ * A figure that has to be remembered is a figure that goes stale, and an About
+ * page claiming 440 miles two years after it was 800 does the opposite of
+ * building trust.
+ */
+const walks = await getCollection("walks");
+const totalMiles = walks.reduce((sum, w) => sum + (w.data.routeDistance ?? w.data.distance ?? 0), 0);
+const totalAscent = walks.reduce((sum, w) => sum + (w.data.ascentM ?? 0), 0);
+
+const walkDates = walks
+  .map((w) => w.data.walkDate ?? w.data.publishDate)
+  .filter(Boolean)
+  .map((d) => new Date(d as Date))
+  .sort((a, b) => a.getTime() - b.getTime());
+const firstYear = walkDates.length ? walkDates[0].getFullYear() : new Date().getFullYear();
+
+// Everest is the unit people actually feel. 8,848m.
+const everests = totalAscent / 8848;
+
+const stats = [
+  { value: walks.length.toString(), label: "routes recorded" },
+  { value: Math.round(totalMiles).toLocaleString("en-GB"), label: "miles walked" },
+  { value: `${Math.round(totalAscent).toLocaleString("en-GB")}m`, label: `of ascent, ${everests.toFixed(1)} × Everest` },
+  { value: `since ${firstYear}`, label: "and still going" },
+];
+
+const hero = page?.data.heroImage;
+const heroAlt = page?.data.heroAlt ?? "";
+
+const siteUrl = "https://walkingwithember.co.uk";
+
+/**
+ * Person and AboutPage markup. Search engines lean on this to work out who is
+ * behind advice, which matters more than usual here: this site tells people
+ * where it is safe to take a dog.
+ */
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "AboutPage",
+  name: page?.data.title ?? "About",
+  url: `${siteUrl}/about/`,
+  description: page?.data.seoDescription,
+  mainEntity: {
+    "@type": "Person",
+    name: "Nick Ward",
+    description: `Hillwalker documenting ${walks.length} dog-tested walking routes across the Peak District, Charnwood and beyond.`,
+    knowsAbout: ["Hillwalking", "Dog-friendly walking routes", "Peak District", "Charnwood Forest", "Countryside access"],
+    url: `${siteUrl}/about/`,
+  },
+  publisher: {
+    "@type": "Organization",
+    name: settings.siteName,
+    url: siteUrl,
+  },
+};
 ---
 
 <BaseLayout
@@ -16,12 +73,131 @@ const { Content } = page ? await page.render() : { Content: null };
   siteName={settings.siteName}
   tagline={settings.tagline}
 >
-  <div class="container page-grid">
-    <section class="hero">
-      <h1>{page?.data.title ?? "About"}</h1>
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+
+  {hero && (
+    <section class="about-hero">
+      <img src={hero} alt={heroAlt} fetchpriority="high" />
+      <div class="about-hero-overlay">
+        <h1>{page?.data.title ?? "About"}</h1>
+        <p>Real routes, walked with a dog, written down honestly.</p>
+      </div>
     </section>
-    <section class="card">
+  )}
+
+  <div class="container page-grid">
+    {!hero && (
+      <section class="hero">
+        <h1>{page?.data.title ?? "About"}</h1>
+      </section>
+    )}
+
+    <section class="about-stats" aria-label="What is on this site">
+      {stats.map((s) => (
+        <div class="about-stat">
+          <strong>{s.value}</strong>
+          <span>{s.label}</span>
+        </div>
+      ))}
+    </section>
+
+    <section class="card about-body">
       {Content ? <Content /> : <p>This page is managed through the CMS.</p>}
+    </section>
+
+    <section class="about-cta card">
+      <h2>Start with the walks</h2>
+      <p>Every route carries the GPX, the grid reference and the dog detail.</p>
+      <div class="about-cta-links">
+        <a class="button" href="/walks/">Browse the routes</a>
+        <a class="button ghost-dark" href="/contact/">Tell me I am wrong</a>
+      </div>
     </section>
   </div>
 </BaseLayout>
+
+<style>
+  .about-hero {
+    position: relative;
+    width: 100%;
+    height: clamp(260px, 42vh, 460px);
+    overflow: hidden;
+  }
+  .about-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .about-hero-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    padding: 2rem clamp(1rem, 5vw, 4rem);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.15) 55%, transparent);
+    color: #fff;
+  }
+  .about-hero-overlay h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1.05;
+  }
+  .about-hero-overlay p {
+    margin: 0;
+    opacity: 0.92;
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+  }
+
+  .about-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 2rem 0 0;
+  }
+  .about-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 1.1rem 1rem;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.035);
+  }
+  .about-stat strong {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    line-height: 1;
+  }
+  .about-stat span {
+    font-size: 0.82rem;
+    opacity: 0.75;
+  }
+
+  .about-body :global(h2) {
+    margin-top: 2rem;
+  }
+  .about-body :global(h2:first-child) {
+    margin-top: 0;
+  }
+
+  .about-cta-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 0.9rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .about-stat {
+      background: rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  @media (max-width: 860px) {
+    .about-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

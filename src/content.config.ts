@@ -113,7 +113,11 @@ const pages = defineCollection({
   type: "content",
   schema: z.object({
     title: z.string(),
-    seoDescription: z.string().max(200),
+    // Kept under 160 so Google shows the whole thing rather than cutting it
+    // mid sentence, which is what a 200 character limit was allowing.
+    seoDescription: z.string().max(160),
+    heroImage: z.string().optional(),
+    heroAlt: z.string().optional(),
   }),
 });
 
