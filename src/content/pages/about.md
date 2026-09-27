@@ -23,12 +23,13 @@ people:
     image: "/uploads/images/walks/2025-07-26/06-a9facafe.jpg"
     alt: "Ember, a black and white border collie, looking out across a green hillside"
     body: |
-      Ember is a border collie, which tells you most of what you need to know.
+      Ember is a three year old border collie, which tells you most of what you
+      need to know.
 
-      Twelve miles in, Ember is still working the ground ahead, still checking
+      Twelve miles in, she is still working the ground ahead, still checking
       back to see where I have got to, and still visibly disappointed when the
-      car comes into view. I have never once seen Ember tire before I do. On the
-      days I would happily have turned round at the halfway point, that
+      car comes into view. I have never once seen her tire before I do. On the
+      days I would happily have turned round at the halfway point, her
       relentless enthusiasm is usually what gets us both to the top.
 
       Every route on this site has been walked with Ember. That is exactly why
@@ -108,7 +109,7 @@ Take the GPX. Take a map. Both, ideally.
 
 Easy, moderate and hard are my opinions, formed by my legs on the day I walked
 it. A moderate in dry June is not a moderate in wet February, and a route that
-suited Ember may not suit a dog with shorter legs, a heavier coat or an older
+suited her may not suit a dog with shorter legs, a heavier coat or an older
 set of hips.
 
 Everything here is planning support, not a substitute for checking the forecast,
