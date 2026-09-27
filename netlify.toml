@@ -26,3 +26,15 @@
   from = "/flyby/2026-08-06-ringinglow/"
   to = "/flyby/2026-08-06-redmires-reservoir-circular/"
   status = 301
+
+# Renamed 2026-09-27: "High Peak" was the geocoded parish, the walk is the
+# Alport Castles circuit from the Derwent.
+[[redirects]]
+  from = "/walks/2025-09-13-high-peak/"
+  to = "/walks/2025-09-13-alport-castles/"
+  status = 301
+
+[[redirects]]
+  from = "/flyby/2025-09-13-high-peak/"
+  to = "/flyby/2025-09-13-alport-castles/"
+  status = 301
