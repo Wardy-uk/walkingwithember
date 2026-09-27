@@ -177,7 +177,14 @@ async function indexPhotosLibrary(libPath) {
   const lonCol = has("ZLONGITUDE") ? "ZLONGITUDE" : "NULL";
   const dirCol = has("ZDIRECTORY") ? "ZDIRECTORY" : "''";
   const nameCol = has("ZFILENAME") ? "ZFILENAME" : "''";
-  const where = has("ZTRASHEDSTATE") ? "WHERE ZTRASHEDSTATE = 0" : "";
+  // ZKIND: 0 = photo, 1 = video. Videos carry GPS and timestamps so they match
+  // walks perfectly well, but sips cannot extract a still from a .mov and they
+  // are not what a photo gallery wants — exclude them rather than let them
+  // consume slots and fail at conversion.
+  const clauses = [];
+  if (has("ZTRASHEDSTATE")) clauses.push("ZTRASHEDSTATE = 0");
+  if (has("ZKIND")) clauses.push("ZKIND = 0");
+  const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
 
   const sql = `SELECT ${dateCol}, ${latCol}, ${lonCol}, ${dirCol}, ${nameCol} FROM ZASSET ${where};`;
   const { stdout } = await exec("sqlite3", ["-separator", SEP, uri, sql], { maxBuffer: 1 << 28 });
@@ -197,6 +204,8 @@ async function indexPhotosLibrary(libPath) {
     if (!Number.isFinite(secs)) continue;
     const time = new Date(APPLE_EPOCH + secs * 1000);
     if (isNaN(time)) continue;
+
+    if (/\.(mov|mp4|m4v|avi)$/i.test(name || "")) continue;
 
     const uuid = (name || "").split(".")[0].toUpperCase();
     const original = dir && name ? join(libPath, "originals", dir, name) : null;
