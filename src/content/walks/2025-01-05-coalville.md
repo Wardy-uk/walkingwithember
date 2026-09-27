@@ -23,7 +23,7 @@ draft: false
 
 January 2025. 6 miles round with 328m of climbing, 2h07 on the move.
 
-Heavy drizzle on and off for 2 hours, 0 to 0 degrees, cold enough to keep moving.
+Heavy drizzle on and off for 2 hours, 0 degrees, cold enough to keep moving.
 
 Out at 10:44, back at 12:50. 2 photographs from the day, 11:43 to 11:43.
 

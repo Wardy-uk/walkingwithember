@@ -23,7 +23,7 @@ draft: false
 
 June 2024. 9.8 miles round with 329m of climbing, 3h22 on the move.
 
-Cloud and sun taking turns, 19 to 19 degrees and warm for it, dry underfoot at least.
+Cloud and sun taking turns, 19 degrees and warm for it, dry underfoot at least.
 
 Out at 12:44, back at 16:06. 6 photographs from the day, 13:02 to 15:10, 4 of the view.
 

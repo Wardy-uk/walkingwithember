@@ -24,7 +24,7 @@ draft: false
 
 May 2015. 4.4 miles point to point with 322m of climbing, 1h39 on the move.
 
-Cloud and sun taking turns, 12 to 12 degrees, wind gusting to 45km/h, dry underfoot at least.
+Cloud and sun taking turns, 12 degrees, wind gusting to 45km/h, dry underfoot at least.
 
 Out at 12:22, back at 14:02.
 

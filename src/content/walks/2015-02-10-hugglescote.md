@@ -24,7 +24,7 @@ draft: false
 
 February 2015. 3.3 miles round with 224m of climbing, 1h03 on the move.
 
-Grey the whole way, cloud never really breaking, 2 to 2 degrees, cold enough to keep moving, dry underfoot at least.
+Grey the whole way, cloud never really breaking, 2 degrees, cold enough to keep moving, dry underfoot at least.
 
 Out at 12:18, back at 13:20.
 

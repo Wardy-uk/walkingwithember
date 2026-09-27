@@ -24,7 +24,7 @@ draft: false
 
 January 2025. 3.1 miles round with 114m of climbing, 1h02 on the move.
 
-Grey the whole way, cloud never really breaking, 4 to 4 degrees, wind gusting to 46km/h, dry underfoot at least.
+Grey the whole way, cloud never really breaking, 4 degrees, wind gusting to 46km/h, dry underfoot at least.
 
 Out at 13:03, back at 14:05.
 

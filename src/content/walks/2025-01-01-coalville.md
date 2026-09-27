@@ -24,7 +24,7 @@ draft: false
 
 January 2025. 3.8 miles round with 74m of climbing, 1h01 on the move.
 
-A bit of light drizzle but nothing that lasted, 7 to 7 degrees, wind gusting to 51km/h.
+A bit of light drizzle but nothing that lasted, 7 degrees, wind gusting to 51km/h.
 
 Out at 13:17, back at 14:18.
 

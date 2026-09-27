@@ -23,7 +23,7 @@ draft: false
 
 March 2025. 6 miles round, 1h39 on the move.
 
-A bit of light drizzle but nothing that lasted, 8 to 8 degrees.
+A bit of light drizzle but nothing that lasted, 8 degrees.
 
 Out at 06:35, back at 08:13. 2 photographs from the day, 07:02 to 07:02, 2 with Ember in them.
 

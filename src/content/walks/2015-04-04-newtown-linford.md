@@ -24,7 +24,7 @@ draft: false
 
 April 2015. 2 miles round with 148m of climbing, 1h31 on the move.
 
-Grey the whole way, cloud never really breaking, 9 to 9 degrees, dry underfoot at least.
+Grey the whole way, cloud never really breaking, 9 degrees, dry underfoot at least.
 
 Out at 14:29, back at 16:00.
 

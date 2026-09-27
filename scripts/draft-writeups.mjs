@@ -113,7 +113,11 @@ function weatherSentence(w) {
   const warm = w.tempMax !== null && w.tempMax >= 18;
 
   if (w.condition && /snow/.test(w.condition)) {
-    bits.push(`Snow, and ${w.tempMin} to ${w.tempMax} degrees with it`);
+    bits.push(
+      w.tempMin === w.tempMax
+        ? `Snow, and ${w.tempMin} degrees with it`
+        : `Snow, and ${w.tempMin} to ${w.tempMax} degrees with it`,
+    );
   } else if (w.condition && /heavy rain|heavy showers/.test(w.condition)) {
     bits.push(`Proper rain, ${w.rainMm}mm of it over ${w.wetHours} hours`);
   } else if (w.condition && /(rain|showers|drizzle)/.test(w.condition)) {
@@ -131,9 +135,14 @@ function weatherSentence(w) {
   }
 
   if (w.tempMin !== null && w.tempMax !== null && !/snow/.test(w.condition ?? "")) {
-    bits.push(cold ? `${w.tempMin} to ${w.tempMax} degrees, cold enough to keep moving`
-      : warm ? `${w.tempMin} to ${w.tempMax} degrees and warm for it`
-      : `${w.tempMin} to ${w.tempMax} degrees`);
+    // On a short walk the hourly readings often do not move, and "7 to 7
+    // degrees" reads like a mistake.
+    const range = w.tempMin === w.tempMax
+      ? `${w.tempMin} degrees`
+      : `${w.tempMin} to ${w.tempMax} degrees`;
+    bits.push(cold ? `${range}, cold enough to keep moving`
+      : warm ? `${range} and warm for it`
+      : range);
   }
 
   if (w.gustMaxKmh !== null && w.gustMaxKmh >= 45) {

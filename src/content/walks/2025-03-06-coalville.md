@@ -23,7 +23,7 @@ draft: false
 
 March 2025. 4 miles round with 114m of climbing, 1h21 on the move.
 
-Clear, the sort of day you plan around, 4 to 4 degrees, dry underfoot at least.
+Clear, the sort of day you plan around, 4 degrees, dry underfoot at least.
 
 Out at 06:33, back at 07:54. 5 photographs from the day, 06:49 to 07:04, 5 of the view.
 

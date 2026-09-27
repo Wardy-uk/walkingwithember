@@ -23,7 +23,7 @@ draft: false
 
 January 2026. 7.9 miles round with 493m of climbing, 3h03 on the move.
 
-Grey the whole way, cloud never really breaking, 6 to 6 degrees, dry underfoot at least.
+Grey the whole way, cloud never really breaking, 6 degrees, dry underfoot at least.
 
 Out at 10:19, back at 13:22. 12 photographs from the day, 10:40 to 13:07, 6 of the view, 5 with Ember in them.
 
