@@ -1403,3 +1403,14 @@ input:focus, select:focus, textarea:focus {
   .map-panel { height: 340px; }
   .flyby-map { height: 340px; }
 }
+
+/* ── Route distance vs distance walked ───────────────────────────────
+   Where the two differ, the headline is the route (what someone following
+   it would cover) and the recorded figure sits underneath, so the page
+   never contradicts its own GPX download. */
+.route-facts .fact-note {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  color: var(--muted, #6b6259);
+}

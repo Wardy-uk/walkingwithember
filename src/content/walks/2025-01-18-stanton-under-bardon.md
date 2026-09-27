@@ -6,6 +6,7 @@ publishDate: 2025-01-18
 walkDate: 2025-01-18
 difficulty: Moderate
 distance: 7.2
+ascentM: 309
 location: "Stanton under Bardon, Leicestershire"
 region: "Leicestershire"
 companions: ["Lizzy"]

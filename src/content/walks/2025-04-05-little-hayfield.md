@@ -6,6 +6,7 @@ publishDate: 2025-04-05
 walkDate: 2025-04-05
 difficulty: Easy
 distance: 3.5
+ascentM: 366
 location: "Little Hayfield, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true

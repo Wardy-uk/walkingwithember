@@ -6,6 +6,7 @@ publishDate: 2025-09-06
 walkDate: 2025-09-06
 difficulty: Hard
 distance: 14.7
+ascentM: 898
 location: "Sheffield, South Yorkshire"
 region: "South Yorkshire"
 dogFriendly: true

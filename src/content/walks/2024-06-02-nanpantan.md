@@ -6,6 +6,7 @@ publishDate: 2024-06-02
 walkDate: 2024-06-02
 difficulty: Moderate
 distance: 9.8
+ascentM: 329
 location: "Nanpantan, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true

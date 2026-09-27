@@ -6,6 +6,7 @@ publishDate: 2025-07-26
 walkDate: 2025-07-26
 difficulty: Hard
 distance: 10.7
+ascentM: 896
 location: "Earl Sterndale, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true

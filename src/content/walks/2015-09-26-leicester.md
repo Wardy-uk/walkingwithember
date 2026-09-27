@@ -6,6 +6,7 @@ publishDate: 2015-09-26
 walkDate: 2015-09-26
 difficulty: Moderate
 distance: 8.7
+ascentM: 614
 location: "Leicester, City of Leicester"
 region: "City of Leicester"
 dogFriendly: true

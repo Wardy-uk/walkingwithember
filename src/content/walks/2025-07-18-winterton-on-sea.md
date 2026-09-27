@@ -6,6 +6,7 @@ publishDate: 2025-07-18
 walkDate: 2025-07-18
 difficulty: Easy
 distance: 7.9
+ascentM: 41
 location: "Winterton-on-Sea, Norfolk"
 region: "Norfolk"
 dogFriendly: true

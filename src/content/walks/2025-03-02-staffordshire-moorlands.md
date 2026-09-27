@@ -6,6 +6,7 @@ publishDate: 2025-03-02
 walkDate: 2025-03-02
 difficulty: Hard
 distance: 12.5
+ascentM: 913
 location: "Staffordshire Moorlands, Staffordshire"
 region: "Staffordshire"
 dogFriendly: true

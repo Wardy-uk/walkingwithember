@@ -6,6 +6,7 @@ publishDate: 2015-04-04
 walkDate: 2015-04-04
 difficulty: Easy
 distance: 2
+ascentM: 148
 location: "Newtown Linford, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true

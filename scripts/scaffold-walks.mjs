@@ -142,6 +142,7 @@ publishDate: ${w.date}
 walkDate: ${w.date}
 difficulty: ${diff}
 distance: ${w.distanceMiles}
+ascentM: ${w.ascentM}
 location: ${yaml(location)}
 region: ${yaml(region)}
 dogFriendly: true

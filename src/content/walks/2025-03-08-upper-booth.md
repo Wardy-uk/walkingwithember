@@ -6,6 +6,7 @@ publishDate: 2025-03-08
 walkDate: 2025-03-08
 difficulty: Hard
 distance: 11.9
+ascentM: 947
 location: "Upper Booth, Derbyshire"
 region: "Derbyshire"
 companions: ["Lizzy", "Daniel"]

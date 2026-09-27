@@ -10,6 +10,13 @@ const walks = defineCollection({
       publishDate: z.coerce.date(),
       difficulty: z.enum(["Easy", "Moderate", "Hard"]),
       distance: z.number().positive(),
+      /**
+       * The route's own distance in miles, when it differs from what was
+       * walked. A retrace for dropped kit, a wrong turn or a there-and-back
+       * to a summit all inflate the GPS figure above what someone following
+       * the route would cover.
+       */
+      routeDistance: z.number().positive().optional(),
       /** Total ascent in metres, from the recorded GPS track. */
       ascentM: z.number().optional(),
       /** Pin to the homepage regardless of how it scores. */

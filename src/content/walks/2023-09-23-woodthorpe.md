@@ -6,6 +6,7 @@ publishDate: 2023-09-23
 walkDate: 2023-09-23
 difficulty: Easy
 distance: 2
+ascentM: 11
 location: "Woodthorpe, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true

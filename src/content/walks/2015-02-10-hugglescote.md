@@ -6,6 +6,7 @@ publishDate: 2015-02-10
 walkDate: 2015-02-10
 difficulty: Easy
 distance: 3.3
+ascentM: 224
 location: "Hugglescote, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true

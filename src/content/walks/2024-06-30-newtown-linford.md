@@ -6,6 +6,7 @@ publishDate: 2024-06-30
 walkDate: 2024-06-30
 difficulty: Moderate
 distance: 11.8
+ascentM: 413
 location: "Newtown Linford, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true

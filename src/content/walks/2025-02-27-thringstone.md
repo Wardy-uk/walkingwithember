@@ -6,6 +6,7 @@ publishDate: 2025-02-27
 walkDate: 2025-02-27
 difficulty: Easy
 distance: 2.4
+ascentM: 82
 location: "Thringstone, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true

@@ -6,6 +6,7 @@ publishDate: 2025-01-01
 walkDate: 2025-01-01
 difficulty: Easy
 distance: 3.8
+ascentM: 74
 location: "Coalville, Leicestershire"
 region: "Leicestershire"
 dogFriendly: true

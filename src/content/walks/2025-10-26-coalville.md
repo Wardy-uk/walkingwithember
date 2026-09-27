@@ -6,6 +6,7 @@ publishDate: 2025-10-26
 walkDate: 2025-10-26
 difficulty: Moderate
 distance: 9.6
+ascentM: 341
 location: "Coalville, Leicestershire"
 region: "Leicestershire"
 companions: ["Lizzy"]

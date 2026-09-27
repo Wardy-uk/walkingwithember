@@ -6,6 +6,7 @@ publishDate: 2025-09-27
 walkDate: 2025-09-27
 difficulty: Hard
 distance: 14.7
+ascentM: 962
 location: "Upper Booth, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true

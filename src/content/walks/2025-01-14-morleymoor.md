@@ -6,6 +6,7 @@ publishDate: 2025-01-14
 walkDate: 2025-01-14
 difficulty: Easy
 distance: 3.2
+ascentM: 58
 location: "Morleymoor, Derbyshire"
 region: "Derbyshire"
 dogFriendly: true
