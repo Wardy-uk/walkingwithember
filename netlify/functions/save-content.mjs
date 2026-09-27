@@ -1,3 +1,5 @@
+import { requireAdmin, deny } from './lib/auth.mjs';
+
 const GITHUB_TOKEN   = process.env.GITHUB_TOKEN;
 const ADMIN_PASSWORD = process.env.WALK_BUILDER_PASSWORD;
 const REPO           = 'Wardy-uk/walkingwithember';
@@ -9,6 +11,10 @@ const CORS = {
 
 export default async function handler(req) {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+
+    // Writes to the repo: admin only. Previously unauthenticated.
+    const auth = await requireAdmin(req);
+    if (!auth.ok) return deny(auth);
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   if (!GITHUB_TOKEN) return json({ error: 'GITHUB_TOKEN not configured' }, 503);
 

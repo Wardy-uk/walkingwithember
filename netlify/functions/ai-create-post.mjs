@@ -1,3 +1,5 @@
+import { requireAdmin, denyLegacy } from './lib/auth.mjs';
+
 import crypto from "node:crypto";
 
 const CORS_HEADERS = {
@@ -9,6 +11,10 @@ const CORS_HEADERS = {
 const REQUIRED_ENV = ["GITHUB_TOKEN", "GITHUB_REPO"];
 
 export const handler = async (event) => {
+  // Creates repo content and spends OpenAI credit: admin only.
+  const auth = await requireAdmin(event);
+  if (!auth.ok) return denyLegacy(auth);
+
   try {
     if (event.httpMethod === "OPTIONS") {
       return { statusCode: 204, headers: CORS_HEADERS, body: "" };
