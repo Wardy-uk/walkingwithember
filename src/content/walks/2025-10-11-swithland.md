@@ -1,5 +1,5 @@
 ---
-title: "Swithland — 14.6 miles"
+title: "Woodhouse to Newtown Linford — 14.6 miles"
 summary: "14.6 miles and 752m of ascent around Swithland, walked in 5h45. Route notes to follow."
 heroImage: "/uploads/images/walks/2025-10-11/12-40e108a7.jpg"
 publishDate: 2025-10-11
@@ -7,7 +7,7 @@ walkDate: 2025-10-11
 difficulty: Hard
 distance: 14.6
 ascentM: 752
-location: "Swithland, Leicestershire"
+location: "Woodhouse to Newtown Linford, Charnwood"
 region: "Leicestershire"
 dogFriendly: true
 parking: "TODO — where did you park?"
