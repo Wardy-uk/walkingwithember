@@ -76,7 +76,7 @@ not much.
 
 Peat groughs, tussock and bog. This is the hardest going of any walk here for
 a dog and the least forgiving if something goes wrong. The ground above the
-Castles is broken and steep, so keep her in close there.
+Castles is broken and steep, so keep your dog close there.
 
 ## Parking and practicalities
 

@@ -68,13 +68,16 @@ thing, retrace and all.
 
 ## For your four legged companion
 
-She was on a long lead through Wyming Brook and went through the water rather
-than over the stepping stones, which is the sensible choice when you have four
-feet and no hands. The brook is the obvious drink on the route, and it is the
-only reliable water once you are up on the moor.
+Wyming Brook is the obvious drink on the route and the only reliable water
+once you are up on the moor. Worth knowing before a warm day.
 
-The descent is steep and rocky in places, on cut stone steps. Fine for a dog
-that is sure-footed, but it is not a run-ahead sort of path.
+The stepping stones across the brook are spaced for boots. Most dogs will
+wade instead, which is the sensible choice when you have four feet and no
+hands. Ember did.
+
+The descent through the brook is steep and rocky, on cut stone steps. Fine
+for a sure-footed dog, but it is not a run-ahead sort of path, and a long
+lead is easier than a short one on it.
 
 ## Parking and practicalities
 

@@ -315,8 +315,9 @@ ${relief ? `\n${relief}\n` : ""}${climb ? `\n${climb}\n` : ""}
 
 ## For your four legged companion
 
-> TODO: livestock, anything she could not get over or through, water on the
-> route, where she needed the lead, and how she was by the end.
+> TODO: livestock, anything a dog could not get over or through, water on the
+> route, and where a lead is needed. Write it for the reader's dog rather than
+> about Ember: the heading addresses theirs.
 
 ## Parking and practicalities
 
