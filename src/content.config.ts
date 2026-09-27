@@ -34,7 +34,7 @@ const walks = defineCollection({
       location: z.string(),
       region: z.string(),
       dogFriendly: z.boolean(),
-      parking: z.string(),
+      parking: z.string().optional(),
       /** OS grid reference of the GPX start point, i.e. where the car goes. */
       startGridRef: z.string().optional(),
       /** Postcode nearest the start, for a sat nav. */

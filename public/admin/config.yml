@@ -27,10 +27,45 @@ collections:
       - { label: "Location", name: "location", widget: "string" }
       - { label: "Region", name: "region", widget: "string" }
       - { label: "Dog-Friendly", name: "dogFriendly", widget: "boolean", default: true }
-      - { label: "Parking Info", name: "parking", widget: "string" }
-      - { label: "GPX Download URL", name: "gpxDownload", widget: "string" }
-      - { label: "Strava Record URL", name: "stravaRecord", widget: "string" }
-      - { label: "Strava Flyby URL", name: "stravaFlyby", widget: "string" }
+      - { label: "Parking Info", name: "parking", required: false, widget: "string" }
+
+      # Everything below was in the content but not in this list. Decap writes
+      # the file from these fields alone, so an unlisted field is dropped on
+      # save: editing one walk here would have quietly stripped its ascent,
+      # grid reference and every dog fact.
+      - { label: "Ascent (m)", name: "ascentM", required: false, widget: "number", value_type: "int", min: 0, hint: "From the GPS track. Leave alone unless it is wrong." }
+      - { label: "Distance actually walked (miles)", name: "routeDistance", required: false, widget: "number", value_type: "float", min: 0.1, step: 0.1, hint: "Only if it differs from the recorded distance, e.g. after retracing part of the route." }
+      - { label: "Write-up status", name: "writeupStatus", required: false, widget: "select", options: ["draft", "reviewed"], hint: "Only reviewed walks get a public page. The rest show a coming soon notice." }
+      - { label: "Featured", name: "featured", required: false, widget: "boolean", default: false }
+      - { label: "Catalogue only", name: "catalogueOnly", required: false, widget: "boolean", default: false, hint: "In the list of routes, but with no page of its own." }
+      - { label: "Companions", name: "companions", required: false, widget: "list", default: [], hint: "Who came along, Ember aside." }
+
+      - { label: "Start grid reference", name: "startGridRef", required: false, widget: "string" }
+      - { label: "Start postcode", name: "startPostcode", required: false, widget: "string" }
+      - { label: "Refreshments", name: "refreshments", required: false, widget: "string" }
+      - { label: "Toilets", name: "toilets", required: false, widget: "string" }
+
+      - { label: "Stiles", name: "stiles", required: false, widget: "select", options: ["none", "few", "several", "many"] }
+      - { label: "Open Access land", name: "accessLand", required: false, widget: "boolean", hint: "Dogs on a lead of 2m or less from 1 March to 31 July." }
+      - { label: "Livestock", name: "livestock", required: false, widget: "select", options: ["none", "likely", "certain"] }
+      - { label: "Water on route", name: "water", required: false, widget: "select", options: ["none", "some", "plenty"] }
+      - { label: "Roads", name: "roads", required: false, widget: "select", options: ["none", "short", "significant"] }
+      - { label: "Underfoot", name: "terrain", required: false, widget: "select", options: ["easy", "rough", "scrambly"] }
+      - { label: "Off lead", name: "offLead", required: false, widget: "select", options: ["no", "partly", "mostly"] }
+      - label: "Other dog notes"
+        name: "dogNotes"
+        required: false
+        widget: "list"
+        default: []
+        summary: "{{fields.label}}"
+        fields:
+          - { label: "What to know", name: "label", widget: "string" }
+          - { label: "More detail", name: "detail", required: false, widget: "string" }
+          - { label: "Tone", name: "tone", widget: "select", options: ["good", "note", "warn"], default: "note" }
+          - { label: "Icon", name: "icon", required: false, widget: "select", options: ["stiles", "water", "livestock", "access", "offlead", "roads", "terrain", "note"], default: "note" }
+      - { label: "GPX Download URL", name: "gpxDownload", required: false, widget: "string" }
+      - { label: "Strava Record URL", name: "stravaRecord", required: false, widget: "string" }
+      - { label: "Strava Flyby URL", name: "stravaFlyby", required: false, widget: "string" }
       - { label: "OS Maps Link", name: "osMapsLink", required: false, widget: "string" }
       - { label: "Map Latitude", name: "routeMapLat", widget: "number", value_type: "float" }
       - { label: "Map Longitude", name: "routeMapLng", widget: "number", value_type: "float" }

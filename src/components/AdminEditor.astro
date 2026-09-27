@@ -288,7 +288,7 @@ const { path } = Astro.props;
         setStatus((await res.json()).error ?? "Save failed", "error");
         return;
       }
-      setStatus("Saved. The site rebuilds in a minute or so.", "ok");
+      setStatus("Saved to the repo. It appears on the site at the next deploy.", "ok");
       setTimeout(close, 2200);
     }
 
