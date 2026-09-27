@@ -1,0 +1,349 @@
+---
+/**
+ * In-page editing for admins.
+ *
+ * Every section of a walk page carries a data-edit key. When a signed-in
+ * admin is detected, this drops an Edit button into each of them. Clicking
+ * one loads the walk's markdown from GitHub, shows the right controls for
+ * that section, and commits the result back.
+ *
+ * Nothing here is a security boundary: the buttons only appear for a
+ * logged-in admin as a convenience, and the functions behind it verify the
+ * Identity token themselves and check for the admin role. Hiding a button
+ * has never stopped anyone.
+ */
+interface Props {
+  /** Path in the repo, e.g. src/content/walks/2026-08-06-redmires.md */
+  path: string;
+}
+const { path } = Astro.props;
+---
+
+<div id="admin-editor" data-edit-path={path} hidden>
+  <div class="ae-backdrop"></div>
+  <div class="ae-panel" role="dialog" aria-modal="true" aria-labelledby="ae-title">
+    <header class="ae-head">
+      <h2 id="ae-title">Edit</h2>
+      <button type="button" class="ae-close" aria-label="Close">&times;</button>
+    </header>
+    <div class="ae-body"></div>
+    <footer class="ae-foot">
+      <span class="ae-status" role="status"></span>
+      <div class="ae-actions">
+        <button type="button" class="button ghost-dark ae-cancel">Cancel</button>
+        <button type="button" class="button ae-save">Save</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script>
+  const root = document.getElementById("admin-editor");
+  if (root) {
+    const PATH = root.dataset.editPath;
+    const panel = root.querySelector(".ae-panel");
+    const body = root.querySelector(".ae-body");
+    const title = root.querySelector("#ae-title");
+    const status = root.querySelector(".ae-status");
+
+    /**
+     * What each Edit button edits.
+     *
+     * The Route notes card renders the whole markdown body, every heading of
+     * it, so its button edits the whole body rather than one section. Editing
+     * only "The route" there would have silently ignored the rest of what the
+     * card was showing.
+     */
+    const SECTIONS = {
+      body: "the write-up",
+      dog: "For your four legged companion",
+      start: "Getting there",
+    };
+
+    /**
+     * The Getting there card. These are frontmatter fields rather than prose,
+     * so they get a form. An emptied field is removed from the frontmatter
+     * rather than written as an empty string, which is what the components
+     * test for when deciding whether to show a row at all.
+     */
+    const START_FIELDS = [
+      { key: "startGridRef", label: "Grid reference", placeholder: "SK 269 856" },
+      { key: "startPostcode", label: "Postcode", placeholder: "S10 4LH" },
+      { key: "stiles", label: "Stiles", options: ["", "none", "few", "several", "many"] },
+      { key: "refreshments", label: "Refreshments", placeholder: "Nothing on the route" },
+      { key: "toilets", label: "Toilets", placeholder: "None at the car park" },
+      { key: "parking", label: "Parking note", placeholder: "Where you left the car", wide: true },
+    ];
+
+    /** The preset dog facts, with the values each one accepts. */
+    const DOG_FIELDS = [
+      { key: "stiles", label: "Stiles", options: ["none", "few", "several", "many"] },
+      { key: "water", label: "Water on route", options: ["none", "some", "plenty"] },
+      { key: "livestock", label: "Livestock", options: ["none", "likely", "certain"] },
+      { key: "accessLand", label: "Open Access land", boolean: true },
+      { key: "offLead", label: "Off lead", options: ["no", "partly", "mostly"] },
+      { key: "roads", label: "Roads", options: ["none", "short", "significant"] },
+      { key: "terrain", label: "Underfoot", options: ["easy", "rough", "scrambly"] },
+    ];
+
+    let file = { content: "", sha: null };
+    let current = null;
+
+    const token = () => window.netlifyIdentity?.currentUser()?.token?.access_token ?? null;
+
+    const setStatus = (msg, kind) => {
+      status.textContent = msg ?? "";
+      status.dataset.kind = kind ?? "";
+    };
+
+    // ── markdown helpers ────────────────────────────────────────────────
+
+    const splitFile = (text) => {
+      const m = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(text);
+      return m ? { frontmatter: m[1], body: m[2] } : { frontmatter: "", body: text };
+    };
+
+    const getField = (fm, key) => {
+      const m = new RegExp(`^${key}:\\s*(.*)$`, "m").exec(fm);
+      if (!m) return null;
+      return m[1].trim().replace(/^["']|["']$/g, "");
+    };
+
+    const setField = (fm, key, value) => {
+      const line = value === null ? null : `${key}: ${value}`;
+      const re = new RegExp(`^${key}:.*$`, "m");
+      if (re.test(fm)) return line === null ? fm.replace(re, "").replace(/\n{3,}/g, "\n\n") : fm.replace(re, line);
+      return line === null ? fm : `${fm}\n${line}`;
+    };
+
+    // ── the editor ──────────────────────────────────────────────────────
+
+    async function load() {
+      const res = await fetch(`/api/read-content?path=${encodeURIComponent(PATH)}`, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? `HTTP ${res.status}`);
+      const data = await res.json();
+      file = { content: data.content, sha: data.sha };
+    }
+
+    function renderProse() {
+      const { body: md } = splitFile(file.content);
+      body_render(`
+        <p class="ae-hint">
+          The whole write-up, as markdown. Headings starting "## " become the
+          sections on the page.
+        </p>
+        <textarea id="ae-text" class="ae-textarea" rows="22">${escapeHtml(md.trim())}</textarea>
+      `);
+    }
+
+    function renderStart() {
+      const { frontmatter } = splitFile(file.content);
+      const rows = START_FIELDS.map((f) => {
+        // Scaffolded walks carry "TODO: where did you park?" here. Show it as
+        // an empty box so it reads as something to fill in, not something to
+        // delete first.
+        const raw = getField(frontmatter, f.key) ?? "";
+        const value = /^TODO/i.test(raw) ? "" : raw;
+        const control = f.options
+          ? `<select class="ae-select" data-start="${f.key}">
+               ${f.options.map((o) => `<option value="${o}"${o === value ? " selected" : ""}>${o || "not set"}</option>`).join("")}
+             </select>`
+          : `<input class="ae-input" data-start="${f.key}" placeholder="${escapeAttr(f.placeholder ?? "")}" value="${escapeAttr(value)}" />`;
+        return `<div class="ae-start-row${f.wide ? " is-wide" : ""}"><label>${f.label}</label>${control}</div>`;
+      }).join("");
+      body_render(`
+        <p class="ae-hint">Leave a box empty to hide that row on the page.</p>
+        <div class="ae-start-grid">${rows}</div>
+      `);
+    }
+
+    function renderDog() {
+      const { frontmatter } = splitFile(file.content);
+      const rows = DOG_FIELDS.map((f) => {
+        const value = getField(frontmatter, f.key);
+        const on = value !== null && value !== "false";
+        const control = f.boolean
+          ? ""
+          : `<select class="ae-select" data-value="${f.key}" ${on ? "" : "disabled"}>
+               ${f.options.map((o) => `<option value="${o}"${o === value ? " selected" : ""}>${o}</option>`).join("")}
+             </select>`;
+        return `
+          <div class="ae-dog-row">
+            <label class="ae-check">
+              <input type="checkbox" data-show="${f.key}" ${on ? "checked" : ""} />
+              <span>${f.label}</span>
+            </label>
+            ${control}
+          </div>`;
+      }).join("");
+
+      const notes = readNotes(frontmatter);
+      body_render(`
+        <p class="ae-hint">Tick to show an icon, then choose the detail. Unticked facts are hidden.</p>
+        <div class="ae-dog-grid">${rows}</div>
+        <hr class="ae-rule" />
+        <p class="ae-hint">Anything the list above does not cover. These show as icons too.</p>
+        <div class="ae-notes">${notes.map(noteRow).join("")}</div>
+        <button type="button" class="button ghost-dark ae-add-note">Add your own</button>
+      `);
+
+      body.querySelectorAll("[data-show]").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          const sel = body.querySelector(`[data-value="${cb.dataset.show}"]`);
+          if (sel) sel.disabled = !cb.checked;
+        });
+      });
+      body.querySelector(".ae-add-note")?.addEventListener("click", () => {
+        body.querySelector(".ae-notes").insertAdjacentHTML("beforeend", noteRow({ label: "", detail: "", tone: "note" }));
+        bindNoteRemoval();
+      });
+      bindNoteRemoval();
+    }
+
+    const noteRow = (n) => `
+      <div class="ae-note-row">
+        <input class="ae-input" data-note-label placeholder="What to know, e.g. Ladder stile at the top field" value="${escapeAttr(n.label ?? "")}" />
+        <input class="ae-input" data-note-detail placeholder="More detail (optional)" value="${escapeAttr(n.detail ?? "")}" />
+        <select class="ae-select" data-note-tone>
+          ${["good", "note", "warn"].map((t) => `<option value="${t}"${t === (n.tone ?? "note") ? " selected" : ""}>${t}</option>`).join("")}
+        </select>
+        <button type="button" class="ae-remove" aria-label="Remove">&times;</button>
+      </div>`;
+
+    const bindNoteRemoval = () => {
+      body.querySelectorAll(".ae-remove").forEach((b) => {
+        b.onclick = () => b.closest(".ae-note-row").remove();
+      });
+    };
+
+    /** dogNotes is a small YAML list; parse just the shape we write. */
+    function readNotes(fm) {
+      // Every indented line under the key. Anchoring the end with $ under /m
+      // would stop at the first line break and drop tone and detail.
+      const m = /^dogNotes:[ \t]*\n((?:[ \t]+.*\n?)*)/m.exec(fm);
+      if (!m) return [];
+      const out = [];
+      for (const chunk of m[1].split(/^\s+- /m).slice(1)) {
+        const g = (k) => new RegExp(`${k}:\\s*(.*)`).exec(chunk)?.[1]?.trim().replace(/^["']|["']$/g, "") ?? "";
+        out.push({ label: g("label"), detail: g("detail"), tone: g("tone") || "note" });
+      }
+      return out;
+    }
+
+    function writeNotes(fm, notes) {
+      const cleaned = notes.filter((n) => n.label);
+      const block = cleaned.length
+        ? "dogNotes:\n" + cleaned.map((n) =>
+            `  - label: ${JSON.stringify(n.label)}\n    tone: ${n.tone}` +
+            (n.detail ? `\n    detail: ${JSON.stringify(n.detail)}` : ""),
+          ).join("\n")
+        : "";
+      const re = /^dogNotes:[ \t]*\n(?:[ \t]+.*\n?)*/m;
+      if (re.test(fm)) return block ? fm.replace(re, block + "\n") : fm.replace(re, "");
+      return block ? `${fm}\n${block}` : fm;
+    }
+
+    // ── save ────────────────────────────────────────────────────────────
+
+    async function save() {
+      setStatus("Saving…");
+      let { frontmatter, body: md } = splitFile(file.content);
+
+      if (current === "dog") {
+        for (const f of DOG_FIELDS) {
+          const on = body.querySelector(`[data-show="${f.key}"]`).checked;
+          if (!on) { frontmatter = setField(frontmatter, f.key, null); continue; }
+          const value = f.boolean ? "true" : body.querySelector(`[data-value="${f.key}"]`).value;
+          frontmatter = setField(frontmatter, f.key, value);
+        }
+        const notes = [...body.querySelectorAll(".ae-note-row")].map((r) => ({
+          label: r.querySelector("[data-note-label]").value.trim(),
+          detail: r.querySelector("[data-note-detail]").value.trim(),
+          tone: r.querySelector("[data-note-tone]").value,
+        }));
+        frontmatter = writeNotes(frontmatter, notes);
+      } else if (current === "start") {
+        for (const f of START_FIELDS) {
+          const value = body.querySelector(`[data-start="${f.key}"]`).value.trim();
+          frontmatter = setField(frontmatter, f.key, value ? JSON.stringify(value) : null);
+        }
+      } else {
+        md = body.querySelector("#ae-text").value;
+      }
+
+      const content = `---\n${frontmatter.trim()}\n---\n\n${md.trim()}\n`;
+      const res = await fetch("/api/save-content", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: PATH,
+          content,
+          sha: file.sha,
+          message: `Edit ${SECTIONS[current] ?? current}: ${PATH.split("/").pop()}`,
+        }),
+      });
+      if (!res.ok) {
+        setStatus((await res.json()).error ?? "Save failed", "error");
+        return;
+      }
+      setStatus("Saved. The site rebuilds in a minute or so.", "ok");
+      setTimeout(close, 2200);
+    }
+
+    // ── plumbing ────────────────────────────────────────────────────────
+
+    const escapeHtml = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+    const escapeAttr = (s) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    const body_render = (html) => { body.innerHTML = html; };
+
+    async function open(section) {
+      current = section;
+      title.textContent = section === "body" ? "Edit the write-up" : SECTIONS[section] ?? "Edit";
+      body.innerHTML = '<p class="ae-hint">Loading…</p>';
+      root.hidden = false;
+      document.body.style.overflow = "hidden";
+      setStatus("");
+      try {
+        await load();
+        if (section === "dog") renderDog();
+        else if (section === "start") renderStart();
+        else renderProse();
+      } catch (err) {
+        body.innerHTML = `<p class="ae-hint">Could not load the file: ${escapeHtml(String(err.message ?? err))}</p>`;
+      }
+    }
+
+    function close() {
+      root.hidden = true;
+      document.body.style.overflow = "";
+      current = null;
+    }
+
+    root.querySelector(".ae-close").onclick = close;
+    root.querySelector(".ae-cancel").onclick = close;
+    root.querySelector(".ae-backdrop").onclick = close;
+    root.querySelector(".ae-save").onclick = save;
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !root.hidden) close(); });
+
+    /** Put an Edit button on each section, once an admin is signed in. */
+    function showButtons(on) {
+      document.querySelectorAll("[data-edit]").forEach((el) => {
+        const existing = el.querySelector(":scope > .ae-edit-btn");
+        if (!on) { existing?.remove(); return; }
+        if (existing) return;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ae-edit-btn";
+        b.textContent = "Edit";
+        b.onclick = () => open(el.dataset.edit);
+        el.classList.add("ae-editable");
+        el.prepend(b);
+      });
+    }
+
+    showButtons(Boolean(window.__wwIdentityUser));
+    window.addEventListener("ww-identity-change", (e) => showButtons(Boolean(e.detail?.user)));
+  }
+</script>

@@ -27,10 +27,12 @@ interface Props {
   roads?: "none" | "short" | "significant";
   terrain?: "easy" | "rough" | "scrambly";
   offLead?: "no" | "partly" | "mostly";
+  /** Free-form entries, for anything the preset fields do not cover. */
+  dogNotes?: Array<{ icon?: string; label: string; detail?: string; tone?: "good" | "warn" | "note" }>;
   walkDate?: Date;
 }
 
-const { accessLand, livestock, stiles, water, roads, terrain, offLead, walkDate } = Astro.props;
+const { accessLand, livestock, stiles, water, roads, terrain, offLead, dogNotes = [], walkDate } = Astro.props;
 
 /** 1 March to 31 July: lead required on Open Access land, max 2m. */
 const inBirdSeason = (d?: Date) => {
@@ -40,6 +42,9 @@ const inBirdSeason = (d?: Date) => {
 };
 
 type Item = { key: string; label: string; detail: string; tone: "good" | "warn" | "note" };
+
+/** A generic icon for free-form notes that do not match a preset. */
+const ICON_KEYS = new Set(["stiles", "water", "livestock", "access", "offlead", "roads", "terrain"]);
 
 const items: Item[] = [];
 
@@ -113,6 +118,16 @@ if (terrain) {
     tone: terrain === "easy" ? "good" : "note",
   });
 }
+// Free-form entries last, so the preset facts keep a stable order.
+for (const n of dogNotes) {
+  if (!n?.label) continue;
+  items.push({
+    key: ICON_KEYS.has(n.icon ?? "") ? (n.icon as string) : "note",
+    label: n.label,
+    detail: n.detail ?? "",
+    tone: n.tone ?? "note",
+  });
+}
 ---
 
 {items.length > 0 && (
@@ -157,6 +172,12 @@ if (terrain) {
                 <path d="M7 3 5 21M17 3l2 18M12 4v3M12 11v3M12 18v3" />
               </svg>
             )}
+            {item.key === "note" && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8h.01M11 12h1v4h1" />
+              </svg>
+            )}
             {item.key === "terrain" && (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M2 19 9 7l4.5 7.5M11 19l5-8 6 8Z" />
@@ -165,7 +186,7 @@ if (terrain) {
           </span>
           <span class="dog-text">
             <strong>{item.label}</strong>
-            <small>{item.detail}</small>
+            {item.detail && <small>{item.detail}</small>}
           </span>
         </li>
       ))}

@@ -5,6 +5,7 @@ import { join } from "path";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import FlybyPanel from "../../components/FlybyPanel.astro";
 import DogChecklist from "../../components/DogChecklist.astro";
+import AdminEditor from "../../components/AdminEditor.astro";
 import StartPanel from "../../components/StartPanel.astro";
 import NearbyWalks from "../../components/NearbyWalks.astro";
 import { getNearbyWalks, getRegions, getSiteSettings, getWalksWithPages } from "../../lib/content";
@@ -37,6 +38,7 @@ const photosUrl = walkDateStr ? `/photos/${walkDateStr}.json` : "";
 const nearby = await getNearbyWalks(walk, 4);
 // The route is real and downloadable; only the words are missing.
 const comingSoon = walk.data.writeupStatus !== "reviewed";
+const sourcePath = `src/content/walks/${walk.id}`;
 const estimatedHours = walk.data.difficulty === "Hard"
   ? Math.max(3, Math.round(walk.data.distance / 2))
   : walk.data.difficulty === "Moderate"
@@ -84,6 +86,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
         <div><span>Dog Access</span><strong>{walk.data.dogFriendly ? "Dog-friendly" : "Lead only / restricted areas"}</strong></div>
       </section>
 
+      <div data-edit="start">
       <StartPanel
         gridRef={walk.data.startGridRef}
         postcode={walk.data.startPostcode}
@@ -94,6 +97,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
         refreshments={walk.data.refreshments}
         toilets={walk.data.toilets}
       />
+      </div>
 
       <section class="card strava-stats" id="strava-stats" data-date={walkDateStr}>
         <div class="strava-inner">
@@ -156,6 +160,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
         </div>
       </section>
 
+      <div data-edit="dog">
       <DogChecklist
         accessLand={walk.data.accessLand}
         livestock={walk.data.livestock}
@@ -164,8 +169,10 @@ const estimatedHours = walk.data.difficulty === "Hard"
         roads={walk.data.roads}
         terrain={walk.data.terrain}
         offLead={walk.data.offLead}
+        dogNotes={walk.data.dogNotes}
         walkDate={walk.data.walkDate ?? walk.data.publishDate}
       />
+      </div>
 
       {comingSoon ? (
         <section class="card coming-soon">
@@ -185,7 +192,7 @@ const estimatedHours = walk.data.difficulty === "Hard"
           </div>
         </section>
       ) : (
-        <section class="card">
+        <section class="card" data-edit="body">
           <h2>Route notes</h2>
           <Content />
         </section>
@@ -216,6 +223,8 @@ const estimatedHours = walk.data.difficulty === "Hard"
       </section>
     </article>
   </div>
+
+  <AdminEditor path={sourcePath} />
 
   {/*
     Structured data, built from named fields rather than the whole frontmatter.

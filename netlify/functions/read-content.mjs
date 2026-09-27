@@ -1,7 +1,6 @@
 import { requireAdmin, deny } from './lib/auth.mjs';
 
 const GITHUB_TOKEN   = process.env.GITHUB_TOKEN;
-const ADMIN_PASSWORD = process.env.WALK_BUILDER_PASSWORD;
 const REPO           = 'Wardy-uk/walkingwithember';
 
 const CORS = {
@@ -11,11 +10,14 @@ const CORS = {
 
 export default async function handler(req) {
 
+  // Preflight carries no Authorization header by definition, so it has to be
+  // answered before the guard rather than 401'd by it.
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+
   // Not destructive, but it enumerates repo paths and their contents, which
   // is exactly what you would want before calling the write endpoints.
   const auth = await requireAdmin(req);
   if (!auth.ok) return deny(auth);
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
   const url  = new URL(req.url);
   const path = url.searchParams.get('path');

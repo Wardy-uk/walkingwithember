@@ -48,6 +48,22 @@ const walks = defineCollection({
       roads: z.enum(["none", "short", "significant"]).optional(),
       terrain: z.enum(["easy", "rough", "scrambly"]).optional(),
       offLead: z.enum(["no", "partly", "mostly"]).optional(),
+      /**
+       * Free-form dog facts, for anything the preset fields above do not
+       * cover. Rendered as icons alongside them, in order.
+       */
+      dogNotes: z
+        .array(
+          z.object({
+            icon: z
+              .enum(["stiles", "water", "livestock", "access", "offlead", "roads", "terrain", "note"])
+              .default("note"),
+            label: z.string(),
+            detail: z.string().optional(),
+            tone: z.enum(["good", "warn", "note"]).default("note"),
+          }),
+        )
+        .default([]),
       /** Nearest pub or cafe worth knowing about. */
       refreshments: z.string().optional(),
       /** Public toilets on or near the route. */
