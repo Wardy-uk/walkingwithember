@@ -1,5 +1,5 @@
 ---
-title: "Upper Booth, 14.7 miles"
+title: "Brown Knoll and the Edale Skyline"
 summary: "14.7 miles and 962m of ascent around Upper Booth, walked in 6h01. Route notes to follow."
 heroImage: "/uploads/images/walks/2025-09-27/09-e45998f6.jpg"
 publishDate: 2025-09-27
@@ -7,18 +7,21 @@ walkDate: 2025-09-27
 difficulty: Hard
 distance: 14.7
 ascentM: 962
-location: "Upper Booth, Derbyshire"
+location: "Hayfield, High Peak"
 region: "Derbyshire"
+accessLand: true
+water: some
+terrain: rough
 dogFriendly: true
-parking: "TODO: where did you park?"
+parking: "Hayfield, off Sheffield Road. Village car parks, pay and display."
 startGridRef: "SK 0914 8246"
 startPostcode: "SK23 0QT"
 gpxDownload: "/uploads/gpx/2025-09-27-walk.gpx"
 routeMapLat: 53.35199
 routeMapLng: -1.85702
 routeMapZoom: 12
-tags: []
-writeupStatus: draft
+tags: ["Peak District", "Kinder", "Edale", "moorland", "long day"]
+writeupStatus: reviewed
 draft: false
 ---
 
@@ -26,35 +29,52 @@ draft: false
 
 September 2025. 14.7 miles round with 962m of climbing, 6h01 on the move.
 
-A bit of light drizzle but nothing that lasted, 7 to 12 degrees, wind gusting to 45km/h.
+A bit of light drizzle but nothing that lasted, 7 to 12°C, wind gusting to 17mph.
 
-Out at 09:55, back at 15:56.
+## Walking with
 
-> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
+Just me and Ember.
 
 ## The route
 
-From Sheffield Road, out over Peat Lane, Hayfield, Upper Booth, Barber Booth and Peak Forest, and back round to Sheffield Road.
+Out of Hayfield on Peat Lane and Beet Lane, climbing south east onto the
+moor, then over the tops to Brown Knoll. The high point of the day at 571m
+on the GPS, and the trig pillar there sits at 569m: close enough that this
+is the summit rather than somewhere near it.
 
-The high point is Chinley at 571m, the low Barber Booth at 247m, so there is 324m of relief between them.
+Brown Knoll stands above the head of the Edale valley, about three kilometres
+south south west of Kinder Scout. The ground up there is peat and it is
+famously wet, though the flagstones have improved matters.
 
-The 962m of ascent comes in bits rather than one long pull. It keeps coming.
+Down Chapel Gate to Barber Booth, the low point at 247m, then the length of
+the Edale valley on the Edale Road before the long haul back over Old Mam Tor
+Road and Peak Forest to Hayfield.
 
-> TODO: the things a map does not carry. What it was like underfoot, the gates
-> and the stiles, where the path gives up, and what is worth stopping for.
+The climbing is oddly arranged: 219m in the first fifth, then a flat third
+fifth of only 41m, then 258m and 233m in the last two. Most of the work is
+in the second half.
 
-## For the dog
+## For your four legged companion
 
-> TODO: livestock, anything she could not get over or through, water on the
-> route, where she needed the lead, and how she was by the end.
+Open moor most of the way, so the lead rules apply: on Access land dogs must
+be on a lead no longer than two metres from 1 March to 31 July, whether or
+not there is stock about.
+
+Sheep throughout. Brown Knoll and the Edale valley are both grazed.
+
+Water is scarce on the tops and plentiful once you drop into Edale. Plan for
+the gap rather than the average.
 
 ## Parking and practicalities
 
-The track starts at **SK 0914 8246**, Sheffield Road, SK23 0QT.
+Hayfield has car parks, pubs, a shop and public toilets, which makes it a
+better start than most for a long day.
 
-> TODO: whether that is where you actually parked, what it cost, facilities,
-> and the one thing you would want to know before setting off.
+Edale at the halfway point has the Old Nags Head and a station on the
+Manchester to Sheffield line, if the day goes wrong.
 
 ---
 
 *Recorded 2025-09-27. 14.7 miles, 962m of ascent, 6h01 moving.*
+
+*Brown Knoll's height and position from [Wikipedia](https://en.wikipedia.org/wiki/Brown_Knoll).*

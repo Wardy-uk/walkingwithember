@@ -1,5 +1,5 @@
 ---
-title: "2 trigs, 4 Ethel’s and 14 miles!"
+title: "High Stones and the Howden Moors"
 summary: "14.7 miles and 898m of ascent around Sheffield, walked in 6h19. Route notes to follow."
 heroImage: "/uploads/images/walks/2025-09-06/11-c3468569.jpg"
 publishDate: 2025-09-06
@@ -7,18 +7,21 @@ walkDate: 2025-09-06
 difficulty: Hard
 distance: 14.7
 ascentM: 898
-location: "Sheffield, South Yorkshire"
+location: "Derwent, Upper Derwent Valley"
 region: "South Yorkshire"
+accessLand: true
+water: some
+terrain: rough
 dogFriendly: true
-parking: "TODO: where did you park?"
+parking: "Fairholmes, below Derwent dam. Pay and display."
 startGridRef: "SK 1732 8896"
 startPostcode: "S33 0AQ"
 gpxDownload: "/uploads/gpx/2025-09-06-walk.gpx"
 routeMapLat: 53.4291
 routeMapLng: -1.71751
 routeMapZoom: 12
-tags: []
-writeupStatus: draft
+tags: ["Peak District", "Derwent", "Howden Moors", "moorland", "long day"]
+writeupStatus: reviewed
 draft: false
 ---
 
@@ -26,35 +29,52 @@ draft: false
 
 September 2025. 14.7 miles round with 898m of climbing, 6h19 on the move.
 
-Grey the whole way, cloud never really breaking, 12 to 16 degrees, wind gusting to 50km/h, dry underfoot at least.
+Grey the whole way, cloud never really breaking, 12 to 16°C, wind gusting to 19mph, dry underfoot at least.
 
-Out at 09:37, back at 15:56.
+## Walking with
 
-> **Proposed write-up.** The route, timings and weather above are recorded fact. Who came is still unknown. What is missing is why this route on this day, and how it actually felt. Rewrite this section and delete this note.
+Just me and Ember.
 
 ## The route
 
-From Hope Woodlands, out over Bradfield and Derwent, and back round to Hope Woodlands.
+From the Derwent valley up onto the Howden Moors and across to the high
+ground above Bradfield. The top of the day is 550m at SK 188 943, which puts
+it on High Stones: at 548m that is the highest point in South Yorkshire and
+in the City of Sheffield, a mile south of the better known Margery Hill.
 
-The high point is Bradfield at 550m, the low Derwent at 206m, so there is 344m of relief between them.
+It is proper Dark Peak up there. Peat, groughs and very little to aim at in
+poor visibility.
 
-Most of the 898m lands in the second fifth.
+Back down to the Derwent reservoir, the low point at 206m, and round the
+water to the start.
 
-> TODO: the things a map does not carry. What it was like underfoot, the gates
-> and the stiles, where the path gives up, and what is worth stopping for.
+898m of climbing, with the heaviest stretch in the second fifth at 306m.
+That is the pull off the valley floor onto the moor, and once you are up
+there the rest is undulating rather than steep.
 
-## For the dog
+This is the walk Nick called "2 trigs, 4 Ethel's and 14 miles!" on Strava.
 
-> TODO: livestock, anything she could not get over or through, water on the
-> route, where she needed the lead, and how she was by the end.
+## For your four legged companion
+
+Access land throughout, so leads from 1 March to 31 July regardless of stock,
+and around sheep at any time of year.
+
+The reservoir shore has water the whole way but the moor section does not.
+That is several hours between drinks if you go anti-clockwise.
+
+Groughs and peat hags on the tops. Heavy going for a small dog and filthy
+for any of them.
 
 ## Parking and practicalities
 
-The track starts at **SK 1732 8896**, Derwent Lane, S33 0AQ.
+Fairholmes sits at the base of the Derwent dam wall and is the biggest car
+park in the valley. Visitor centre, toilets, and a cafe.
 
-> TODO: whether that is where you actually parked, what it cost, facilities,
-> and the one thing you would want to know before setting off.
+The 257 bus runs from Sheffield along the Snake Road and terminates there, so
+this is one of the few Dark Peak walks you can reach without a car.
 
 ---
 
 *Recorded 2025-09-06. 14.7 miles, 898m of ascent, 6h19 moving.*
+
+*High Stones and Margery Hill heights from [Wikipedia](https://en.wikipedia.org/wiki/High_Stones).*
