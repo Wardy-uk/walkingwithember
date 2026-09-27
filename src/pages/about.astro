@@ -8,10 +8,12 @@ const regions = await getRegions();
 const page = (await getCollection("pages")).find((entry) => entry.slug === "about");
 const { Content } = page ? await page.render() : { Content: null };
 
+const people = page?.data.people ?? [];
+
 /**
  * The numbers are counted from the walks at build time rather than typed in.
  * A figure that has to be remembered is a figure that goes stale, and an About
- * page claiming 440 miles two years after it was 800 does the opposite of
+ * page still claiming 437 miles two years from now does the opposite of
  * building trust.
  */
 const walks = await getCollection("walks");
@@ -35,9 +37,6 @@ const stats = [
   { value: `since ${firstYear}`, label: "and still going" },
 ];
 
-const hero = page?.data.heroImage;
-const heroAlt = page?.data.heroAlt ?? "";
-
 const siteUrl = "https://walkingwithember.co.uk";
 
 /**
@@ -56,13 +55,10 @@ const schema = {
     name: "Nick Ward",
     description: `Hillwalker documenting ${walks.length} dog-tested walking routes across the Peak District, Charnwood and beyond.`,
     knowsAbout: ["Hillwalking", "Dog-friendly walking routes", "Peak District", "Charnwood Forest", "Countryside access"],
+    image: people[0]?.image ? `${siteUrl}${people[0].image}` : undefined,
     url: `${siteUrl}/about/`,
   },
-  publisher: {
-    "@type": "Organization",
-    name: settings.siteName,
-    url: siteUrl,
-  },
+  publisher: { "@type": "Organization", name: settings.siteName, url: siteUrl },
 };
 ---
 
@@ -75,22 +71,27 @@ const schema = {
 >
   <script type="application/ld+json" set:html={JSON.stringify(schema)} />
 
-  {hero && (
-    <section class="about-hero">
-      <img src={hero} alt={heroAlt} fetchpriority="high" />
-      <div class="about-hero-overlay">
-        <h1>{page?.data.title ?? "About"}</h1>
-        <p>Real routes, walked with a dog, written down honestly.</p>
-      </div>
-    </section>
-  )}
-
   <div class="container page-grid">
-    {!hero && (
-      <section class="hero">
-        <h1>{page?.data.title ?? "About"}</h1>
+    {people.map((person, i) => (
+      <section class={`about-person${i % 2 === 1 ? " is-flipped" : ""}`}>
+        <div class="about-person-photo">
+          <img
+            src={person.image}
+            alt={person.alt}
+            loading={i === 0 ? "eager" : "lazy"}
+            fetchpriority={i === 0 ? "high" : undefined}
+          />
+        </div>
+        <div class="about-person-text">
+          {i === 0 ? <h1>{person.heading}</h1> : <h2>{person.heading}</h2>}
+          {person.body
+            .split(/\n\s*\n/)
+            .map((para) => para.trim())
+            .filter(Boolean)
+            .map((para) => <p>{para}</p>)}
+        </div>
       </section>
-    )}
+    ))}
 
     <section class="about-stats" aria-label="What is on this site">
       {stats.map((s) => (
@@ -117,39 +118,37 @@ const schema = {
 </BaseLayout>
 
 <style>
-  .about-hero {
-    position: relative;
-    width: 100%;
-    height: clamp(260px, 42vh, 460px);
-    overflow: hidden;
+  .about-person {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(1.2rem, 4vw, 3rem);
+    align-items: center;
+    margin: clamp(1.5rem, 5vw, 3.5rem) 0;
   }
-  .about-hero img {
+  /* Alternate the photo side so three stacked introductions do not read as a list. */
+  .about-person.is-flipped .about-person-photo {
+    order: 2;
+  }
+
+  .about-person-photo img {
     width: 100%;
-    height: 100%;
+    aspect-ratio: 4 / 3;
     object-fit: cover;
+    border-radius: 12px;
     display: block;
   }
-  .about-hero-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 0.4rem;
-    padding: 2rem clamp(1rem, 5vw, 4rem);
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.15) 55%, transparent);
-    color: #fff;
+
+  .about-person-text h1,
+  .about-person-text h2 {
+    margin: 0 0 0.6rem;
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    line-height: 1.1;
   }
-  .about-hero-overlay h1 {
-    margin: 0;
-    color: #fff;
-    font-size: clamp(2rem, 5vw, 3.2rem);
-    line-height: 1.05;
+  .about-person-text p {
+    margin: 0 0 0.85rem;
   }
-  .about-hero-overlay p {
-    margin: 0;
-    opacity: 0.92;
-    font-size: clamp(0.95rem, 2vw, 1.15rem);
+  .about-person-text p:last-child {
+    margin-bottom: 0;
   }
 
   .about-stats {
@@ -196,6 +195,14 @@ const schema = {
   }
 
   @media (max-width: 860px) {
+    .about-person {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    /* Photo always first on a phone, whatever the desktop order says. */
+    .about-person.is-flipped .about-person-photo {
+      order: 0;
+    }
     .about-stats {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }

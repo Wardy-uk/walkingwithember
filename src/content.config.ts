@@ -118,6 +118,21 @@ const pages = defineCollection({
     seoDescription: z.string().max(160),
     heroImage: z.string().optional(),
     heroAlt: z.string().optional(),
+    /**
+     * Introductions with a photo each, used on the About page. Kept in
+     * frontmatter rather than hard-coded in the template so the copy and the
+     * picture stay together, and so the CMS can reach them.
+     */
+    people: z
+      .array(
+        z.object({
+          heading: z.string(),
+          image: z.string(),
+          alt: z.string(),
+          body: z.string(),
+        }),
+      )
+      .optional(),
   }),
 });
 
