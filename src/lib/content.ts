@@ -85,6 +85,27 @@ export async function getFeaturedWalks(limit = 3) {
     .slice(0, limit);
 }
 
+/**
+ * The site's headline numbers, counted from the walks at build time.
+ *
+ * One source for every page that quotes them: the About page once said 437
+ * miles while the homepage said 439, because each did its own sum. Miles are
+ * the distance walked, as recorded, and floored so the figure never claims
+ * more than was walked.
+ */
+export async function getSiteTotals() {
+  const walks = (await getAllWalks()).filter((walk) => !walk.data.draft);
+  const published = await getPublishedWalks();
+  const years = walks.map((walk) => (walk.data.walkDate ?? walk.data.publishDate).getFullYear());
+  return {
+    routesWrittenUp: published.length,
+    walksOnFile: walks.length,
+    milesWalked: Math.floor(walks.reduce((sum, walk) => sum + walk.data.distance, 0)),
+    ascentM: Math.round(walks.reduce((sum, walk) => sum + (walk.data.ascentM ?? 0), 0)),
+    firstYear: years.length ? Math.min(...years) : new Date().getFullYear(),
+  };
+}
+
 export async function getAllBlogs() {
   const posts = await getCollection("blog");
   return posts.sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime());

@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
-import { getRegions, getSiteSettings } from "../lib/content";
+import { getRegions, getSiteSettings, getSiteTotals } from "../lib/content";
 
 const settings = await getSiteSettings();
 const regions = await getRegions();
@@ -9,33 +9,17 @@ const page = (await getCollection("pages")).find((entry) => entry.slug === "abou
 const { Content } = page ? await page.render() : { Content: null };
 
 const people = page?.data.people ?? [];
+const paragraphs = (text = "") =>
+  text
+    .split(/\n\s*\n/)
+    .map((para) => para.replace(/\s*\n\s*/g, " ").trim())
+    .filter(Boolean);
 
 /**
- * The numbers are counted from the walks at build time rather than typed in.
- * A figure that has to be remembered is a figure that goes stale, and an About
- * page still claiming 437 miles two years from now does the opposite of
- * building trust.
+ * The numbers are the homepage's, from the same helper, so the two pages
+ * cannot disagree. None of them is typed into the copy.
  */
-const walks = await getCollection("walks");
-const totalMiles = walks.reduce((sum, w) => sum + (w.data.routeDistance ?? w.data.distance ?? 0), 0);
-const totalAscent = walks.reduce((sum, w) => sum + (w.data.ascentM ?? 0), 0);
-
-const walkDates = walks
-  .map((w) => w.data.walkDate ?? w.data.publishDate)
-  .filter(Boolean)
-  .map((d) => new Date(d as Date))
-  .sort((a, b) => a.getTime() - b.getTime());
-const firstYear = walkDates.length ? walkDates[0].getFullYear() : new Date().getFullYear();
-
-// Everest is the unit people actually feel. 8,848m.
-const everests = totalAscent / 8848;
-
-const stats = [
-  { value: walks.length.toString(), label: "routes recorded" },
-  { value: Math.round(totalMiles).toLocaleString("en-GB"), label: "miles walked" },
-  { value: `${Math.round(totalAscent).toLocaleString("en-GB")}m`, label: `of ascent, ${everests.toFixed(1)} × Everest` },
-  { value: `since ${firstYear}`, label: "and still going" },
-];
+const totals = await getSiteTotals();
 
 const siteUrl = "https://walkingwithember.co.uk";
 
@@ -53,9 +37,9 @@ const schema = {
   mainEntity: {
     "@type": "Person",
     name: "Nick Ward",
-    description: `Hillwalker documenting ${walks.length} dog-tested walking routes across the Peak District, Charnwood and beyond.`,
+    description: `Hillwalker documenting ${totals.walksOnFile} walks with his dog across the Peak District, Charnwood and beyond.`,
     knowsAbout: ["Hillwalking", "Dog-friendly walking routes", "Peak District", "Charnwood Forest", "Countryside access"],
-    image: people[0]?.image ? `${siteUrl}${people[0].image}` : undefined,
+    image: page?.data.heroImage ? `${siteUrl}${page.data.heroImage}` : undefined,
     url: `${siteUrl}/about/`,
   },
   publisher: { "@type": "Organization", name: settings.siteName, url: siteUrl },
@@ -71,140 +55,270 @@ const schema = {
 >
   <script type="application/ld+json" set:html={JSON.stringify(schema)} />
 
-  <div class="container page-grid">
-    {people.map((person, i) => (
-      <section class={`about-person${i % 2 === 1 ? " is-flipped" : ""}`}>
-        <div class="about-person-photo">
-          <img
-            src={person.image}
-            alt={person.alt}
-            loading={i === 0 ? "eager" : "lazy"}
-            fetchpriority={i === 0 ? "high" : undefined}
-          />
-        </div>
-        <div class="about-person-text">
-          {i === 0 ? <h1>{person.heading}</h1> : <h2>{person.heading}</h2>}
-          {person.body
-            .split(/\n\s*\n/)
-            .map((para) => para.trim())
-            .filter(Boolean)
-            .map((para) => <p>{para}</p>)}
+  <div class="ab">
+    <!-- ── Opening: Nick and Ember ── -->
+    <section class="container ab-open" aria-labelledby="ab-title">
+      <div class="ab-open-copy">
+        <p class="ab-kicker">About · The team</p>
+        <h1 id="ab-title">Nick, Ember <em>and Lizzy.</em></h1>
+        {paragraphs(page?.data.intro).map((para) => <p>{para}</p>)}
+        <ul class="ab-proof ab-mono" aria-label="Walking with Ember in numbers">
+          <li><b>{totals.walksOnFile}</b> walks on file</li>
+          <li><b>{totals.milesWalked.toLocaleString("en-GB")}</b> miles walked</li>
+          <li><b>{totals.ascentM.toLocaleString("en-GB")} m</b> climbed</li>
+          <li>since <b>{totals.firstYear}</b></li>
+        </ul>
+      </div>
+      {page?.data.heroImage && (
+        <figure class="ab-open-photo">
+          <img src={page.data.heroImage} alt={page.data.heroAlt ?? ""} fetchpriority="high" />
+        </figure>
+      )}
+    </section>
+
+    <!-- ── The team: Ember and Lizzy ── -->
+    {people.length > 0 && (
+      <section class="container ab-team" aria-label="The team">
+        {people.map((person) => (
+          <article class="ab-person">
+            <img src={person.image} alt={person.alt} loading="lazy" decoding="async" />
+            <div>
+              <h2>{person.heading}</h2>
+              {person.role && <p class="ab-role ab-mono">{person.role}</p>}
+              {paragraphs(person.body).map((para) => <p>{para}</p>)}
+            </div>
+          </article>
+        ))}
+      </section>
+    )}
+
+    <!-- ── Why this site exists ── -->
+    {Content && (
+      <section class="ab-why">
+        <div class="container ab-why-body">
+          <Content />
         </div>
       </section>
-    ))}
+    )}
 
-    <section class="about-stats" aria-label="What is on this site">
-      {stats.map((s) => (
-        <div class="about-stat">
-          <strong>{s.value}</strong>
-          <span>{s.label}</span>
-        </div>
-      ))}
-    </section>
-
-    <section class="card about-body">
-      {Content ? <Content /> : <p>This page is managed through the CMS.</p>}
-    </section>
-
-    <section class="about-cta card">
-      <h2>Start with the walks</h2>
-      <p>Every route carries the GPX, the grid reference and the dog detail.</p>
-      <div class="about-cta-links">
-        <a class="button" href="/walks/">Browse the routes</a>
-        <a class="button ghost-dark" href="/contact/">Tell me I am wrong</a>
+    <!-- ── What every walk includes ── -->
+    <section class="container ab-includes" aria-labelledby="ab-includes-title">
+      <h2 id="ab-includes-title">What every walk includes</h2>
+      {page?.data.includes && (
+        <ul class="ab-list">
+          {page.data.includes.map((item) => <li>{item}</li>)}
+        </ul>
+      )}
+      {page?.data.includesNote && <p class="ab-note">{page.data.includesNote}</p>}
+      <div class="ab-cta">
+        <a class="ab-button" href="/walks/">Browse the walks <span aria-hidden="true">→</span></a>
+        <a class="ab-textlink" href="/contact/">Found something out of date? Tell me</a>
       </div>
     </section>
   </div>
 </BaseLayout>
 
 <style>
-  .about-person {
+  /* The homepage's editorial system: Fraunces for the voice, DM Mono for
+     readouts, paper and peat for contrast. */
+  .ab {
+    --ab-mono: "DM Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+    --ab-brand-lit: #E07A3A;
+    --ab-on-peat: #F5F0E8;
+    --ab-on-peat-dim: rgba(245, 240, 232, 0.66);
+    --ab-rule-peat: rgba(245, 240, 232, 0.14);
+  }
+
+  .ab-mono {
+    font-family: var(--ab-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ab :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 2px; }
+
+  /* ── Opening ── */
+  .ab-open {
     display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-    gap: clamp(1.2rem, 4vw, 3rem);
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: clamp(1.75rem, 5vw, 4.5rem);
     align-items: center;
-    margin: clamp(1.5rem, 5vw, 3.5rem) 0;
-  }
-  /* Alternate the photo side so three stacked introductions do not read as a list. */
-  .about-person.is-flipped .about-person-photo {
-    order: 2;
+    padding-block: clamp(2rem, 5vw, 4rem) clamp(2.5rem, 5vw, 4rem);
   }
 
-  .about-person-photo img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-radius: 12px;
-    display: block;
-  }
-
-  .about-person-text h1,
-  .about-person-text h2 {
-    margin: 0 0 0.6rem;
-    font-size: clamp(1.7rem, 4vw, 2.6rem);
-    line-height: 1.1;
-  }
-  .about-person-text p {
-    margin: 0 0 0.85rem;
-  }
-  .about-person-text p:last-child {
-    margin-bottom: 0;
-  }
-
-  .about-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1rem;
-    margin: 2rem 0 0;
-  }
-  .about-stat {
+  .ab-kicker {
     display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    padding: 1.1rem 1rem;
-    border-radius: 10px;
-    background: rgba(0, 0, 0, 0.035);
-  }
-  .about-stat strong {
-    font-size: clamp(1.4rem, 3vw, 2rem);
-    line-height: 1;
-  }
-  .about-stat span {
-    font-size: 0.82rem;
-    opacity: 0.75;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1rem;
+    font-family: var(--ab-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
 
-  .about-body :global(h2) {
-    margin-top: 2rem;
-  }
-  .about-body :global(h2:first-child) {
-    margin-top: 0;
+  .ab-kicker::before { content: ""; flex: none; width: 26px; height: 2px; background: var(--brand); }
+
+  .ab-open h1 {
+    margin: 0 0 1.2rem;
+    font-size: clamp(2.6rem, 6vw, 4.8rem);
+    font-weight: 380;
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
   }
 
-  .about-cta-links {
+  .ab-open h1 em { font-style: italic; font-weight: 340; color: var(--brand-deep); }
+  .ab-open-copy > p { margin: 0 0 1rem; max-width: 36em; font-size: 1.05rem; }
+
+  .ab-proof {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.7rem;
-    margin-top: 0.9rem;
+    gap: 0.4rem 1.6rem;
+    margin: 1.6rem 0 0;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--line);
+    list-style: none;
+    color: var(--muted);
   }
 
-  @media (prefers-color-scheme: dark) {
-    .about-stat {
-      background: rgba(255, 255, 255, 0.06);
-    }
+  .ab-proof b { font-weight: 500; color: var(--text); }
+
+  .ab-open-photo { margin: 0; }
+  /* A landscape selfie: keep its shape so neither of them is cropped. */
+  .ab-open-photo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: left center; border-radius: 3px; }
+
+  /* ── The team: two equal portraits, not alternating blocks ── */
+  .ab-team {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.75rem, 4vw, 3.5rem);
+    padding-block: clamp(2.5rem, 5vw, 4rem);
+    border-top: 1px solid var(--text);
   }
 
-  @media (max-width: 860px) {
-    .about-person {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-    /* Photo always first on a phone, whatever the desktop order says. */
-    .about-person.is-flipped .about-person-photo {
-      order: 0;
-    }
-    .about-stats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .ab-person { display: grid; gap: 1.4rem; align-content: start; }
+  .ab-person img { width: 100%; aspect-ratio: 5 / 4; object-fit: cover; object-position: center 35%; border-radius: 3px; }
+  .ab-person h2 { margin: 0; font-size: clamp(2rem, 3.4vw, 2.8rem); font-weight: 380; line-height: 1; letter-spacing: -0.015em; }
+  .ab-role { margin: 0.6rem 0 1rem; color: var(--brand-deep); }
+  .ab-person p:not(.ab-role) { margin: 0 0 0.85rem; font-size: 0.97rem; line-height: 1.65; }
+
+  /* ── Why this site exists: the pull line on the left, the argument on the right ── */
+  .ab-why { padding-block: clamp(3rem, 7vw, 5.5rem); background: var(--peat); color: var(--ab-on-peat); }
+
+  .ab-why-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 0 clamp(2rem, 5vw, 5rem);
+    align-items: start;
   }
+
+  .ab-why-body :global(h2) {
+    grid-column: 1 / -1;
+    margin: 0 0 1.4rem;
+    font-family: var(--ab-mono);
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #A89A8A;
+  }
+
+  .ab-why-body :global(blockquote) {
+    grid-column: 1;
+    grid-row: 2 / span 3;
+    margin: 0;
+  }
+
+  .ab-why-body :global(blockquote p) {
+    margin: 0;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(2.4rem, 5vw, 4.4rem);
+    font-style: italic;
+    font-weight: 340;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ab-brand-lit);
+    text-wrap: balance;
+  }
+
+  .ab-why-body :global(p) { grid-column: 2; margin: 0 0 1rem; font-size: 1.02rem; color: var(--ab-on-peat-dim); }
+  .ab-why-body :global(p:last-child) { margin-bottom: 0; color: var(--ab-on-peat); font-weight: 600; }
+
+  /* ── What every walk includes ── */
+  .ab-includes { padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(2.5rem, 5vw, 4rem); }
+  .ab-includes h2 { margin: 0 0 1.4rem; font-size: clamp(2rem, 4.2vw, 3.2rem); font-weight: 380; line-height: 1; letter-spacing: -0.015em; }
+
+  .ab-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 clamp(1.5rem, 4vw, 3.5rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--text);
+  }
+
+  .ab-list li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ab-list li::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); transform: translateY(-1px); }
+
+  .ab-note { max-width: 46em; margin: 1.4rem 0 0; color: var(--muted); }
+
+  .ab-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; margin-top: 1.8rem; }
+
+  .ab-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1.5rem;
+    border-radius: 999px;
+    background: var(--brand);
+    color: #FFF8F2;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .ab-button:hover { background: var(--brand-deep); }
+
+  .ab-textlink {
+    padding-bottom: 2px;
+    border-bottom: 1px solid currentColor;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--brand-deep);
+    text-decoration: none;
+  }
+
+  /* The includes section ends the page, so the footer follows it directly. */
+  :global(body:has(.ab) .site-footer) { margin-top: 0; }
+
+  @media (max-width: 760px) {
+    .ab-team { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 760px) {
+    .ab-open { grid-template-columns: 1fr; }
+    .ab-open-photo { order: -1; }
+    .ab-open-photo img { aspect-ratio: 4 / 3; }
+    .ab-why-body { grid-template-columns: 1fr; }
+    .ab-why-body :global(blockquote) { grid-row: auto; margin-bottom: 1.4rem; }
+    .ab-why-body :global(p) { grid-column: 1; }
+    .ab-list { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { .ab-button { transition: none; } }
 </style>

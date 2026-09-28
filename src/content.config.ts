@@ -127,12 +127,20 @@ const pages = defineCollection({
       .array(
         z.object({
           heading: z.string(),
+          /** A short line under the name: who they are on the walks. */
+          role: z.string().optional(),
           image: z.string(),
           alt: z.string(),
           body: z.string(),
         }),
       )
       .optional(),
+    /** The About page's opening story, beside heroImage. */
+    intro: z.string().optional(),
+    /** What every walk write-up carries, as a short list. */
+    includes: z.array(z.string()).optional(),
+    /** A line after that list: what is deliberately left out. */
+    includesNote: z.string().optional(),
   }),
 });
 

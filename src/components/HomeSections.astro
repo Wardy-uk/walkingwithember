@@ -1,7 +1,7 @@
 ---
 import fs from "node:fs";
 import path from "node:path";
-import { getAllWalks, getCatalogueWalks, getFeaturedWalks, getPublishedWalks, getSiteSettings } from "../lib/content";
+import { getAllWalks, getCatalogueWalks, getFeaturedWalks, getPublishedWalks, getSiteSettings, getSiteTotals } from "../lib/content";
 import { imgSrc } from "../lib/imgSrc";
 import { routeProfile } from "../lib/routeProfile";
 
@@ -16,10 +16,8 @@ const mastheadAlt = settings.homepage?.mastheadAlt || "";
 const mastheadCaption = settings.homepage?.mastheadCaption || "";
 
 // ── Proof strip ──────────────────────────────────────────────────────
-// Counted from the collections, so the figures cannot drift from the site.
-// Miles are floored: the strip should never claim more than was walked.
-const onFile = allWalks.filter((walk) => !walk.data.draft);
-const milesOnFile = Math.floor(onFile.reduce((sum, walk) => sum + walk.data.distance, 0));
+// The same counted totals the About page quotes.
+const totals = await getSiteTotals();
 
 const WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
 const countWord = (n: number) => WORDS[n] ?? n.toLocaleString("en-GB");
@@ -187,9 +185,9 @@ const KEY: Array<{ icon: string; name: string; values: string; why: string }> = 
     <div class="hm-ground">
       <div class="container">
         <ul class="hm-proof hm-mono" aria-label="Walking with Ember in numbers">
-          <li><b>{publishedWalks.length}</b> routes written up</li>
-          <li><b>{onFile.length}</b> walks on file</li>
-          <li><b>{milesOnFile.toLocaleString("en-GB")}</b> miles of GPX</li>
+          <li><b>{totals.routesWrittenUp}</b> routes written up</li>
+          <li><b>{totals.walksOnFile}</b> walks on file</li>
+          <li><b>{totals.milesWalked.toLocaleString("en-GB")}</b> miles of GPX</li>
           <li>Peak District &amp; Charnwood</li>
         </ul>
       </div>
