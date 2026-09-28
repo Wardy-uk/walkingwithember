@@ -218,6 +218,9 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
 <script is:inline define:vars={{ PHOTO_BASE }}>
 (function () {
   let fileSha      = null;
+  // Homepage fields this form does not edit (the masthead alt text and
+  // caption), carried through a save so it cannot wipe them.
+  let loadedHomepage = {};
   let allPhotos    = [];
   let pickerTarget = null;
 
@@ -265,6 +268,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       const settings = JSON.parse(data.content);
       fileSha = data.sha;
+      loadedHomepage = settings.homepage || {};
       $('siteName').value  = settings.siteName || '';
       $('tagline').value   = settings.tagline  || '';
       $('instagram').value = settings.social?.instagram || '';
@@ -444,7 +448,7 @@ const PHOTO_BASE = 'https://upload.nickward.co.uk';
       tagline:  $('tagline').value.trim(),
       baseUrl:  'https://www.walkingwithember.co.uk',
       social: { instagram: $('instagram').value.trim(), facebook: $('facebook').value.trim() },
-      homepage: { mastheadImage: mastheadUrl.value.trim(), galleryImages },
+      homepage: { ...loadedHomepage, mastheadImage: mastheadUrl.value.trim(), galleryImages },
     };
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="spin"></span> Saving…';

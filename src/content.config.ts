@@ -148,6 +148,10 @@ const settings = defineCollection({
       }),
       homepage: z.object({
         mastheadImage: z.string(),
+        /** Describes the masthead for screen readers. */
+        mastheadAlt: z.string().optional(),
+        /** Small credit over the masthead, e.g. to mark an illustration as one. */
+        mastheadCaption: z.string().optional(),
         galleryImages: z.array(z.string()).default([]),
       }),
     }),

@@ -140,6 +140,8 @@ collections:
             widget: "object"
             fields:
               - { label: "Masthead Image", name: "mastheadImage", widget: "image" }
+              - { label: "Masthead Alt Text", name: "mastheadAlt", widget: "string", required: false }
+              - { label: "Masthead Caption", name: "mastheadCaption", widget: "string", required: false }
               - label: "Gallery Images"
                 name: "galleryImages"
                 widget: "list"

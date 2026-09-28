@@ -7,7 +7,9 @@
     "facebook": ""
   },
   "homepage": {
-    "mastheadImage": "/uploads/images/homepage/hero-walking-with-ember.jpg",
+    "mastheadImage": "/uploads/images/homepage/hero-nick-ember-1672.webp",
+    "mastheadAlt": "Nick and Ember on a rocky path along a limestone ridge, above a green valley at golden hour.",
+    "mastheadCaption": "Illustration · Nick and Ember",
     "galleryImages": [
       "/uploads/images/walks/2025-09-27/07-0750455e.jpg",
       "/uploads/images/walks/2025-10-18/11-56780902.jpg"

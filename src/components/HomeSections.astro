@@ -1,51 +1,347 @@
 ---
-import { getAllWalks, getFeaturedWalks, getPublishedWalks, getSiteSettings } from "../lib/content";
+import fs from "node:fs";
+import path from "node:path";
+import { getAllWalks, getCatalogueWalks, getFeaturedWalks, getPublishedWalks, getSiteSettings } from "../lib/content";
 import { imgSrc } from "../lib/imgSrc";
+import { routeProfile } from "../lib/routeProfile";
 
 const settings = await getSiteSettings();
+const allWalks = await getAllWalks();
 const publishedWalks = await getPublishedWalks();
-const draftWalks = (await getAllWalks()).filter((walk) => walk.data.draft).slice(0, 3);
-const walks = await getFeaturedWalks(3);
+const draftWalks = allWalks.filter((walk) => walk.data.draft).slice(0, 3);
+const indexWalks = await getFeaturedWalks(6);
+const archiveCount = (await getCatalogueWalks()).length;
 const mastheadImage = settings.homepage?.mastheadImage || "/uploads/images/5da590c5-0884-4c1c-8fc1-012850f889fa-61fec1bcfa.jpg";
+const mastheadAlt = settings.homepage?.mastheadAlt || "";
+const mastheadCaption = settings.homepage?.mastheadCaption || "";
 const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 2);
-
-const ethosImages = galleryImages.slice(0, 2).map((img, i) => ({ src: img, alt: `Trail photo ${i + 1}` }));
 const emberImages = galleryImages.slice(0, 1);
 
-function difficultyLabel(d: string | undefined) {
-  if (!d) return "";
-  const map: Record<string, string> = { easy: "Easy", moderate: "Moderate", hard: "Hard", challenging: "Challenging" };
-  return map[d.toLowerCase()] ?? d;
+// ── Proof strip ──────────────────────────────────────────────────────
+// Counted from the collections, so the figures cannot drift from the site.
+// Miles are floored: the strip should never claim more than was walked.
+const onFile = allWalks.filter((walk) => !walk.data.draft);
+const milesOnFile = Math.floor(onFile.reduce((sum, walk) => sum + walk.data.distance, 0));
+
+const WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+const countWord = (n: number) => WORDS[n] ?? n.toLocaleString("en-GB");
+
+// ── Hero srcset ──────────────────────────────────────────────────────
+// A masthead named like hero-name-1672.webp is served with its smaller
+// siblings (hero-name-1280.webp, ...) made by scripts/make-hero.mjs.
+let heroSrcset: string | undefined;
+const heroName = /^(.*)-(\d+)\.webp$/.exec(mastheadImage);
+if (heroName) {
+  const dir = path.posix.dirname(mastheadImage);
+  const stem = path.posix.basename(heroName[1]).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const sibling = new RegExp(`^${stem}-(\\d+)\\.webp$`);
+  const localDir = path.join(process.cwd(), "public", dir);
+  if (fs.existsSync(localDir)) {
+    heroSrcset = fs
+      .readdirSync(localDir)
+      .map((f) => sibling.exec(f))
+      .filter((m): m is RegExpExecArray => m !== null)
+      .sort((a, b) => Number(a[1]) - Number(b[1]))
+      .map((m) => `${dir}/${m[0]} ${m[1]}w`)
+      .join(", ");
+  }
 }
+
+// ── The worked example ───────────────────────────────────────────────
+// One real walk, annotated with what its GPX cannot say. The prose is
+// editorial and lives here; the numbers and the profile come from the walk.
+const EXAMPLE_SLUG = "2026-08-06-redmires-reservoir-circular";
+const example = allWalks.find((walk) => walk.slug === EXAMPLE_SLUG);
+const profile = routeProfile(example?.data.gpxDownload);
+
+const exampleDate = example?.data.walkDate ?? example?.data.publishDate;
+const exampleDateLabel = exampleDate
+  ? exampleDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
+  : "";
+
+type Factor = "distance" | "access" | "water" | "terrain";
+const FACTOR_LABELS: Record<Factor, string> = {
+  distance: "Distance",
+  access: "Lead restriction",
+  water: "Water",
+  terrain: "Terrain",
+};
+
+/** `at` is the fraction along the GPX where the note's pin sits. */
+const notes: Array<{ at: number; mark: string; title: string; body: string; factors: Factor[] }> = [
+  {
+    at: 0.094,
+    mark: "The first mile",
+    title: "Walked twice.",
+    body: "We dropped a piece of kit and went back for it. The GPX keeps the retrace, bump and all, so it reads long. Followed as a route, it’s closer to 8 miles.",
+    factors: ["distance"],
+  },
+  {
+    at: 0.338,
+    mark: "Around mile 3 · high point",
+    title: "Open Access moor.",
+    body: "From 1 March to 31 July your dog is on a lead no longer than 2 m, for ground-nesting birds. It’s the law most walkers don’t know. No shelter up here either.",
+    factors: ["access"],
+  },
+  {
+    at: 0.64,
+    mark: "Mile 6.8 · Wyming Brook",
+    title: "The only reliable water.",
+    body: "Once you’re up on the moor, the brook is the drink. The way down is steep cut-stone steps: not a run-ahead path, and easier on a long lead than a short one.",
+    factors: ["water", "terrain"],
+  },
+  {
+    at: 0.8,
+    mark: "Mile 8.5 to the finish",
+    title: "The climb waits for you.",
+    body: "Of the day’s 325 m of ascent, 141 m comes in the last fifth. The walk out is gentle. You pay for it coming home, and so do tired paws.",
+    factors: ["terrain"],
+  },
+];
+
+// Profile geometry: viewBox 0 0 1000 100, filled below the line. `h` is the
+// ground's height at a point as a fraction of the band, which the pins use.
+let profileLine = "";
+let pins: Array<{ n: number; x: number; h: number }> = [];
+if (profile) {
+  const ele = profile.elevations;
+  const lo = Math.min(...ele) - 10;
+  const hi = Math.max(...ele) + 10;
+  const h = (e: number) => 0.06 + ((e - lo) / (hi - lo)) * 0.9;
+  profileLine = ele
+    .map((e, i) => `${i ? "L" : "M"}${((i / (ele.length - 1)) * 1000).toFixed(1)},${(100 - h(e) * 100).toFixed(1)}`)
+    .join(" ");
+  pins = notes.map((note, i) => ({
+    n: i + 1,
+    x: note.at * 100,
+    h: h(ele[Math.round(note.at * (ele.length - 1))]),
+  }));
+}
+
+// ── Route index ──────────────────────────────────────────────────────
+type DogFact = { icon: string; label: string; warn: boolean };
+
+/** The recorded dog facts for a route, worded as DogChecklist words them. */
+function dogFacts(d: (typeof indexWalks)[number]["data"]): DogFact[] {
+  const facts: DogFact[] = [];
+  if (d.livestock) facts.push({ icon: "livestock", label: d.livestock === "none" ? "No livestock" : d.livestock === "certain" ? "Livestock certain" : "Livestock likely", warn: d.livestock !== "none" });
+  if (d.water) facts.push({ icon: "water", label: d.water === "none" ? "No water on route" : d.water === "plenty" ? "Water throughout" : "Some water", warn: d.water === "none" });
+  if (d.stiles) facts.push({ icon: "stiles", label: d.stiles === "none" ? "No stiles" : `${d.stiles[0].toUpperCase()}${d.stiles.slice(1)} stiles`, warn: false });
+  if (d.accessLand) facts.push({ icon: "access", label: "Open Access land", warn: true });
+  if (d.terrain) facts.push({ icon: "terrain", label: d.terrain === "easy" ? "Easy underfoot" : d.terrain === "rough" ? "Rough underfoot" : "Scrambly in places", warn: d.terrain === "scrambly" });
+  if (d.roads) facts.push({ icon: "roads", label: d.roads === "none" ? "No roads" : d.roads === "short" ? "Short road section" : "Roads to cross", warn: d.roads !== "none" });
+  return facts;
+}
+
+const KEY: Array<{ icon: string; name: string; values: string; why: string }> = [
+  { icon: "livestock", name: "Livestock", values: "None · likely · certain", why: "A farmer may lawfully shoot a dog worrying a flock." },
+  { icon: "water", name: "Water", values: "None · some · plenty", why: "The difference between a good summer day and carrying litres." },
+  { icon: "stiles", name: "Stiles", values: "None · few · several · many", why: "Decides whether a big or an older dog can do the route at all." },
+  { icon: "access", name: "Lead restrictions", values: "Access land · 1 Mar–31 Jul", why: "A 2 m lead by law in nesting season, livestock or not." },
+  { icon: "terrain", name: "Terrain", values: "Easy · rough · scrambly", why: "Hands-on ground is no place for a dog that needs carrying." },
+  { icon: "roads", name: "Road exposure", values: "None · short · significant", why: "Where the lead goes on and you watch for traffic." },
+];
 ---
 
-<div class="v2-home">
-  <!-- ── Full-screen hero ── -->
-  <section class="v2-hero">
-    <img src={imgSrc(mastheadImage)} alt="Mountain landscape with Ember" />
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="hm-i-water" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3.5 4.2 5.5 7 5.5 9.5A5.5 5.5 0 0 1 12 18a5.5 5.5 0 0 1-5.5-5.5C6.5 10 8.5 7.2 12 3Z" /></symbol>
+  <symbol id="hm-i-livestock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v1a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3Z" /><path d="M8 17v3M16 17v3M9 9V7a3 3 0 0 1 6 0v2" /></symbol>
+  <symbol id="hm-i-stiles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 3v18M18 3v18M6 9h12M6 15h12" /></symbol>
+  <symbol id="hm-i-access" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 20h18L12 3Z" /><path d="M12 10v4M12 17h.01" /></symbol>
+  <symbol id="hm-i-terrain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 19 9 7l4.5 7.5M11 19l5-8 6 8Z" /></symbol>
+  <symbol id="hm-i-roads" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3 5 21M17 3l2 18M12 4v3M12 11v3M12 18v3" /></symbol>
+  <symbol id="hm-i-distance" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c3-6 5-9 8-5s5 1 10-6" /><circle cx="3" cy="17" r="1.5" /><circle cx="21" cy="6" r="1.5" /></symbol>
+  <symbol id="hm-i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+</svg>
 
-    <!-- Layered gradient -->
-    <div class="v2-hero-gradient"></div>
+<div class="hm">
+  <!-- ── Hero ── -->
+  <section class="hm-hero" aria-labelledby="hm-hero-title">
+    <img
+      class="hm-hero-img"
+      src={heroSrcset ? mastheadImage : imgSrc(mastheadImage)}
+      srcset={heroSrcset || undefined}
+      sizes={heroSrcset ? "(max-width: 720px) 300vw, 100vw" : undefined}
+      alt={mastheadAlt}
+      fetchpriority="high"
+      decoding="async"
+    />
 
-    <!-- Mountain silhouettes -->
-    <svg class="v2-hero-mountains" viewBox="0 0 1440 260" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <!-- Back layer - lighter -->
-      <path d="M0,260 L0,180 L120,100 L240,140 L340,70 L460,120 L560,50 L680,110 L780,40 L900,100 L1020,60 L1140,120 L1220,80 L1340,130 L1440,100 L1440,260 Z"
-        fill="rgba(28,21,16,0.32)" />
-      <!-- Front layer - darker -->
-      <path d="M0,260 L0,220 L80,180 L180,200 L280,155 L400,185 L500,145 L620,175 L720,140 L840,165 L940,130 L1060,160 L1160,125 L1280,155 L1380,135 L1440,150 L1440,260 Z"
-        fill="rgba(28,21,16,0.72)" />
-    </svg>
-
-    <!-- Text overlay -->
-    <div class="v2-hero-overlay">
-      <p class="v2-hero-kicker">UK hillwalking · dog-first trail notes</p>
-      <h1>Walking<br/>with Ember</h1>
-      <p class="v2-hero-sub">Mountains, moors, and honest days out.</p>
-      <div class="v2-hero-ctas">
-        <a class="button" href="/walks/">Explore routes</a>
-        <a class="button ghost" href="/about/">About us</a>
+    <div class="container">
+      <div class="hm-hero-copy">
+        <p class="hm-kicker">Walking with Ember · dog-first route notes</p>
+        <h1 id="hm-hero-title">A good walk shouldn’t end in an apology <em>to your dog.</em></h1>
+        <p class="hm-hero-sub">Every route walked. Every note earned.</p>
+        <a class="hm-cta" href="/walks/">Explore routes <svg aria-hidden="true"><use href="#hm-i-arrow" /></svg></a>
       </div>
+    </div>
+
+    {(mastheadCaption || profile) && (
+      <p class="hm-hero-caption">
+        {mastheadCaption && <span>{mastheadCaption}</span>}
+        {profile && example && <a href="#hm-gpx">The line below is the {example.data.title} GPX, {exampleDateLabel} ↓</a>}
+      </p>
+    )}
+
+    {profile && (
+      <>
+        <svg class="hm-profile" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+          <path class="hm-profile-fill" d={`${profileLine} L1000,101 L0,101 Z`} />
+          <path class="hm-profile-line" d={profileLine} />
+        </svg>
+        {pins.map((pin) => (
+          <span class="hm-pin" style={`--x:${pin.x.toFixed(2)}%;--h:${pin.h.toFixed(3)}`} aria-hidden="true">{pin.n}</span>
+        ))}
+      </>
+    )}
+
+    <div class="hm-ground">
+      <div class="container">
+        <ul class="hm-proof hm-mono" aria-label="Walking with Ember in numbers">
+          <li><b>{publishedWalks.length}</b> routes written up</li>
+          <li><b>{onFile.length}</b> walks on file</li>
+          <li><b>{milesOnFile.toLocaleString("en-GB")}</b> miles of GPX</li>
+          <li>Peak District &amp; Charnwood</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── What the GPX doesn't tell you ── -->
+  <section class="hm-gpx" id="hm-gpx" aria-labelledby="hm-gpx-title">
+    <div class="container">
+      <div class="hm-gpx-head">
+        <div>
+          {example && <p class="hm-eyebrow hm-mono">Worked example · {example.data.title}</p>}
+          <h2 id="hm-gpx-title">What the GPX <em>doesn’t</em> tell you.</h2>
+        </div>
+        <p class="hm-lede">A GPX file knows how far, how high and where you turned. It has no idea where your dog can drink, which stretch the law says is lead-only, or that the stepping stones were spaced for boots. <strong>That’s the half of the route we write down.</strong></p>
+      </div>
+
+      {example && (
+        <dl class="hm-readout">
+          <dt class="hm-mono">The file says</dt>
+          <dd>
+            {example.data.routeDistance
+              ? <span><s>{example.data.distance} mi</s> about {example.data.routeDistance} mi as a route</span>
+              : <span>{example.data.distance} mi</span>}
+            {example.data.ascentM && <span>{example.data.ascentM.toLocaleString("en-GB")} m ascent</span>}
+            <span>4h52 moving</span>
+            <span>High point ~415 m</span>
+          </dd>
+        </dl>
+      )}
+
+      <ol class="hm-notes">
+        {notes.map((note, i) => (
+          <li class="hm-note">
+            <span class="hm-note-mark hm-mono"><span class="hm-n" aria-hidden="true">{i + 1}</span>{note.mark}</span>
+            <h3>{note.title}</h3>
+            <p>{note.body}</p>
+            <span class="hm-tags">
+              {note.factors.map((f) => (
+                <span class="hm-tag"><svg aria-hidden="true"><use href={`#hm-i-${f}`} /></svg>{FACTOR_LABELS[f]}</span>
+              ))}
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      <div class="hm-field">
+        <figure>
+          <img src="/uploads/images/homepage/wyming-brook-ember.webp" width="800" height="600" alt="Ember wading through a shallow peaty brook beside a line of stone stepping stones, under overhanging trees." loading="lazy" decoding="async" />
+          <figcaption><span class="hm-mono">Mile 6.8</span><span><em>The stones are spaced for boots. Ember waded.</em> Most dogs will, which is the sensible choice with four feet and no hands.</span></figcaption>
+        </figure>
+
+        <div class="hm-key">
+          <h3>The key</h3>
+          <p>Six things decide whether a route works for a dog. Every write-up checks them.</p>
+          <ul>
+            {KEY.map((k) => (
+              <li>
+                <span class="hm-key-icon" aria-hidden="true"><svg><use href={`#hm-i-${k.icon}`} /></svg></span>
+                <span class="hm-key-row"><strong>{k.name}</strong><span class="hm-mono">{k.values}</span></span>
+                <small>{k.why}</small>
+              </li>
+            ))}
+          </ul>
+          <p class="hm-honest">Where we haven’t checked something, the route page leaves it out. We don’t guess.</p>
+          {example && <a class="hm-textlink" href={`/walks/${example.slug}/`}>Read the full {example.data.title} write-up <span aria-hidden="true">→</span></a>}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Route index ── -->
+  <section class="hm-routes" aria-labelledby="hm-routes-title">
+    <div class="container">
+      <div class="hm-routes-head">
+        <div>
+          <h2 id="hm-routes-title">{countWord(publishedWalks.length)} {publishedWalks.length === 1 ? "route" : "routes"}, written up properly.</h2>
+          <p>
+            Each one walked, photographed and checked for the six things above.
+            {archiveCount > 0 && <> Another {archiveCount} are in the archive with their GPX while the write-ups catch up.</>}
+          </p>
+        </div>
+        <a href="/walks/">All walks, including the archive →</a>
+      </div>
+
+      {indexWalks.length > 0 ? (
+        <div class="hm-index">
+          <figure class="hm-preview" aria-hidden="true">
+            <img id="hmPreview" src={imgSrc(indexWalks[0].data.heroImage, 900)} alt="" loading="lazy" decoding="async" />
+            <figcaption class="hm-mono" id="hmPreviewCaption">{indexWalks[0].data.title}</figcaption>
+          </figure>
+
+          <ol class="hm-rows" id="hmRows">
+            {indexWalks.map((walk, i) => {
+              const facts = dogFacts(walk.data);
+              const miles = walk.data.routeDistance ?? walk.data.distance;
+              return (
+                <li>
+                  <a href={`/walks/${walk.slug}/`} data-img={imgSrc(walk.data.heroImage, 900)} data-active={i === 0 ? "" : undefined}>
+                    <img class="hm-thumb" src={imgSrc(walk.data.heroImage, 200)} alt="" loading="lazy" decoding="async" />
+                    <h3>{walk.data.title}</h3>
+                    <span class="hm-where hm-mono">{walk.data.location} · {walk.data.difficulty}</span>
+                    <span class="hm-stats">
+                      <span class="hm-nums">{miles} mi{walk.data.ascentM ? ` · ${walk.data.ascentM.toLocaleString("en-GB")} m` : ""}</span>
+                      {facts.length > 0 && (
+                        <span class="hm-dogs" role="img" aria-label={facts.map((f) => f.label).join(", ")}>
+                          {facts.map((f) => (
+                            <span class={f.warn ? "is-warn" : undefined} title={f.label}><svg aria-hidden="true"><use href={`#hm-i-${f.icon}`} /></svg></span>
+                          ))}
+                        </span>
+                      )}
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ) : (
+        <article id="noPublishedRoutes" class="card">
+          <p style="color:var(--muted)">No published walks yet — check back soon.</p>
+        </article>
+      )}
+
+      <!-- Admin: draft walks preview -->
+      {draftWalks.length > 0 && (
+        <section class="admin-draft-only hidden" style="margin-top:1.5rem;">
+          <p class="card" style="margin-bottom:1rem;"><strong>Admin preview:</strong> draft routes below.</p>
+          <ol class="hm-rows">
+            {draftWalks.map((walk) => (
+              <li>
+                <a href={`/preview/walks/${walk.slug}/`} target="_blank" rel="noreferrer">
+                  <img class="hm-thumb" src={imgSrc(walk.data.heroImage, 200)} alt="" loading="lazy" />
+                  <h3>{walk.data.title} <em>(draft)</em></h3>
+                  <span class="hm-where hm-mono">{walk.data.location}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
     </div>
   </section>
 
@@ -69,123 +365,6 @@ function difficultyLabel(d: string | undefined) {
       }
     </div>
   </section>
-
-  <!-- ── Routes section ── -->
-  <div class="container v2-section">
-    <div class="v2-section-head">
-      <h2>Recent routes</h2>
-      <a href="/walks/">All walks →</a>
-    </div>
-
-    {walks.length > 0 ? (
-      <div class="v2-route-grid">
-        <!-- Large feature card -->
-        <a class="v2-route-card large" href={`/walks/${walks[0].slug}/`} style="text-decoration:none;">
-          <div class="card-img">
-            <img src={imgSrc(walks[0].data.heroImage)} alt={walks[0].data.title} loading="lazy" />
-            <div class="card-img-overlay"></div>
-            <div class="card-img-meta">
-              <h3>{walks[0].data.title}</h3>
-              <div class="card-img-stats">
-                {walks[0].data.distance && <span>{walks[0].data.distance} mi</span>}
-                {walks[0].data.distance && walks[0].data.difficulty && <span class="dot">·</span>}
-                {walks[0].data.difficulty && <span>{difficultyLabel(walks[0].data.difficulty)}</span>}
-                {walks[0].data.location && <><span class="dot">·</span><span>{walks[0].data.location}</span></>}
-              </div>
-            </div>
-          </div>
-          <div class="card-footer">
-            <span class="card-region">{walks[0].data.region || walks[0].data.location || "UK"}</span>
-            {walks[0].data.dogFriendly && <span class="card-dog-badge">Dog friendly</span>}
-          </div>
-        </a>
-
-        <!-- Two smaller cards -->
-        {walks.length > 1 && (
-          <div class="v2-route-cards-small">
-            {walks.slice(1, 3).map((walk) => (
-              <a class="v2-route-card small" href={`/walks/${walk.slug}/`} style="text-decoration:none;">
-                <div class="card-img">
-                  <img src={imgSrc(walk.data.heroImage)} alt={walk.data.title} loading="lazy" />
-                  <div class="card-img-overlay"></div>
-                  <div class="card-img-meta">
-                    <h3 class="small">{walk.data.title}</h3>
-                    <div class="card-img-stats">
-                      {walk.data.distance && <span>{walk.data.distance} mi</span>}
-                      {walk.data.difficulty && <><span class="dot">·</span><span>{difficultyLabel(walk.data.difficulty)}</span></>}
-                    </div>
-                  </div>
-                </div>
-                <div class="card-footer">
-                  <span class="card-region">{walk.data.region || walk.data.location || "UK"}</span>
-                  {walk.data.dogFriendly && <span class="card-dog-badge">Dog friendly</span>}
-                </div>
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
-    ) : (
-      <article id="noPublishedRoutes" class="card">
-        <p style="color:var(--muted)">No published walks yet — check back soon.</p>
-      </article>
-    )}
-
-    <!-- Admin: draft walks preview -->
-    {draftWalks.length > 0 && (
-      <section class="admin-draft-only hidden" style="margin-top:1.5rem;">
-        <p class="card" style="margin-bottom:1rem;"><strong>Admin preview:</strong> draft routes below.</p>
-        <div class="v2-route-grid">
-          {draftWalks.map((walk) => (
-            <a class="v2-route-card" href={`/preview/walks/${walk.slug}/`} target="_blank" rel="noreferrer"
-               style="text-decoration:none;outline:2px dashed var(--brand);outline-offset:3px;">
-              <div class="card-img" style="height:180px;">
-                <img src={imgSrc(walk.data.heroImage)} alt={walk.data.title} loading="lazy" />
-                <div class="card-img-overlay"></div>
-                <div class="card-img-meta">
-                  <h3 class="small">{walk.data.title} <em>(draft)</em></h3>
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-      </section>
-    )}
-  </div>
-
-  <!-- ── Ethos / trail notes strip ── -->
-  <div class="container">
-    <section class="v2-ethos">
-      <article>
-        <h2>Dog-first<br/>trail notes.</h2>
-        <p>
-          Every route comes with the real detail: livestock risk, lead-sensitive ground, weather exposure,
-          parking, and honest alternatives when conditions bite back.
-        </p>
-        <p>
-          Ember has final approval on all gradings.
-        </p>
-        <a class="button ghost-dark" href="/blog/">Read trail stories</a>
-      </article>
-      <div class="v2-image-stack">
-        {ethosImages.length >= 2 ? (
-          ethosImages.map((img) => (
-            <img src={imgSrc(img.src)} alt={img.alt} loading="lazy" />
-          ))
-        ) : ethosImages.length === 1 ? (
-          <>
-            <img src={imgSrc(ethosImages[0].src)} alt={ethosImages[0].alt} loading="lazy" />
-            <div style="background:var(--bg-soft);border-radius:4px;display:flex;align-items:center;justify-content:center;height:200px;color:var(--muted);font-size:2rem;">⛰️</div>
-          </>
-        ) : (
-          <>
-            <div style="background:var(--bg-soft);border-radius:4px;height:200px;"></div>
-            <div style="background:var(--peat);opacity:0.15;border-radius:4px;height:200px;"></div>
-          </>
-        )}
-      </div>
-    </section>
-  </div>
 </div>
 
 <script is:inline>
@@ -206,4 +385,22 @@ function difficultyLabel(d: string | undefined) {
   window.addEventListener("ww-identity-change", (event) => {
     syncDraftsFromIdentity(event.detail?.user || null);
   });
+
+  // Route index: the large photo follows hover and keyboard focus.
+  (() => {
+    const preview = document.getElementById("hmPreview");
+    const caption = document.getElementById("hmPreviewCaption");
+    const rows = Array.from(document.querySelectorAll("#hmRows a"));
+    if (!preview || !caption) return;
+    rows.forEach((row) => {
+      const show = () => {
+        rows.forEach((r) => r.removeAttribute("data-active"));
+        row.setAttribute("data-active", "");
+        preview.src = row.dataset.img;
+        caption.textContent = row.querySelector("h3")?.textContent || "";
+      };
+      row.addEventListener("mouseenter", show);
+      row.addEventListener("focus", show);
+    });
+  })();
 </script>
