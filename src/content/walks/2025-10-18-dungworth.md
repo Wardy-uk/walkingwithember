@@ -12,6 +12,10 @@ region: "South Yorkshire"
 accessLand: true
 water: some
 terrain: rough
+livestock: certain
+stiles: many
+offLead: partly
+roads: significant
 dogFriendly: true
 parking: "North Lees car park below the edge. Pay and display."
 startGridRef: "SK 2275 8434"

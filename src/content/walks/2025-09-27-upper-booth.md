@@ -12,6 +12,10 @@ region: "Derbyshire"
 accessLand: true
 water: some
 terrain: rough
+livestock: certain
+stiles: many
+offLead: partly
+roads: short
 dogFriendly: true
 parking: "Hayfield, off Sheffield Road. Village car parks, pay and display."
 startGridRef: "SK 0914 8246"

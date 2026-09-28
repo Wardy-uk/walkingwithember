@@ -92,7 +92,9 @@ if (offLead) {
   items.push({
     key: "offlead",
     label: offLead === "mostly" ? "Mostly off lead" : offLead === "partly" ? "Off lead in parts" : "Lead throughout",
-    detail: offLead === "no" ? "Nowhere sensible to let a dog run" : "Stretches where a dog can run",
+    detail: offLead === "no"
+      ? "Nowhere sensible to let a dog run"
+      : "A dog with excellent recall can run loose on stretches. Follow local signs where leads are required",
     tone: offLead === "mostly" ? "good" : "note",
   });
 }

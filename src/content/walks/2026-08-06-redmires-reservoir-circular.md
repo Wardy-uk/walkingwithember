@@ -14,6 +14,10 @@ companions: ["Lizzy"]
 accessLand: true
 water: plenty
 terrain: rough
+livestock: likely
+stiles: several
+offLead: partly
+roads: short
 dogFriendly: true
 parking: "Free car park where Redmires Road runs out and becomes the Long Causeway, by the Upper reservoir."
 startGridRef: "SK 2565 8566"
@@ -78,6 +82,9 @@ hands. Ember did.
 The descent through the brook is steep and rocky, on cut stone steps. Fine
 for a sure-footed dog, but it is not a run-ahead sort of path, and a long
 lead is easier than a short one on it.
+
+Sheep in places, and ground-nesting birds are possible on the moor, so a
+lead there from March to July.
 
 ## Parking and practicalities
 

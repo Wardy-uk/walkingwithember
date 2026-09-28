@@ -11,6 +11,11 @@ location: "Woodhouse Eaves, Charnwood"
 region: "Leicestershire"
 water: some
 terrain: easy
+accessLand: false
+livestock: likely
+stiles: few
+offLead: partly
+roads: significant
 dogFriendly: true
 parking: "Dean's Lane, Woodhouse Eaves."
 startGridRef: "SK 5046 1528"

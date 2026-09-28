@@ -1,6 +1,6 @@
 ---
 title: "High Stones and the Howden Moors"
-summary: "14.7 miles and 898m of ascent around Sheffield, walked in 6h19. Route notes to follow."
+summary: "Up from the Derwent onto Howden Edge, over Margery Hill to High Stones, the highest point in South Yorkshire, and back by Back Tor and Lost Lad. 14.7 miles and 898m of climbing."
 heroImage: "/uploads/images/walks/2025-09-06/11-c3468569.jpg"
 publishDate: 2025-09-06
 walkDate: 2025-09-06
@@ -12,6 +12,10 @@ region: "South Yorkshire"
 accessLand: true
 water: some
 terrain: rough
+livestock: likely
+stiles: few
+offLead: partly
+roads: short
 dogFriendly: true
 parking: "Fairholmes, below Derwent dam. Pay and display."
 startGridRef: "SK 1732 8896"
@@ -45,7 +49,8 @@ in the City of Sheffield, a mile south of the better known Margery Hill.
 It is proper Dark Peak up there. Peat, groughs and very little to aim at in
 poor visibility.
 
-Back down to the Derwent reservoir, the low point at 206m, and round the
+South from there by Back Tor and Lost Lad, then back down to the Derwent
+reservoir, the low point at 206m, and round the
 water to the start.
 
 898m of climbing, with the heaviest stretch in the second fifth at 306m.
@@ -77,4 +82,4 @@ this is one of the few Dark Peak walks you can reach without a car.
 
 *Recorded 2025-09-06. 14.7 miles, 898m of ascent, 6h19 moving.*
 
-*High Stones and Margery Hill heights from [Wikipedia](https://en.wikipedia.org/wiki/High_Stones).*
+*High Stones and Margery Hill heights from [Wikipedia](https://en.wikipedia.org/wiki/High_Stones). The same circuit is published as the [Margery Hill, High Stones, Back Tor and Lost Lad Circular](https://www.alltrails.com/trail/england/derbyshire/margery-hill-high-stones-back-tor-and-lost-lad-circular) on AllTrails.*
