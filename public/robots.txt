@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 # Unpublished drafts — noindex is set on the pages themselves too
 Disallow: /preview/
+Disallow: /admin/
 
-Sitemap: https://www.walkingwithember.co.uk/sitemap-index.xml
+Sitemap: https://walkingwithember.co.uk/sitemap-index.xml

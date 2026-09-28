@@ -22,6 +22,7 @@ export default defineConfig({
     sitemap({
       // Keep out of search:
       //  • /preview/ — unpublished drafts, still full of TODO prompts
+      //  • /admin/ — the editor tools, no use to anyone searching
       // Attach each walk's photographs to its sitemap entry. The images are
       // in the HTML now, so a crawler would find them eventually; this just
       // stops it being a matter of luck.
@@ -42,6 +43,7 @@ export default defineConfig({
       },
       filter: (page) =>
         !page.includes("/preview/") &&
+        !page.includes("/admin/") &&
         !NOINDEX_WALKS.some((slug) => page.includes(`/walks/${slug}/`)),
     }),
   ],
