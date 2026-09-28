@@ -14,8 +14,6 @@ const archiveCount = (await getCatalogueWalks()).length;
 const mastheadImage = settings.homepage?.mastheadImage || "/uploads/images/5da590c5-0884-4c1c-8fc1-012850f889fa-61fec1bcfa.jpg";
 const mastheadAlt = settings.homepage?.mastheadAlt || "";
 const mastheadCaption = settings.homepage?.mastheadCaption || "";
-const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 2);
-const emberImages = galleryImages.slice(0, 1);
 
 // ── Proof strip ──────────────────────────────────────────────────────
 // Counted from the collections, so the figures cannot drift from the site.
@@ -345,26 +343,6 @@ const KEY: Array<{ icon: string; name: string; values: string; why: string }> = 
     </div>
   </section>
 
-  <!-- ── Nick + Ember strip ── -->
-  <section class="v2-ember-strip">
-    <div class="v2-ember-text">
-      <p class="v2-ember-eyebrow">The team</p>
-      <h2>Nick and Ember,<br/>out in all weathers.</h2>
-      <p>Honest route notes from a hillwalker and his dog. No sponsored shortcuts, no sugar-coating, just the real detail on what you'll find underfoot, overhead, and at the gate.</p>
-    </div>
-    <div class="v2-ember-photo">
-      {emberImages.length > 0
-        ? emberImages.map((img, i) => (
-            <img
-              src={imgSrc(img)}
-              alt={i === 0 ? "Nick and Ember" : "Nick and Ember on the trail"}
-              loading="lazy"
-            />
-          ))
-        : <span class="v2-ember-photo-fallback">🐕</span>
-      }
-    </div>
-  </section>
 </div>
 
 <script is:inline>

@@ -14,9 +14,11 @@ interface Props {
   canonicalPath?: string;
   /** Keep the page out of search results (A/B variants, previews). */
   noindex?: boolean;
+  /** The quieter homepage header: no tagline, fewer links. */
+  minimalHeader?: boolean;
 }
 
-const { title, description, regions = [], siteName, tagline, canonicalPath, noindex = false } = Astro.props;
+const { title, description, regions = [], siteName, tagline, canonicalPath, noindex = false, minimalHeader = false } = Astro.props;
 const canonical = new URL(canonicalPath ?? Astro.url.pathname, Astro.site).toString();
 ---
 
@@ -41,7 +43,7 @@ const canonical = new URL(canonicalPath ?? Astro.url.pathname, Astro.site).toStr
     <link rel="icon" href="/images/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
-    <SiteHeader siteName={siteName} tagline={tagline} regions={regions} />
+    <SiteHeader siteName={siteName} tagline={tagline} regions={regions} minimal={minimalHeader} />
     <main>
       <slot />
     </main>
