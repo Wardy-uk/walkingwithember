@@ -1,30 +1,24 @@
 ---
+/**
+ * A quiet bar: the brand and the four links that matter. No tagline, and no
+ * Blog or Gallery until they hold something worth linking to.
+ */
 interface Props {
   siteName: string;
-  tagline: string;
   regions: string[];
-  /**
-   * The homepage header: brand and the four links that matter, no tagline.
-   * The hero says what the site is, so the bar can stay quiet.
-   */
-  minimal?: boolean;
 }
 
-const { siteName, tagline, regions, minimal = false } = Astro.props;
+const { siteName, regions } = Astro.props;
 ---
 
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
       <div class="brand-name">{siteName}</div>
-      {!minimal && <p class="brand-tagline">{tagline}</p>}
     </a>
 
     <nav class="nav" aria-label="Main navigation">
-      {!minimal && <a href="/">Home</a>}
       <a href="/walks/">Walks</a>
-      {!minimal && <a href="/blog/">Blog</a>}
-      {!minimal && <a href="/gallery/">Gallery</a>}
       <a href="/about/">About</a>
       <a href="/contact/">Contact</a>
       <div class="dropdown">

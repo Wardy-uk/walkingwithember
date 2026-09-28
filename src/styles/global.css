@@ -78,13 +78,6 @@ main { min-height: 60vh; }
   line-height: 1;
 }
 
-.brand-tagline {
-  margin: 0.25rem 0 0;
-  color: var(--muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.02em;
-}
-
 .nav {
   display: flex;
   flex-wrap: wrap;
