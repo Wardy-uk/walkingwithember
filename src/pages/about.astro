@@ -139,6 +139,11 @@ const schema = {
 
   .ab :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; border-radius: 2px; }
 
+  /* Direct links (#why-this-site-exists) land clear of the sticky header,
+     which is taller on phones where the nav wraps. */
+  .ab :global(h1[id]),
+  .ab :global(h2[id]) { scroll-margin-top: 6.5rem; }
+
   /* ── Opening ── */
   .ab-open {
     display: grid;
