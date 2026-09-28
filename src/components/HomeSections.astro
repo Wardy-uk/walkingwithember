@@ -52,10 +52,6 @@ const EXAMPLE_SLUG = "2026-08-06-redmires-reservoir-circular";
 const example = allWalks.find((walk) => walk.slug === EXAMPLE_SLUG);
 const profile = routeProfile(example?.data.gpxDownload);
 
-const exampleDate = example?.data.walkDate ?? example?.data.publishDate;
-const exampleDateLabel = exampleDate
-  ? exampleDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
-  : "";
 
 type Factor = "distance" | "access" | "water" | "terrain";
 const FACTOR_LABELS: Record<Factor, string> = {
@@ -174,12 +170,7 @@ const KEY: Array<{ icon: string; name: string; values: string; why: string }> = 
       </div>
     </div>
 
-    {(mastheadCaption || profile) && (
-      <p class="hm-hero-caption">
-        {mastheadCaption && <span>{mastheadCaption}</span>}
-        {profile && example && <a href="#hm-gpx">The line below is the {example.data.title} GPX, {exampleDateLabel} ↓</a>}
-      </p>
-    )}
+    {mastheadCaption && <p class="hm-hero-caption">{mastheadCaption}</p>}
 
     {profile && (
       <>
@@ -210,7 +201,7 @@ const KEY: Array<{ icon: string; name: string; values: string; why: string }> = 
     <div class="container">
       <div class="hm-gpx-head">
         <div>
-          {example && <p class="hm-eyebrow hm-mono">Worked example · {example.data.title}</p>}
+          {example && <p class="hm-eyebrow hm-mono">Worked example · {example.data.title}{profile && " · the line above is its GPX"}</p>}
           <h2 id="hm-gpx-title">What the GPX <em>doesn’t</em> tell you.</h2>
         </div>
         <p class="hm-lede">A GPX file knows how far, how high and where you turned. It has no idea where your dog can drink, which stretch the law says is lead-only, or that the stepping stones were spaced for boots. <strong>That’s the half of the route we write down.</strong></p>
@@ -263,6 +254,9 @@ const KEY: Array<{ icon: string; name: string; values: string; why: string }> = 
               </li>
             ))}
           </ul>
+        </div>
+
+        <div class="hm-field-foot">
           <p class="hm-honest">Where we haven’t checked something, the route page leaves it out. We don’t guess.</p>
           {example && <a class="hm-textlink" href={`/walks/${example.slug}/`}>Read the full {example.data.title} write-up <span aria-hidden="true">→</span></a>}
         </div>
