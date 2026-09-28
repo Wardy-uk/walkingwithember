@@ -9,6 +9,16 @@ const publishedWalks = walks.filter((walk) => !walk.data.draft && !walk.data.cat
 const draftWalks = walks.filter((walk) => walk.data.draft);
 // Recorded but not written up — listed with their GPX, no page of their own.
 const catalogueWalks = await getCatalogueWalks();
+// The three honest states a walk can be in, from its existing fields.
+// Labelled here, not reclassified: the list, its order and the archive
+// are exactly as before.
+const isGuide = (w: (typeof walks)[number]) => w.data.writeupStatus === "reviewed";
+const guideCount = publishedWalks.filter(isGuide).length;
+const writingCount = publishedWalks.length - guideCount;
+// GPX-only records have no page. The archive table below also lists the
+// walks being written up, so it is counted separately to keep the three
+// states adding up to the walks on file.
+const gpxOnlyCount = catalogueWalks.filter((w) => w.data.catalogueOnly).length;
 const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((a, b) => a.localeCompare(b));
 ---
 
@@ -19,39 +29,45 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
   siteName={settings.siteName}
   tagline={settings.tagline}
 >
-  <div class="container page-grid">
-    <section class="hero">
+  <div class="container">
+    <header class="page-head">
+      <p class="page-kicker">Walks · route index</p>
       <h1>Walks</h1>
-      <p>Route finder for UK hills and mountains. Filter by region, distance, difficulty, tags, and dog access.</p>
-    </section>
+      <p class="page-lede">Route finder for UK hills and mountains. Filter by region, distance, difficulty, tags, and dog access.</p>
+      <ul class="page-meta mono-label" aria-label="What is in the index">
+        <li><b>{guideCount}</b> field guides</li>
+        <li><b>{writingCount}</b> being written up</li>
+        {gpxOnlyCount > 0 && <li><b>{gpxOnlyCount}</b> GPX-only records</li>}
+      </ul>
+    </header>
 
-    <section class="card route-planning-grid">
-      <article>
-        <h2>Before You Set Off</h2>
+    <section class="walks-notes" aria-label="Before you go">
+      <div>
+        <h2 class="mono-label">Before you set off</h2>
         <ul>
           <li>Check weather and wind exposure for high ground.</li>
           <li>Download GPX and carry offline mapping backup.</li>
           <li>Plan parking and daylight margins, especially in winter.</li>
         </ul>
-      </article>
-      <article>
-        <h2>Dog Trail Intelligence</h2>
+      </div>
+      <div>
+        <h2 class="mono-label">Dog trail intelligence</h2>
         <ul>
           <li>Filter by dog-friendly routes only.</li>
           <li>Use route notes for livestock and lead-sensitive sections.</li>
           <li>Carry water, paw towel, and spare lead.</li>
         </ul>
-      </article>
+      </div>
     </section>
 
-    <section class="card page-grid">
-      <div class="filters" aria-label="Walk filters">
+    <section aria-label="Find a walk">
+      <div class="filter-bar" aria-label="Walk filters">
         <label>
-          Search
+          <span>Search</span>
           <input id="filter-search" type="search" placeholder="Search title or location" />
         </label>
         <label>
-          Distance
+          <span>Distance</span>
           <select id="filter-distance">
             <option value="">Any</option>
             <option value="short">Up to 5 mi</option>
@@ -60,7 +76,7 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
           </select>
         </label>
         <label>
-          Difficulty
+          <span>Difficulty</span>
           <select id="filter-difficulty">
             <option value="">Any</option>
             <option value="Easy">Easy</option>
@@ -69,14 +85,14 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
           </select>
         </label>
         <label>
-          Region
+          <span>Region</span>
           <select id="filter-region">
             <option value="">Any</option>
             {regions.map((region) => <option value={region}>{region}</option>)}
           </select>
         </label>
         <label>
-          Dog-friendly
+          <span>Dog-friendly</span>
           <select id="filter-dog">
             <option value="">Any</option>
             <option value="yes">Yes</option>
@@ -84,7 +100,7 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
           </select>
         </label>
         <label>
-          Tag
+          <span>Tag</span>
           <select id="filter-tag">
             <option value="">Any</option>
             {tagOptions.map((tag) => <option value={tag}>{tag}</option>)}
@@ -92,12 +108,13 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
         </label>
       </div>
 
-      <p id="walk-count" class="muted"></p>
+      <p id="walk-count" class="walk-count mono-label" aria-live="polite"></p>
 
-      <div id="walk-grid" class="card-grid">
+      <ol id="walk-grid" class="route-index">
         {publishedWalks.map((walk) => (
-          <article
-            class:list={["entry-card", "walk-card"]}
+          <li
+            class:list={["route-entry", "walk-card"]}
+            data-state={isGuide(walk) ? "guide" : "writing"}
             data-title={walk.data.title}
             data-location={walk.data.location}
             data-distance={walk.data.distance}
@@ -114,24 +131,31 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
               <button type="button" class="entry-admin-delete" data-admin-action="delete" aria-label={`Delete ${walk.data.title}`}>×</button>
               <button type="button" class="entry-admin-archive" data-admin-action="archive">Archive</button>
             </div>
-            <a href={`/walks/${walk.slug}/`}>
-              <img src={walk.data.heroImage} alt={walk.data.title} loading="lazy" />
+            <a class="route-entry-thumb" href={`/walks/${walk.slug}/`} tabindex="-1" aria-hidden="true">
+              <img src={walk.data.heroImage} alt="" loading="lazy" />
             </a>
-            <div class="entry-card-body">
+            <div class="route-entry-body">
+              <p class="route-entry-state mono-label">{isGuide(walk) ? "Field guide" : "Being written up"}</p>
               <h2><a href={`/walks/${walk.slug}/`}>{walk.data.title}</a></h2>
-              <p class="muted">{walk.data.location} · {walk.data.distance} mi · {walk.data.difficulty}</p>
-              <p>{walk.data.summary}</p>
-              <ul class="chip-list">
-                <li class="chip">{walk.data.region}</li>
-                {walk.data.tags.slice(0, 2).map((tag) => <li class="chip">{tag}</li>)}
-              </ul>
+              <p class="mono-label">{walk.data.location} · {walk.data.region}</p>
+              <p class="route-entry-summary">{walk.data.summary}</p>
+              {walk.data.tags.length > 0 && (
+                <ul class="chip-list">
+                  {walk.data.tags.slice(0, 2).map((tag) => <li class="chip">{tag}</li>)}
+                </ul>
+              )}
             </div>
-          </article>
+            <p class="route-entry-stats">
+              <span>{walk.data.distance} mi{walk.data.ascentM ? ` · ${walk.data.ascentM.toLocaleString("en-GB")} m` : ""}</span>
+              <span>{walk.data.difficulty}</span>
+            </p>
+          </li>
         ))}
-      </div>
+      </ol>
 
       {catalogueWalks.length > 0 && (
-        <section class="card walk-archive">
+        <section class="section-rule walk-archive">
+          <p class="page-kicker">GPX archive</p>
           <h2>Route archive</h2>
           <p class="muted">
             {catalogueWalks.length} more walks recorded but not written up. The GPX is here
@@ -171,7 +195,7 @@ const tagOptions = Array.from(new Set(walks.flatMap((w) => w.data.tags))).sort((
       )}
 
       {draftWalks.length > 0 && (
-        <section id="draft-section" class="card draft-section hidden">
+        <section id="draft-section" class="section-rule draft-section hidden">
           <h2>Draft Walks (Admin)</h2>
           <p class="muted">Visible only when logged in as admin.</p>
           <div id="draft-grid" class="card-grid">

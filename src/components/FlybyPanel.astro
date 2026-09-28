@@ -470,8 +470,8 @@ const {
 
 <style>
   .flyby-panel {
-    background: #0d1117;
-    border-radius: 12px;
+    background: var(--peat);
+    border-radius: 6px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -487,16 +487,18 @@ const {
 
   .flyby-head h2 {
     margin: 0;
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 400;
     color: #e0d8d0;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
   .flyby-tab-link {
     font-size: 0.78rem;
-    color: #FC4C02;
+    font-weight: 700;
+    color: var(--brand-lit);
     text-decoration: none;
     white-space: nowrap;
   }
@@ -506,7 +508,7 @@ const {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    background: #0d1117;
+    background: var(--peat);
   }
 
   .flyby-map {
@@ -543,7 +545,7 @@ const {
   .flyby-elev-wrap {
     position: relative;
     height: 64px;
-    background: #0d1117;
+    background: var(--peat);
     border-top: 1px solid rgba(255,255,255,0.06);
   }
 
@@ -570,7 +572,7 @@ const {
     align-items: center;
     gap: 0.5rem;
     padding: 0.55rem 0.75rem;
-    background: #0d1117;
+    background: var(--peat);
     border-top: 1px solid rgba(255,255,255,0.06);
   }
 

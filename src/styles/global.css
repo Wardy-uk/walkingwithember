@@ -16,6 +16,8 @@
   --max:           1140px;
   --shadow:        0 8px 24px rgba(28,21,16,0.09);
   --radius:        16px;
+  --brand-lit:     #E07A3A;
+  --font-mono:     "DM Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 
 /* ── Reset ─────────────────────────────────────────────────────────── */
@@ -258,13 +260,14 @@ h3 { font-size: clamp(1.1rem, 2vw, 1.4rem); }
 
 .chip {
   border: 1px solid var(--line);
-  background: var(--bg-soft);
+  background: transparent;
   color: var(--muted);
   border-radius: 999px;
-  padding: 0.18rem 0.65rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  padding: 0.22rem 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .chip.dog { background: var(--forest-soft); border-color: rgba(58,92,46,0.3); color: var(--forest); }
@@ -297,11 +300,15 @@ button:hover, .button:hover {
 
 .button.ghost:hover { background: var(--bg-soft); }
 
+/* The quiet utility button: outline, no fill, so tools do not compete
+   with the one primary action on a page. */
 .button.ghost-dark {
-  background: var(--bg-soft);
-  border: 1px solid var(--line);
+  background: transparent;
+  border: 1px solid rgba(154,69,21,0.4);
   color: var(--brand-deep);
 }
+
+.button.ghost-dark:hover { background: var(--brand-soft); }
 
 /* ── Filters ────────────────────────────────────────────────────────── */
 .filters {
@@ -310,8 +317,7 @@ button:hover, .button:hover {
   gap: 0.7rem;
 }
 
-.filters label,
-.contact-form label {
+.filters label {
   display: grid;
   gap: 0.3rem;
   font-size: 0.82rem;
@@ -320,8 +326,8 @@ button:hover, .button:hover {
 }
 
 input, select, textarea {
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  border: 1px solid rgba(28,21,16,0.22);
+  border-radius: 4px;
   padding: 0.55rem 0.7rem;
   font: inherit;
   font-size: 0.9rem;
@@ -335,6 +341,7 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(198,93,30,0.22);
 }
 
 /* ── Masthead / hero photo ───────────────────────────────────────────── */
@@ -378,30 +385,27 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ── Route facts ──────────────────────────────────────────────────────── */
+/* Styled as a .readout: mono labels over display values, hairline rules. */
 .route-facts {
   display: grid;
-  gap: 0.7rem;
+  gap: 0 1.5rem;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding-block: 0.9rem;
+  border-block: 1px solid var(--text);
 }
 
-.route-facts div {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 0.7rem;
-  background: var(--surface);
-}
+.route-facts div { display: grid; gap: 0.25rem; align-content: start; padding-block: 0.3rem; }
 
 .route-facts span {
   display: block;
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 0.2rem;
+  color: var(--muted);
 }
 
-.route-facts strong { font-size: 1rem; color: var(--text); }
+.route-facts strong { font-family: "Fraunces", Georgia, serif; font-size: 1.5rem; font-weight: 400; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--text); }
 
 /* ── Dog panel ──────────────────────────────────────────────────────── */
 .dog-panel { border-left: 3px solid var(--forest); }
@@ -411,10 +415,11 @@ input:focus, select:focus, textarea:focus {
 /* ── Article / blog ─────────────────────────────────────────────────── */
 .article { display: grid; gap: 1rem; }
 .article-meta { color: var(--muted); font-size: 0.88rem; }
+.route .article-meta { margin: 0; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
 .share-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
 /* ── Map / flyby ─────────────────────────────────────────────────────── */
-.map-panel { height: 520px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.map-panel { height: 520px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .map-compare { display: grid; gap: 1rem; }
 .map-compare.two-panels { grid-template-columns: 1fr; align-items: start; }
 .map-card { display: grid; gap: 0.75rem; }
@@ -425,7 +430,7 @@ input:focus, select:focus, textarea:focus {
 .flyby-panel { display: grid; gap: 0.75rem; padding: 1.2rem 1.4rem; }
 .flyby-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; }
 .flyby-head h2 { margin: 0; }
-.flyby-map-wrap { position: relative; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.flyby-map-wrap { position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .flyby-map { height: 520px; }
 .flyby-controls { display: grid; grid-template-columns: 90px 1fr 88px 130px 130px 210px; gap: 0.55rem; align-items: center; }
 .flyby-range { width: 100%; }
@@ -458,9 +463,6 @@ input:focus, select:focus, textarea:focus {
   border-radius: 12px;
   border: 1px solid var(--line);
 }
-
-/* ── Contact form ─────────────────────────────────────────────────────── */
-.contact-form { display: grid; gap: 0.8rem; }
 
 /* ── Misc helpers ─────────────────────────────────────────────────────── */
 .muted { color: var(--muted); }
@@ -1042,6 +1044,298 @@ body:has(.hm) .site-footer { margin-top: 0; }
   .hm-cta:hover { transform: none; }
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   INTERIOR PAGES — shared editorial primitives
+
+   The homepage's grammar, quieter: Fraunces for editorial display, DM Mono
+   for labels, measurements and utility detail, thin rules instead of boxes.
+   Interior pages are built from these few pieces rather than page CSS:
+
+     .page-head     masthead: mono kicker, Fraunces h1, lede, closing rule
+     .page-kicker   mono label with the orange rule, as on the homepage
+     .section-rule  a section divided by a hairline, not a card
+     .section-head  heading row with an aside (count, link) on the right
+     .readout       label/value data, mono labels over display values
+     .tool-frame    the one framed container: maps, 3D and other tools
+     .prose         editorial reading measure for stories and policy text
+     .mono-label    small uppercase DM Mono label
+     .text-link     underlined orange link for secondary actions
+
+   Story is set in .prose, decisions on peat (the dog card), and tools
+   inside .tool-frame, so the three read differently at a glance.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.page-head {
+  display: grid;
+  gap: 0.9rem;
+  padding-block: clamp(2rem, 5vw, 3.5rem) clamp(1.4rem, 3vw, 2.2rem);
+  border-bottom: 1px solid var(--text);
+}
+
+.page-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.page-kicker::before { content: ""; flex: none; width: 26px; height: 2px; background: var(--brand); }
+
+.page-head h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+  font-weight: 380;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.page-head h1 em { font-style: italic; font-weight: 340; color: var(--brand-deep); }
+
+.page-lede { margin: 0; max-width: 40em; font-size: 1.05rem; line-height: 1.6; }
+.page-lede p { margin: 0 0 0.6rem; }
+.page-lede p:last-child { margin-bottom: 0; }
+
+.page-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.5rem;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-meta b { font-weight: 500; color: var(--text); }
+
+.section-rule {
+  padding-block: clamp(1.6rem, 3.5vw, 2.6rem);
+  border-top: 1px solid var(--line);
+}
+
+.section-rule > h2,
+.section-head h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.section-head h2 { margin: 0; }
+
+.readout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0 1.5rem;
+  margin: 0;
+  padding-block: 0.9rem;
+  border-block: 1px solid var(--line);
+}
+
+.readout > div { display: grid; gap: 0.25rem; align-content: start; min-width: 0; padding-block: 0.3rem; }
+
+.readout dt,
+.readout .readout-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.readout dd,
+.readout .readout-value {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.45rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.readout small { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em; color: var(--muted); }
+
+.tool-frame {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.prose { max-width: 68ch; }
+.prose > :first-child { margin-top: 0; }
+.prose h2 { margin: 2.2rem 0 0.7rem; font-size: clamp(1.4rem, 2.4vw, 1.75rem); font-weight: 400; }
+.prose p, .prose li { line-height: 1.7; }
+.prose p { margin: 0 0 1rem; }
+.prose hr { margin: 2rem 0 1.2rem; border: 0; border-top: 1px solid var(--line); }
+
+.text-link {
+  padding-bottom: 2px;
+  border-bottom: 1px solid currentColor;
+  font-weight: 700;
+  color: var(--brand-deep);
+  text-decoration: none;
+}
+
+.text-link:hover { color: var(--brand); }
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
+
+/* ── Walks index ─────────────────────────────────────────────────────── */
+.walks-notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem clamp(1.5rem, 4vw, 3rem);
+  padding-block: 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.walks-notes h2 { margin: 0 0 0.5rem; }
+.walks-notes ul { margin: 0; padding-left: 1.05rem; display: grid; gap: 0.25rem; font-size: 0.92rem; color: var(--muted); }
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(5, minmax(0, 1fr));
+  gap: 0.8rem;
+  align-items: end;
+  padding-block: 1.4rem 1rem;
+}
+
+.filter-bar label { display: grid; gap: 0.35rem; }
+.filter-bar input,
+.filter-bar select { height: 2.6rem; }
+.filter-bar label > span { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.walk-count { margin: 0 0 0.8rem; }
+
+.route-index { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--text); }
+
+.route-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) auto;
+  gap: 0.3rem 1.4rem;
+  align-items: start;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.route-entry-thumb { grid-row: 1 / span 2; display: block; }
+.route-entry-thumb img { width: 132px; height: 99px; object-fit: cover; border-radius: 3px; background: var(--bg-soft); }
+.route-entry-body { display: grid; gap: 0.3rem; min-width: 0; }
+.route-entry-body > *,
+.route-entry-stats { margin: 0; }
+.route-entry h2 { margin: 0; font-size: clamp(1.2rem, 2vw, 1.5rem); font-weight: 420; line-height: 1.15; }
+.route-entry h2 a { color: var(--text); text-decoration: none; }
+.route-entry h2 a:hover { color: var(--brand-deep); }
+.route-entry-summary { margin: 0.15rem 0 0; max-width: 62ch; font-size: 0.92rem; color: var(--muted); }
+
+.route-entry-state::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background: var(--brand);
+  vertical-align: 1px;
+}
+
+.route-entry[data-state="writing"] .route-entry-state::before { background: transparent; box-shadow: inset 0 0 0 1.5px var(--muted); }
+
+.route-entry-stats {
+  display: grid;
+  justify-items: end;
+  gap: 0.2rem;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.route-entry-stats span:last-child { color: var(--muted); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ── Route pages ─────────────────────────────────────────────────────── */
+.article.route { gap: 0; padding-block: 0 1rem; }
+.route-head { display: grid; gap: 0.8rem; padding-block: 1.6rem 1.3rem; }
+.route-head h1 { margin: 0; font-size: clamp(2.3rem, 5vw, 4rem); font-weight: 380; line-height: 1; letter-spacing: -0.02em; text-wrap: balance; }
+.route-intro { display: grid; gap: 0.8rem; padding-block: 1.3rem 1.4rem; }
+.route-intro .chip-list { margin: 0; }
+.route-story > .page-kicker { margin-bottom: 1.4rem; font-size: 0.72rem; font-weight: 400; }
+
+/* Utility sections: precise and compact, so the story stays the loudest text. */
+.planning-strip { display: grid; grid-template-columns: minmax(0, 1.4fr) auto; gap: 1rem 2rem; align-items: end; }
+.planning-strip h2 { margin: 0 0 0.6rem; }
+.planning-strip p { max-width: 60ch; margin: 0 0 0.6rem; }
+.planning-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.route-utility h2 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
+.route-utility p { margin: 0 0 0.4rem; }
+.map-card .flyby-head h2 { font-size: clamp(1.5rem, 2.6vw, 2rem); }
+
+@media (max-width: 760px) {
+  .planning-strip { grid-template-columns: 1fr; }
+}
+
+/* ── Contact ─────────────────────────────────────────────────────────── */
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(1.8rem, 5vw, 4.5rem);
+  align-items: start;
+  padding-block: clamp(1.8rem, 4vw, 3rem);
+}
+
+.contact-form { display: grid; gap: 1rem; }
+.contact-form label { display: grid; gap: 0.35rem; }
+.contact-form label > span { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.contact-form button { justify-self: start; }
+
+.privacy-body { padding-block: clamp(1.8rem, 4vw, 3rem); font-size: 1.02rem; }
+
+@media (max-width: 980px) {
+  .filter-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .filter-bar label:first-child { grid-column: 1 / -1; }
+}
+
+@media (max-width: 760px) {
+  .walks-notes,
+  .contact-layout { grid-template-columns: 1fr; }
+  .route-entry { grid-template-columns: 88px minmax(0, 1fr); }
+  .route-entry-thumb img { width: 88px; height: 88px; }
+  .route-entry-stats { grid-column: 2; justify-items: start; text-align: left; grid-auto-flow: column; justify-content: start; gap: 0.9rem; }
+}
+
+@media (max-width: 480px) {
+  .filter-bar { grid-template-columns: 1fr 1fr; }
+}
+
 /* ── Animations ─────────────────────────────────────────────────────── */
 @keyframes riseIn {
   from { opacity: 0; transform: translateY(14px); }
@@ -1066,7 +1360,7 @@ body:has(.hm) .site-footer { margin-top: 0; }
   .nav          { flex-wrap: wrap; gap: 0; }
   .filters      { grid-template-columns: 1fr; }
   .card-grid    { grid-template-columns: 1fr; }
-  .route-facts  { grid-template-columns: 1fr; }
+  .route-facts  { grid-template-columns: 1fr 1fr; gap: 0.4rem 1.2rem; }
 }
 
 /* ── Route map photo pins ─────────────────────────────────────────────── */
@@ -1118,7 +1412,7 @@ body:has(.hm) .site-footer { margin-top: 0; }
   aspect-ratio: 16 / 9;
   object-fit: cover;
   object-position: center 40%; /* favour the horizon over the foreground */
-  border-radius: 14px;
+  border-radius: 4px;
 }
 
 @media (max-width: 720px) {
@@ -1223,8 +1517,8 @@ body:has(.hm) .site-footer { margin-top: 0; }
 /* ── Route archive ────────────────────────────────────────────────────
    Walks recorded but not written up. A table rather than cards: there is
    no photograph to show, and the useful content is the numbers. */
-.walk-archive { margin-top: 1.5rem; }
-.walk-archive h2 { margin-top: 0; }
+.walk-archive { margin-top: 2rem; }
+.walk-archive .page-kicker { margin-bottom: 0.7rem; }
 
 .archive-table {
   width: 100%;
@@ -1240,15 +1534,19 @@ body:has(.hm) .site-footer { margin-top: 0; }
   border-bottom: 1px solid var(--line);
 }
 
+.archive-table thead th { border-bottom-color: var(--text); }
+
 .archive-table th {
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 400;
 }
 
-.archive-table .num { text-align: right; white-space: nowrap; }
+.archive-table .num { text-align: right; white-space: nowrap; font-family: var(--font-mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.archive-table td time { font-family: var(--font-mono); font-size: 0.78rem; }
 .archive-table tbody tr:hover { background: var(--bg-soft); }
 .archive-table td time { color: var(--muted); white-space: nowrap; }
 
@@ -1352,13 +1650,16 @@ body:has(.hm) .site-footer { margin-top: 0; }
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 0.75rem 1.25rem;
   margin: 0 0 0.9rem;
+  padding-block: 0.9rem;
+  border-block: 1px solid var(--line);
 }
 
 .start-grid div { margin: 0; }
 
 .start-grid dt {
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted, #6b6259);
   margin-bottom: 0.2rem;
@@ -1367,11 +1668,11 @@ body:has(.hm) .site-footer { margin-top: 0; }
 .start-grid dd { margin: 0; font-weight: 600; }
 
 .start-grid code {
-  font-family: Consolas, "Courier New", monospace;
-  font-size: 0.95rem;
-  background: var(--bg-soft, #F7F2EA);
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  background: none;
+  padding: 0;
+  border-radius: 0;
   /* A grid reference is meant to be copied, so keep it selectable and whole. */
   user-select: all;
   white-space: nowrap;
@@ -1404,7 +1705,7 @@ body:has(.hm) .site-footer { margin-top: 0; }
 /* A walk without a write-up is still listed, but should not look clickable. */
 .nearby-untitled { font-weight: 600; color: var(--muted, #6b6259); }
 
-.nearby-stats { font-size: 0.78rem; color: var(--muted, #6b6259); }
+.nearby-stats { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--muted, #6b6259); }
 
 .nearby-aside {
   display: flex;
@@ -1413,7 +1714,7 @@ body:has(.hm) .site-footer { margin-top: 0; }
   flex-shrink: 0;
 }
 
-.nearby-distance { font-size: 0.78rem; color: var(--muted, #6b6259); white-space: nowrap; }
+.nearby-distance { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted, #6b6259); white-space: nowrap; }
 
 .nearby-gpx {
   font-size: 0.72rem;

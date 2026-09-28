@@ -16,13 +16,14 @@ const { Content } = page ? await page.render() : { Content: null };
   siteName={settings.siteName}
   tagline={settings.tagline}
 >
-  <div class="container page-grid">
-    <section class="hero">
+  <div class="container">
+    <header class="page-head">
+      <p class="page-kicker">Get in touch</p>
       <h1>{page?.data.title ?? "Contact"}</h1>
-      {Content && <Content />}
-    </section>
+    </header>
 
-    <section class="card">
+    <div class="contact-layout">
+      {Content && <div class="prose page-lede"><Content /></div>}
       <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="contact-form">
         <input type="hidden" name="form-name" value="contact" />
         <p hidden>
@@ -31,19 +32,19 @@ const { Content } = page ? await page.render() : { Content: null };
           </label>
         </p>
         <label>
-          Name
-          <input type="text" name="name" required />
+          <span>Name</span>
+          <input type="text" name="name" autocomplete="name" required />
         </label>
         <label>
-          Email
-          <input type="email" name="email" required />
+          <span>Email</span>
+          <input type="email" name="email" autocomplete="email" required />
         </label>
         <label>
-          Message
+          <span>Message</span>
           <textarea name="message" rows="6" required></textarea>
         </label>
         <button type="submit">Send Message</button>
       </form>
-    </section>
+    </div>
   </div>
 </BaseLayout>
