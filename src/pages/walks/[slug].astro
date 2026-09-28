@@ -80,6 +80,11 @@ const nearby = await getNearbyWalks(walk, 4);
 // The route is real and downloadable; only the words are missing.
 const comingSoon = walk.data.writeupStatus !== "reviewed";
 const sourcePath = `src/content/walks/${walk.id}`;
+// The decision card links down to the write-up's fuller dog section, when
+// there is one to link to. Astro gives markdown headings slug ids.
+const dogNotesAnchor = !comingSoon && /^## For your four legged companion\s*$/m.test(walk.body)
+  ? "for-your-four-legged-companion"
+  : undefined;
 const estimatedHours = walk.data.difficulty === "Hard"
   ? Math.max(3, Math.round(walk.data.distance / 2))
   : walk.data.difficulty === "Moderate"
@@ -124,8 +129,23 @@ const estimatedHours = walk.data.difficulty === "Hard"
         {walk.data.ascentM && <div><span>Ascent</span><strong>{walk.data.ascentM} m</strong></div>}
         <div><span>Difficulty</span><strong>{walk.data.difficulty}</strong></div>
         <div><span>Estimated Time</span><strong>{estimatedHours} hrs</strong></div>
-        <div><span>Dog Access</span><strong>{walk.data.dogFriendly ? "Dog-friendly" : "Lead only / restricted areas"}</strong></div>
       </section>
+
+      <!-- The dog is the first practical decision, so it comes before the map. -->
+      <div data-edit="dog">
+      <DogChecklist
+        accessLand={walk.data.accessLand}
+        livestock={walk.data.livestock}
+        stiles={walk.data.stiles}
+        water={walk.data.water}
+        roads={walk.data.roads}
+        terrain={walk.data.terrain}
+        offLead={walk.data.offLead}
+        dogNotes={walk.data.dogNotes}
+        walkDate={walk.data.walkDate ?? walk.data.publishDate}
+        notesAnchor={dogNotesAnchor}
+      />
+      </div>
 
       <div data-edit="start">
       <StartPanel
@@ -200,20 +220,6 @@ const estimatedHours = walk.data.difficulty === "Hard"
           <a class="button ghost-dark" href={walk.data.gpxDownload} target="_blank" rel="noreferrer">Download GPX</a>
         </div>
       </section>
-
-      <div data-edit="dog">
-      <DogChecklist
-        accessLand={walk.data.accessLand}
-        livestock={walk.data.livestock}
-        stiles={walk.data.stiles}
-        water={walk.data.water}
-        roads={walk.data.roads}
-        terrain={walk.data.terrain}
-        offLead={walk.data.offLead}
-        dogNotes={walk.data.dogNotes}
-        walkDate={walk.data.walkDate ?? walk.data.publishDate}
-      />
-      </div>
 
       {comingSoon ? (
         <section class="card coming-soon">

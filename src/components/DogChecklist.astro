@@ -1,23 +1,26 @@
 ---
 /**
- * What the route is like for a dog, as icons rather than prose.
+ * The dog decision card: what this route asks of a dog, before anything else.
  *
- * Nick's point: he should not have to write a paragraph per walk, and a
- * reader deciding whether to bring their dog wants to see it at a glance.
+ * It sits straight after the route's core facts, because for this site the
+ * dog is the first practical question, not an appendix after the map. The
+ * fuller account stays in the write-up's "For your four legged companion"
+ * section, which the card links down to.
  *
  * The fields are chosen from what actually governs a dog day out in Britain:
  *
+ *  - Livestock is the serious lead trigger: a farmer may lawfully shoot a dog
+ *    worrying a flock.
  *  - Open Access land carries a legal lead requirement from 1 March to 31
  *    July for ground-nesting birds, and a 2m maximum lead length, regardless
  *    of livestock. Most walkers do not know this, so it is worth stating.
- *  - Livestock is the other lead trigger, and the serious one: a farmer may
- *    lawfully shoot a dog worrying a flock.
- *  - Stiles decide whether a big or an old dog can do the route at all. The
- *    dog-walk listicles sell "stile-free" as a headline feature.
+ *  - Stiles decide whether a big or an old dog can do the route at all.
  *  - Water is the difference between a good summer day and carrying litres.
  *  - Roads and steep ground are the two things that turn a walk unsuitable.
  *
- * Everything is optional. An unset field shows nothing rather than guessing.
+ * Everything is optional. An unset field is left out, never guessed, and the
+ * card says which factors were not recorded so their absence is not mistaken
+ * for "no problem". With nothing recorded at all, the card does not render.
  */
 interface Props {
   accessLand?: boolean;
@@ -29,44 +32,23 @@ interface Props {
   offLead?: "no" | "partly" | "mostly";
   /** Free-form entries, for anything the preset fields do not cover. */
   dogNotes?: Array<{ icon?: string; label: string; detail?: string; tone?: "good" | "warn" | "note" }>;
+  /** Kept for callers; the lead rule is stated for the season, not the walk date. */
   walkDate?: Date;
+  /** Anchor of the write-up's full dog section, when the page has one. */
+  notesAnchor?: string;
 }
 
-const { accessLand, livestock, stiles, water, roads, terrain, offLead, dogNotes = [], walkDate } = Astro.props;
+const { accessLand, livestock, stiles, water, roads, terrain, offLead, dogNotes = [], notesAnchor } = Astro.props;
 
-/** 1 March to 31 July: lead required on Open Access land, max 2m. */
-const inBirdSeason = (d?: Date) => {
-  if (!d) return false;
-  const m = d.getMonth();
-  return m >= 2 && m <= 6;
-};
-
-type Item = { key: string; label: string; detail: string; tone: "good" | "warn" | "note" };
+type Tone = "good" | "warn" | "note";
+type Item = { key: string; label: string; detail: string; tone: Tone };
 
 /** A generic icon for free-form notes that do not match a preset. */
 const ICON_KEYS = new Set(["stiles", "water", "livestock", "access", "offlead", "roads", "terrain"]);
 
+// Ordered by how much each one decides the day: the lead triggers first.
 const items: Item[] = [];
-
-if (stiles) {
-  items.push({
-    key: "stiles",
-    label: stiles === "none" ? "No stiles" : `${stiles[0].toUpperCase()}${stiles.slice(1)} stiles`,
-    detail: stiles === "none"
-      ? "Gates or gaps throughout, so no lifting"
-      : "Expect to lift a dog that cannot climb",
-    tone: stiles === "none" ? "good" : "note",
-  });
-}
-
-if (water) {
-  items.push({
-    key: "water",
-    label: water === "none" ? "No water on route" : water === "plenty" ? "Water throughout" : "Some water",
-    detail: water === "none" ? "Carry everything your dog will drink" : "Streams or pools to drink from",
-    tone: water === "none" ? "warn" : "good",
-  });
-}
+const missing: string[] = [];
 
 if (livestock) {
   items.push({
@@ -77,16 +59,16 @@ if (livestock) {
       : "Lead around stock. A farmer may lawfully shoot a dog worrying a flock",
     tone: livestock === "none" ? "good" : "warn",
   });
-}
+} else missing.push("livestock");
 
 if (accessLand) {
   items.push({
     key: "access",
-    label: inBirdSeason(walkDate) ? "Lead required by law" : "Open Access land",
-    detail: "On Access land dogs must be on a lead no longer than 2m from 1 March to 31 July, for ground-nesting birds",
-    tone: inBirdSeason(walkDate) ? "warn" : "note",
+    label: "Lead by law, 1 March to 31 July",
+    detail: "Open Access land: a lead no longer than 2m in nesting season, for ground-nesting birds",
+    tone: "warn",
   });
-}
+} else if (accessLand === undefined) missing.push("lead restrictions");
 
 if (offLead) {
   items.push({
@@ -97,16 +79,36 @@ if (offLead) {
       : "A dog with excellent recall can run loose on stretches. Follow local signs where leads are required",
     tone: offLead === "mostly" ? "good" : "note",
   });
-}
+} else missing.push("off-lead");
 
 if (roads) {
   items.push({
     key: "roads",
     label: roads === "none" ? "No roads" : roads === "short" ? "Short road section" : "Roads to cross",
     detail: roads === "none" ? "Nothing with traffic on it" : "Lead on and watch for traffic",
-    tone: roads === "none" ? "good" : "warn",
+    tone: roads === "none" ? "good" : roads === "significant" ? "warn" : "note",
   });
-}
+} else missing.push("roads");
+
+if (stiles) {
+  items.push({
+    key: "stiles",
+    label: stiles === "none" ? "No stiles" : `${stiles[0].toUpperCase()}${stiles.slice(1)} stiles`,
+    detail: stiles === "none"
+      ? "Gates or gaps throughout, so no lifting"
+      : "Expect to lift a dog that cannot climb",
+    tone: stiles === "none" ? "good" : stiles === "many" ? "warn" : "note",
+  });
+} else missing.push("stiles");
+
+if (water) {
+  items.push({
+    key: "water",
+    label: water === "none" ? "No water on route" : water === "plenty" ? "Water throughout" : "Some water",
+    detail: water === "none" ? "Carry everything your dog will drink" : "Streams or pools to drink from",
+    tone: water === "none" ? "warn" : "good",
+  });
+} else missing.push("water");
 
 if (terrain) {
   items.push({
@@ -117,9 +119,10 @@ if (terrain) {
       : terrain === "rough"
         ? "Uneven, rocky or boggy going"
         : "Good paths and tracks",
-    tone: terrain === "easy" ? "good" : "note",
+    tone: terrain === "easy" ? "good" : terrain === "scrambly" ? "warn" : "note",
   });
-}
+} else missing.push("terrain");
+
 // Free-form entries last, so the preset facts keep a stable order.
 for (const n of dogNotes) {
   if (!n?.label) continue;
@@ -130,17 +133,32 @@ for (const n of dogNotes) {
     tone: n.tone ?? "note",
   });
 }
+
+const count = (t: Tone) => items.filter((i) => i.tone === t).length;
+const toPlan = count("warn");
+const inFavour = count("good");
+const TONE_LABEL: Record<Tone, string> = { warn: "Plan for", good: "In your favour", note: "Worth knowing" };
+const list = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}` : xs[0]);
 ---
 
 {items.length > 0 && (
-  <section class="card dog-checklist">
-    <h2>For your four legged companion</h2>
-    <p class="muted">What this route is like with a dog, at a glance.</p>
+  <section class="dd" aria-labelledby="dog-decision-title">
+    <header class="dd-head">
+      <p class="dd-eyebrow">For your dog</p>
+      <h2 id="dog-decision-title">Before you bring your dog</h2>
+      <p class="dd-summary">
+        {toPlan > 0 && <span><b>{toPlan}</b> to plan for</span>}
+        {inFavour > 0 && <span><b>{inFavour}</b> in your favour</span>}
+      </p>
+      {notesAnchor && (
+        <a class="dd-link" href={`#${notesAnchor}`}>Full dog notes from the day <span aria-hidden="true">↓</span></a>
+      )}
+    </header>
 
-    <ul class="dog-grid">
+    <ul class="dd-list">
       {items.map((item) => (
-        <li class={`dog-item is-${item.tone}`}>
-          <span class="dog-icon" aria-hidden="true">
+        <li class={`dd-item is-${item.tone}`}>
+          <span class="dd-icon" aria-hidden="true">
             {item.key === "stiles" && (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
                 <path d="M6 3v18M18 3v18M6 9h12M6 15h12" />
@@ -186,12 +204,150 @@ for (const n of dogNotes) {
               </svg>
             )}
           </span>
-          <span class="dog-text">
+          <span class="dd-text">
             <strong>{item.label}</strong>
             {item.detail && <small>{item.detail}</small>}
           </span>
+          <span class="dd-tone">{TONE_LABEL[item.tone]}</span>
         </li>
       ))}
     </ul>
+
+    {missing.length > 0 && (
+      <p class="dd-missing">Not recorded for this route: {list(missing)}. Left out rather than guessed.</p>
+    )}
   </section>
 )}
+
+<style>
+  /* A field note on peat, in the homepage key's language: Fraunces for the
+     question, DM Mono for labels, ruled rows rather than a badge grid. Tone is
+     carried by a text label and the icon ring, never by colour alone. */
+  .dd {
+    --dd-on: #F5F0E8;
+    --dd-dim: rgba(245, 240, 232, 0.68);
+    --dd-mono-c: #A89A8A;
+    --dd-rule: rgba(245, 240, 232, 0.14);
+    --dd-lit: #E07A3A;
+    --dd-good: #8FBF7A;
+    --dd-mono: "DM Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 1.2rem clamp(1.5rem, 4vw, 3rem);
+    margin: 1.2rem 0;
+    padding: clamp(1.3rem, 3vw, 2rem);
+    border-radius: 14px;
+    background: var(--peat);
+    color: var(--dd-on);
+  }
+
+  /* Sticky within the card, so the summary stays beside a long list. */
+  .dd-head { position: sticky; top: 5.5rem; display: grid; align-content: start; gap: 0.7rem; align-self: start; }
+
+  .dd-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    font-family: var(--dd-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dd-mono-c);
+  }
+
+  .dd-eyebrow::before { content: ""; flex: none; width: 22px; height: 2px; background: var(--dd-lit); }
+
+  .dd h2 {
+    margin: 0;
+    font-size: clamp(1.7rem, 3vw, 2.3rem);
+    font-weight: 380;
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    color: var(--dd-on);
+    text-wrap: balance;
+  }
+
+  .dd-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.2rem;
+    margin: 0.2rem 0 0;
+    font-family: var(--dd-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dd-mono-c);
+  }
+
+  .dd-summary b { font-weight: 500; color: var(--dd-on); }
+
+  .dd-link {
+    justify-self: start;
+    margin-top: 0.3rem;
+    padding-bottom: 2px;
+    border-bottom: 1px solid currentColor;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--dd-lit);
+    text-decoration: none;
+  }
+
+  .dd-link:focus-visible { outline: 2px solid var(--dd-lit); outline-offset: 3px; border-radius: 2px; }
+
+  .dd-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--dd-rule); }
+
+  .dd-item {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 0.15rem 0.85rem;
+    align-items: start;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--dd-rule);
+  }
+
+  .dd-icon {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid var(--dd-rule);
+    border-radius: 50%;
+    color: var(--dd-mono-c);
+  }
+
+  .dd-icon svg { width: 17px; height: 17px; }
+  .dd-item.is-warn .dd-icon { border-color: var(--dd-lit); color: var(--dd-lit); }
+  .dd-item.is-good .dd-icon { border-color: var(--dd-good); color: var(--dd-good); }
+
+  .dd-text { display: grid; gap: 0.1rem; min-width: 0; padding-top: 0.2rem; }
+  .dd-text strong { font-size: 0.97rem; font-weight: 600; }
+  .dd-text small { font-size: 0.84rem; line-height: 1.45; color: var(--dd-dim); }
+
+  .dd-tone {
+    padding-top: 0.35rem;
+    font-family: var(--dd-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--dd-mono-c);
+  }
+
+  .dd-item.is-warn .dd-tone { color: var(--dd-lit); }
+  .dd-item.is-good .dd-tone { color: var(--dd-good); }
+
+  .dd-missing { grid-column: 2; margin: -0.4rem 0 0; font-size: 0.8rem; color: var(--dd-mono-c); }
+
+  @media (max-width: 860px) {
+    .dd { grid-template-columns: 1fr; }
+    .dd-head { position: static; }
+    .dd-missing { grid-column: 1; }
+  }
+
+  @media (max-width: 480px) {
+    /* The tone label moves under the text rather than squeezing it. */
+    .dd-item { grid-template-columns: 32px minmax(0, 1fr); }
+    .dd-tone { grid-column: 2; padding-top: 0.15rem; }
+  }
+</style>
