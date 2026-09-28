@@ -117,6 +117,23 @@ collections:
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "SEO Description", name: "seoDescription", widget: "text" }
+      # About page fields. Optional, so the other pages are unaffected, but they
+      # must be listed or a save from the CMS drops them.
+      - { label: "Opening photo", name: "heroImage", widget: "image", required: false }
+      - { label: "Opening photo alt text", name: "heroAlt", widget: "string", required: false }
+      - { label: "Opening story", name: "intro", widget: "text", required: false }
+      - label: "People"
+        name: "people"
+        widget: "list"
+        required: false
+        fields:
+          - { label: "Name", name: "heading", widget: "string" }
+          - { label: "Role", name: "role", widget: "string", required: false }
+          - { label: "Photo", name: "image", widget: "image" }
+          - { label: "Photo alt text", name: "alt", widget: "string" }
+          - { label: "Introduction", name: "body", widget: "text" }
+      - { label: "What every walk includes", name: "includes", widget: "list", required: false, field: { label: "Item", name: "item", widget: "string" } }
+      - { label: "Note after the list", name: "includesNote", widget: "text", required: false }
       - { label: "Body", name: "body", widget: "markdown" }
 
   - name: "settings"
