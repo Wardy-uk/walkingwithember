@@ -1,15 +1,6 @@
 ---
 import { getAllWalks, getFeaturedWalks, getPublishedWalks, getSiteSettings } from "../lib/content";
 import { imgSrc } from "../lib/imgSrc";
-import AbTracking from "./AbTracking.astro";
-
-interface Props {
-  /** "a" = original homepage, "b" = Aug-2026 redesign. Drives markup + scoped CSS. */
-  variant: "a" | "b";
-}
-
-const { variant } = Astro.props;
-const isB = variant === "b";
 
 const settings = await getSiteSettings();
 const publishedWalks = await getPublishedWalks();
@@ -18,14 +9,8 @@ const walks = await getFeaturedWalks(3);
 const mastheadImage = settings.homepage?.mastheadImage || "/uploads/images/5da590c5-0884-4c1c-8fc1-012850f889fa-61fec1bcfa.jpg";
 const galleryImages = (settings.homepage?.galleryImages || []).filter(Boolean).slice(0, 2);
 
-// Variant B pulls the ethos images from walk heroes so the same photos don't
-// appear in both the ember strip and the ethos strip.
-const ethosImages = isB
-  ? walks.slice(0, 2).map((walk) => ({ src: walk.data.heroImage, alt: walk.data.title }))
-  : galleryImages.slice(0, 2).map((img, i) => ({ src: img, alt: `Trail photo ${i + 1}` }));
-
-// Variant B shows up to two photos side by side in the ember strip; A shows one.
-const emberImages = isB ? galleryImages.slice(0, 2) : galleryImages.slice(0, 1);
+const ethosImages = galleryImages.slice(0, 2).map((img, i) => ({ src: img, alt: `Trail photo ${i + 1}` }));
+const emberImages = galleryImages.slice(0, 1);
 
 function difficultyLabel(d: string | undefined) {
   if (!d) return "";
@@ -34,7 +19,7 @@ function difficultyLabel(d: string | undefined) {
 }
 ---
 
-<div class="v2-home" data-ab={variant}>
+<div class="v2-home">
   <!-- ── Full-screen hero ── -->
   <section class="v2-hero">
     <img src={imgSrc(mastheadImage)} alt="Mountain landscape with Ember" />
@@ -58,8 +43,8 @@ function difficultyLabel(d: string | undefined) {
       <h1>Walking<br/>with Ember</h1>
       <p class="v2-hero-sub">Mountains, moors, and honest days out.</p>
       <div class="v2-hero-ctas">
-        <a class="button" href="/walks/" data-ab-goal="hero-walks">Explore routes</a>
-        <a class="button ghost" href="/about/" data-ab-goal="hero-about">About us</a>
+        <a class="button" href="/walks/">Explore routes</a>
+        <a class="button ghost" href="/about/">About us</a>
       </div>
     </div>
   </section>
@@ -71,11 +56,10 @@ function difficultyLabel(d: string | undefined) {
       <h2>Nick and Ember,<br/>out in all weathers.</h2>
       <p>Honest route notes from a hillwalker and his dog. No sponsored shortcuts, no sugar-coating, just the real detail on what you'll find underfoot, overhead, and at the gate.</p>
     </div>
-    <div class={isB ? "v2-ember-photos" : "v2-ember-photo"}>
+    <div class="v2-ember-photo">
       {emberImages.length > 0
         ? emberImages.map((img, i) => (
             <img
-              class={isB ? "v2-ember-img" : undefined}
               src={imgSrc(img)}
               alt={i === 0 ? "Nick and Ember" : "Nick and Ember on the trail"}
               loading="lazy"
@@ -90,13 +74,13 @@ function difficultyLabel(d: string | undefined) {
   <div class="container v2-section">
     <div class="v2-section-head">
       <h2>Recent routes</h2>
-      <a href="/walks/" data-ab-goal="all-walks">All walks →</a>
+      <a href="/walks/">All walks →</a>
     </div>
 
     {walks.length > 0 ? (
       <div class="v2-route-grid">
         <!-- Large feature card -->
-        <a class="v2-route-card large" href={`/walks/${walks[0].slug}/`} style="text-decoration:none;" data-ab-goal="route-card">
+        <a class="v2-route-card large" href={`/walks/${walks[0].slug}/`} style="text-decoration:none;">
           <div class="card-img">
             <img src={imgSrc(walks[0].data.heroImage)} alt={walks[0].data.title} loading="lazy" />
             <div class="card-img-overlay"></div>
@@ -120,7 +104,7 @@ function difficultyLabel(d: string | undefined) {
         {walks.length > 1 && (
           <div class="v2-route-cards-small">
             {walks.slice(1, 3).map((walk) => (
-              <a class="v2-route-card small" href={`/walks/${walk.slug}/`} style="text-decoration:none;" data-ab-goal="route-card">
+              <a class="v2-route-card small" href={`/walks/${walk.slug}/`} style="text-decoration:none;">
                 <div class="card-img">
                   <img src={imgSrc(walk.data.heroImage)} alt={walk.data.title} loading="lazy" />
                   <div class="card-img-overlay"></div>
@@ -181,7 +165,7 @@ function difficultyLabel(d: string | undefined) {
         <p>
           Ember has final approval on all gradings.
         </p>
-        <a class="button ghost-dark" href="/blog/" data-ab-goal="ethos-blog">Read trail stories</a>
+        <a class="button ghost-dark" href="/blog/">Read trail stories</a>
       </article>
       <div class="v2-image-stack">
         {ethosImages.length >= 2 ? (
@@ -202,7 +186,6 @@ function difficultyLabel(d: string | undefined) {
       </div>
     </section>
   </div>
-  <AbTracking />
 </div>
 
 <script is:inline>

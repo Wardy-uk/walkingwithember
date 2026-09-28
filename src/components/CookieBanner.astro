@@ -34,13 +34,12 @@ const gaId = import.meta.env.PUBLIC_GA4_MEASUREMENT_ID ?? "";
       window.gtag = gtag;
       gtag('js', new Date());
       gtag('config', '${gaId}', {
-        anonymize_ip: true,
-        ab_home: window.__wweAbVariant || 'none'
+        anonymize_ip: true
       });
     `;
     document.head.appendChild(scriptB);
 
-    // Tells AbTracking (and anything else consent-gated) that gtag is
+    // Tells anything consent-gated that gtag is
     // configured and events sent from here on will be recorded.
     window.dispatchEvent(new CustomEvent("wwe-ga4-ready"));
   }

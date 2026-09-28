@@ -2,6 +2,5 @@ User-agent: *
 Allow: /
 # Unpublished drafts — noindex is set on the pages themselves too
 Disallow: /preview/
-Disallow: /home-b/
 
 Sitemap: https://www.walkingwithember.co.uk/sitemap-index.xml

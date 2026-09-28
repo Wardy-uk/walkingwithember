@@ -21,7 +21,6 @@ export default defineConfig({
   integrations: [
     sitemap({
       // Keep out of search:
-      //  • /home-b/ — the B arm of the homepage A/B test, served at "/"
       //  • /preview/ — unpublished drafts, still full of TODO prompts
       // Attach each walk's photographs to its sitemap entry. The images are
       // in the HTML now, so a crawler would find them eventually; this just
@@ -42,7 +41,6 @@ export default defineConfig({
         return item;
       },
       filter: (page) =>
-        !page.includes("/home-b") &&
         !page.includes("/preview/") &&
         !NOINDEX_WALKS.some((slug) => page.includes(`/walks/${slug}/`)),
     }),

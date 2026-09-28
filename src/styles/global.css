@@ -954,87 +954,6 @@ input:focus, select:focus, textarea:focus {
   .v2-ember-photo { width: 100%; height: 160px; }
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   Homepage A/B test — variant B (Aug 2026 redesign)
-
-   Every rule here is scoped to [data-ab="b"] so variant A above is the
-   untouched original. Delete this whole block (and the ab-home edge
-   function) when the test is called, or promote these values into the
-   base rules if B wins.
-   ══════════════════════════════════════════════════════════════════════ */
-
-/* Hero: full viewport height, no oversize crop hack */
-[data-ab="b"] .v2-hero { height: 100svh; }
-
-/* Ember strip: 55/45 split instead of a fixed 220px photo column */
-[data-ab="b"] .v2-ember-strip {
-  grid-template-columns: 55% 1fr;
-  min-height: 420px;
-}
-
-[data-ab="b"] .v2-ember-text {
-  padding: clamp(2rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3.5rem);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-[data-ab="b"] .v2-ember-text h2 {
-  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-  margin: 0 0 0.9rem;
-  line-height: 1.05;
-}
-
-[data-ab="b"] .v2-ember-text p {
-  font-size: 0.92rem;
-  line-height: 1.75;
-}
-
-/* Photo column — supports 1 or 2 images side by side */
-[data-ab="b"] .v2-ember-photos {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  overflow: hidden;
-  background: #2A2018;
-}
-
-[data-ab="b"] .v2-ember-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  opacity: 0.88;
-  transition: opacity 0.3s ease;
-}
-
-[data-ab="b"] .v2-ember-img:only-child { grid-column: 1 / -1; }
-
-[data-ab="b"] .v2-ember-photos .v2-ember-photo-fallback {
-  font-size: 3.5rem;
-  opacity: 0.5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  grid-column: 1 / -1;
-}
-
-/* Taller route cards */
-[data-ab="b"] .v2-route-card.large .card-img { height: 380px; }
-[data-ab="b"] .v2-route-card.small .card-img { height: 220px; }
-
-/* Match the base breakpoints (980 / 720). These re-state the mobile rules
-   because the [data-ab="b"] prefix outranks the unscoped media queries above. */
-@media (max-width: 980px) {
-  [data-ab="b"] .v2-route-card.large .card-img { height: 280px; }
-  [data-ab="b"] .v2-route-card.small .card-img { height: 200px; }
-}
-
-@media (max-width: 720px) {
-  [data-ab="b"] .v2-ember-strip { grid-template-columns: 1fr; min-height: 0; }
-  [data-ab="b"] .v2-ember-photos { height: 220px; }
-  [data-ab="b"] .v2-ember-img { width: 100%; height: 100%; }
-}
-
 /* ── Route map photo pins ─────────────────────────────────────────────── */
 .route-photo-pin {
   background: var(--brand, #be6d37);
@@ -1093,8 +1012,7 @@ input:focus, select:focus, textarea:focus {
    deeper bottom margin of a real print, a slight tilt and a cast shadow
    makes them objects lying on the panel instead. */
 
-.v2-ember-photo,
-[data-ab="b"] .v2-ember-photos {
+.v2-ember-photo {
   background: transparent;
   display: flex;
   align-items: center;
@@ -1106,8 +1024,7 @@ input:focus, select:focus, textarea:focus {
 
 .v2-ember-photo { width: auto; }
 
-.v2-ember-photo img,
-[data-ab="b"] .v2-ember-img {
+.v2-ember-photo img {
   /* The frame is padding on the image itself: even on three sides, deeper
      at the foot, exactly as a Polaroid prints. */
   box-sizing: border-box;
@@ -1127,13 +1044,9 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* Alternate the tilt so a pair looks dropped rather than placed. */
-.v2-ember-photo img,
-[data-ab="b"] .v2-ember-img:first-child { transform: rotate(-2.2deg); }
-[data-ab="b"] .v2-ember-img:last-child  { transform: rotate(1.6deg); }
-[data-ab="b"] .v2-ember-img:only-child  { transform: rotate(-1.5deg); }
+.v2-ember-photo img { transform: rotate(-2.2deg); }
 
-.v2-ember-photo img:hover,
-[data-ab="b"] .v2-ember-img:hover {
+.v2-ember-photo img:hover {
   transform: rotate(0deg) translateY(-4px);
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.3),
@@ -1142,9 +1055,7 @@ input:focus, select:focus, textarea:focus {
 
 @media (prefers-reduced-motion: reduce) {
   .v2-ember-photo img,
-  [data-ab="b"] .v2-ember-img,
-  .v2-ember-photo img:hover,
-  [data-ab="b"] .v2-ember-img:hover { transform: none; transition: none; }
+  .v2-ember-photo img:hover { transform: none; transition: none; }
 }
 
 /* ── Route cards: softer corners ──────────────────────────────────── */
